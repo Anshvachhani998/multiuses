@@ -1,6 +1,6 @@
 import os
 
-SESSION = "my_bot"
+SESSION = "teraboxdl"
 API_ID = int(os.getenv("API_ID", "801239"))
 API_HASH = os.getenv("API_HASH", "171e6f1c5140fbe827b6b08")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "653862OrA3AJn8t-YIKy_N_3Z6BsNc")
