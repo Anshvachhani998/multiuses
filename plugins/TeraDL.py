@@ -194,7 +194,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 formatted_caption = (
                     f"{part_caption}\n\n"
                     f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
-                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({youtube_link})**"
+                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({terabox_link})**"
                 )
                 await client.send_video(
                     chat_id=DUMP_CHANNEL,
@@ -222,7 +222,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 f"❌ **Upload Failed!**\n\n"
                 f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
                 f"**Filename:** `{output_filename}`\n"
-                f"**Source:** [YouTube Link]({youtube_link})\n"
+                f"**Source:** [Terabox Link]({terabox_link})\n"
                 f"**Error:** `{str(e)}`"
             )
             await client.send_message(LOG_CHANNEL, error_report)
