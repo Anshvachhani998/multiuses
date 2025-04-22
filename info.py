@@ -7,3 +7,17 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "7277194738:AAHrewQsvKcPqeXYeMIbSk-nyUjgJ14kW
 LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002284232975"))
 DUMP_CHANNEL = int(os.getenv("DUMP_CHANNEL", "-1002284232975"))
 PORT = int(os.getenv("PORT", "8080"))
+FORCE_CHANNEL = int(os.getenv("FORCE_CHANNEL", "-1002379643238"))
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
+MONGO_NAME = os.getenv("MONGO_NAME", "YouTubeDL")
+ADMINS = [5660839376, 6167872503]
+DAILY_LIMITS = 20
+MAINTENANCE_MODE = False  # Change to False to disable maintenance mode
+
+MAINTENANCE_MESSAGE = (
+    "⚠️ **Maintenance Mode Activated** ⚙️\n\n"
+    "Our bot is currently undergoing scheduled maintenance to improve performance and add new features.\n\n"
+    "Please check back in a while. We’ll be back soon, better than ever!\n\n"
+    "💬 **Support Group:** [SUPPORT](https://t.me/AnSBotsSupports)\n\n"
+    "**– Team Support**"
+)
