@@ -215,7 +215,7 @@ async def detect_terabox_link(client, message):
     link = match.group(1)
     sent = await message.reply("Fetching file info...", quote=True)
 
-    result = get_terabox_info(link)
+    result = await get_terabox_info(link)
 
     if "error" in result:
         await sent.edit(f"Error fetching file:\n`{result['error']}`")
