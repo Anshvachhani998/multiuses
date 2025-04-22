@@ -435,7 +435,7 @@ async def detect_terabox_link(client, message):
     if not match:
         return
     
-    sent = await message.reply_text("🔍 **Fetching file info Please wait a moment!**", quote=True)
+    sent = await message.reply_text("🔍 **Fetching file info. Please wait a moment!**", quote=True)
 
     if not await db.check_task_limit(chat_id):
         await message.reply_text(
@@ -451,38 +451,65 @@ async def detect_terabox_link(client, message):
         return
 
     link = match.group(1)
-    
-    result = await get_terabox_info(link)
 
-    if "error" in result:
-        await sent.edit(f"Error fetching file:\n`{result['error']}`")
-        return
+    try:
+        result = await get_terabox_info(link)
 
-    title = result['title']
-    size = result['size']
-    download_url = result['download_url']
-    thumbnail = result.get('thumbnail')  # 360x270 or None
+        if not result or "error" in result:
+            error_text = result.get('error', 'No response or unknown error')
+            await client.send_message(
+                LOG_CHANNEL,
+                f"❌ Error while fetching TeraBox link:\n`{error_text}`\n\nLink: {link}",
+                disable_web_page_preview=True
+            )
+            await sent.edit(
+                "⚠️ **Oops! Something went wrong while fetching the file. Please try again later.**\n\n"
+                "If the issue persists, please ask for help in our support group.\n\n"
+                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)",
+                disable_web_page_preview=True
+            )
+            return
 
-    btn = InlineKeyboardMarkup([
-        [InlineKeyboardButton("⬇️ Download", callback_data="download")]
-    ])
+        title = result['title']
+        size = result['size']
+        download_url = result['download_url']
+        thumbnail = result.get('thumbnail')
 
-    caption = f"**{title}**\n\n**Size:** {size}"
+        btn = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬇️ Download", callback_data="download")]
+        ])
 
-    if thumbnail:
+        caption = f"**{title}**\n\n**Size:** {size}"
+
         await sent.delete()
-        await message.reply_photo(
-            photo=thumbnail,
-            caption=caption,
-            reply_markup=btn,
-            quote=True
-        )
-    else:
-        await sent.edit(
-            caption,
-            reply_markup=btn,
+        if thumbnail:
+            await message.reply_photo(
+                photo=thumbnail,
+                caption=caption,
+                reply_markup=btn,
+                quote=True
+            )
+        else:
+            await message.reply_text(
+                caption,
+                reply_markup=btn,
+                disable_web_page_preview=True,
+                quote=True
+            )
+
+    except Exception as e:
+        error_message = str(e)
+        await client.send_message(
+            LOG_CHANNEL,
+            f"❌ Exception while processing TeraBox link:\n`{error_message}`\n\nLink: {link}",
             disable_web_page_preview=True
         )
+        await sent.edit(
+            "⚠️ **Oops! Something went wrong while processing the request. Please try again later.**\n\n"
+            "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)",
+            disable_web_page_preview=True
+        )
+        
         
 
 @Client.on_callback_query(filters.regex(r'^download'))
