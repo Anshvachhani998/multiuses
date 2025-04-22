@@ -18,6 +18,7 @@ from threading import Thread
 from PIL import Image
 import uuid
 import ffmpeg
+from info import DUMP_CHANNEL, ADMINS, LOG_CHANNEL
 from math import ceil
 from database.db import db
 
