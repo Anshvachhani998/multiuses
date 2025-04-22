@@ -533,7 +533,7 @@ async def download_video(client, callback_query, chat_id, teralink):
         if not thumbnail_path and terabox_thumb:
             thumbnail_path = await download_and_resize_thumbnail(terabox_thumb)
             
-        durations = await get_video_duration(output_filename)
+        duration = await get_video_duration(output_filename)
         
         await upload_video(
             client, chat_id, output_filename, caption,
