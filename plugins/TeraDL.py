@@ -9,8 +9,8 @@ def get_terabox_info(link):
         data = response.json()
 
         return {
-            "title": data.get("title"),
-            "url": data.get("url")
+            "title": data.get("Title"),
+            "url": data.get("Direct Download Link")
         }
     except Exception as e:
         return {"error": str(e)}
