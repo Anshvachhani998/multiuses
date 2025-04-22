@@ -242,7 +242,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 f"❌ **Upload Failed - File Not Found!**\n\n"
                 f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
                 f"**Expected File:** `{output_filename}`\n"
-                f"**Source:** [YouTube Link]({youtube_link})"
+                f"**Source:** [YouTube Link]({terabox_link})"
             )
             await client.send_message(LOG_CHANNEL, error_report)
         except Exception as e:
@@ -501,8 +501,7 @@ async def download_video(client, callback_query, chat_id, teralink):
             download_url = info.get("download_url")
             terabox_thumb = info.get("Thumbnails", {}).get("360x270")
         
-            file_ext = ".mp4" if ".mp4" in download_url else ".bin"
-            filename_only = f"{caption}_{timestamp}-{random_str}{file_ext}"
+            filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
             final_filename = os.path.join("downloads", filename_only)
             
             await asyncio.to_thread(manual_download_with_progress, download_url, final_filename, "📥 Downloading", queue, client)
