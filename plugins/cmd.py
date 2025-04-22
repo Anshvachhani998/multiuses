@@ -10,7 +10,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import LOG_CHANNEL, ADMINS, DAILY_LIMITS, BOT_TOKEN
 from database.db import db
 from pyrogram.enums import ParseMode 
-from plugins.youtube import active_tasks
+from plugins.TeraDL import active_tasks
 
 logger = logging.getLogger(__name__)
 
