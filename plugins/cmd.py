@@ -1,5 +1,244 @@
-from pyrogram import Client, filters
+import os
+import time
+import logging 
+import aiohttp
+import requests
+import asyncio
+import subprocess
+from pyrogram import Client, filters, enums
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from info import LOG_CHANNEL, ADMINS, DAILY_LIMITS, BOT_TOKEN
+from database.db import db
+from pyrogram.enums import ParseMode 
+from plugins.youtube import active_tasks
+from pytubefix import YouTube
+from pytubefix.helpers import reset_cache
+
+logger = logging.getLogger(__name__)
+
+ 
 
 @Client.on_message(filters.command("start"))
 async def start(client, message):
-    await message.reply_text("👋 Hello! Bot is running successfully!")
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("❓ Help", callback_data="help"), InlineKeyboardButton("ℹ️ About", callback_data="about")],
+        [InlineKeyboardButton("📢 Updates Channel", url="https://t.me/AnS_Bots")]
+    ])
+    if not await db.is_user_exist(message.from_user.id):
+        await db.add_user(message.from_user.id, message.from_user.first_name)
+        await client.send_message(
+            LOG_CHANNEL, 
+            f"**#NewUser 🔻**\n**ID -> `{message.from_user.id}`**\n**Name -> {message.from_user.mention}**"
+        )
+    await message.reply_text(
+        "🎬✨ **Welcome to the Ultimate YouTube Downloader!** ✨🎬\n\n"
+        "🚀 **Download YouTube Videos, Shorts & Music Instantly!** 🎶\n"
+        "💫 Just send any YouTube link & get **high-speed downloads in seconds!**\n\n"
+        "⚡ **Fast & Secure Downloads**\n"
+        "✅ **Supports Videos, Shorts, MP3, MP4 in HD Quality**\n"
+        "🎵 **Download Audio (MP3) & Video (MP4)**\n"
+        "🔹 **No Watermark, Full HD Quality**\n"
+        "🌟 **Custom Thumbnails for Each Video**\n\n"
+        "💖 **Enjoy Hassle-Free Downloads!** 💖",
+        reply_markup=buttons                
+    )
+
+@Client.on_callback_query(filters.regex("start"))
+async def start_hendler(client, callback_query):
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("❓ Help", callback_data="help"), InlineKeyboardButton("ℹ️ About", callback_data="about")],
+        [InlineKeyboardButton("📢 Updates Channel", url="https://t.me/AnS_Bots")]
+    ])
+    
+    await callback_query.message.edit_text(
+        "🎬✨ **Welcome to the Ultimate YouTube Downloader!** ✨🎬\n\n"
+        "🚀 **Download YouTube Videos, Shorts & Music Instantly!** 🎶\n"
+        "💫 Just send any YouTube link & get **high-speed downloads in seconds!**\n\n"
+        "⚡ **Fast & Secure Downloads**\n"
+        "✅ **Supports Videos, Shorts, MP3, MP4 in HD Quality**\n"
+        "🎵 **Download Audio (MP3) & Video (MP4)**\n"
+        "🔹 **No Watermark, Full HD Quality**\n"
+        "🌟 **Custom Thumbnails for Each Video**\n\n"
+        "💖 **Enjoy Hassle-Free Downloads!** 💖",
+        reply_markup=buttons                
+    )
+
+
+
+@Client.on_callback_query(filters.regex("help"))
+async def help(client, callback_query):
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("⬅️ Back", callback_data="start"), InlineKeyboardButton("ℹ️ About", callback_data="about")]
+    ])
+    
+    await callback_query.message.edit_text(
+        "**❓ Help Guide - YouTube Downloader**\n\n"
+        "📌 Just send any **YouTube video link** here.\n"
+        "🔹 The bot will instantly fetch & send your download link.\n"
+        "🎥 **Supports MP4 (Video) & MP3 (Audio) Downloads**\n"
+        "🎵 **High-Quality Audio & Video** (upto 320kbps & 4K)\n"
+        "🌟 **Custom Thumbnail Support**\n\n"
+        "**🖼️ Thumbnail Features:**\n"
+        "➤ Add a custom thumbnail using `/add_thumbnail`\n"
+        "➤ Remove thumbnail using `/remove_thumbnail`\n"
+        "➤ View your current thumbnail using `/show_thumbnail`\n"
+        "➤ If no custom thumbnail is added, the bot will **auto-fetch the YouTube thumbnail**.\n\n"
+        "**🎬 How to Download?**\n"
+        "1️⃣ Send a YouTube link.\n"
+        "2️⃣ Choose between **MP3 (Audio) or MP4 (Video).**\n"
+        "3️⃣ Get your download instantly!\n\n"
+        "🚀 **Fast, Secure & Unlimited Downloads!** 💖",
+        reply_markup=buttons
+    )
+    
+
+
+@Client.on_callback_query(filters.regex("about"))
+async def about(client, callback_query):
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("⬅️ Back", callback_data="start"), InlineKeyboardButton("❓ Help", callback_data="help")]
+    ])
+    
+    await callback_query.message.edit_text(
+        "**ℹ️ About This Bot**\n\n"
+        "🎬 **YouTube Video & Audio Downloader**\n"
+        "🚀 **Fastest YouTube downloader with custom thumbnail support!**\n"
+        "🎥 **Supports:** MP4 (Video) & MP3 (Audio)\n"
+        "🔹 **High-Quality Downloads** (upto 320kbps & 1080p)\n"
+        "🖼️ **Custom Thumbnail Support**\n\n"
+        "**⚡ Features:**\n"
+        "➤ **Blazing Fast & Secure**\n"
+        "➤ **Unlimited Downloads**\n"
+        "➤ **Easy-to-use Interface**\n\n"
+        "💎 **Developed By: [AnS </> Team](https://t.me/AnS_team)**\n"
+        "💖 **Enjoy & Share!**",
+        reply_markup=buttons,
+        disable_web_page_preview=True
+    )
+
+
+@Client.on_message(filters.command('users') & filters.private)
+async def total_users(client, message):
+    if message.from_user.id not in ADMINS:
+        return await message.reply_text("🚫 **You are not authorized to use this command!**")
+
+    response = await message.reply("🔍 Fetching total users...")
+
+    total_users = await db.total_users_count()
+
+    await response.edit_text(
+        f"👑 **Admin Panel**\n\n"
+        f"🌍 **Total Users in Database:** `{total_users}`\n\n"
+        "**🚀 Thanks for managing this bot!**"
+    )
+    
+
+
+@Client.on_message(filters.command("stats") & filters.private)
+async def stats(client, message):
+    if message.from_user.id not in ADMINS:
+        return await message.reply_text("🚫 **You are not authorized to use this command!**")
+  
+    response = await message.reply("**🔍 Fetching Bot Statistics**")
+
+    total_users = await db.total_users_count()
+    total_downloads = await db.get_total_downloads()
+    
+    await response.edit_text(
+        f"📊 **Bot Statistics**\n\n"
+        f"👥 **Total Users:** {total_users}\n"
+        f"⬇️ **Total Downloads:** {total_downloads}\n\n"
+        "These stats show the total number of users and downloads recorded in the system."
+    )
+
+
+@Client.on_message(filters.command("mytasks"))
+async def my_tasks(client, message):
+    user_id = message.from_user.id
+    allowed, tasks_used, user_type, total_tasks = await db.get_task_limit(user_id)
+
+    if user_type == "Premium":
+        remaining_tasks = "Unlimited 🚀"
+        task_limit_text = "∞ (No Limit) 🔥"
+    else:
+        remaining_tasks = max(0, DAILY_LIMITS - tasks_used)
+        task_limit_text = f"{DAILY_LIMITS}"
+
+    text = (
+        f"👤 **User Type:** `{user_type}`\n"
+        f"📅 **Today's Tasks Used:** `{tasks_used}/{task_limit_text}`\n"
+        f"🔹 **Remaining Today:** `{remaining_tasks}`\n"
+        f"📊 **Total Tasks Completed:** `{total_tasks}`\n"
+    )
+
+    await message.reply_text(text)
+    
+
+@Client.on_message(filters.command("checkdc") & filters.private)
+async def check_dc(client, message):
+    try:
+        me = await client.get_me()
+        dc_id = me.dc_id
+        await message.reply_text(f"🌍 **Your Data Center ID:** `{dc_id}`")
+    except Exception as e:
+        await message.reply_text(f"❌ Error while checking DC ID:\n`{e}`")
+
+
+@Client.on_message(filters.command("taskinfo"))
+async def show_active_tasks(client, message):
+    if message.from_user.id not in ADMINS:
+        await message.reply("❌ You are not authorized to use this command.")
+        return
+
+    total_tasks = len(active_tasks)
+    await message.reply(f"**🧾 Active Tasks (Total: {total_tasks})**")
+
+def custom_oauth_verifier(verification_url, user_code):
+    send_message_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    params = {
+        "chat_id": ADMINS,
+        "text": f"<b>OAuth Verification</b>\n\nOpen this URL in your browser:\n{verification_url}\n\nEnter this code:\n<code>{user_code}</code>",
+        "parse_mode": "HTML"
+    }
+    response = requests.get(send_message_url, params=params)
+    if response.status_code == 200:
+        logging.info("Message sent successfully.")
+    else:
+        logging.error(f"Failed to send message. Status code: {response.status_code}")
+    for i in range(30, 0, -5):
+        logging.info(f"{i} seconds remaining")
+        time.sleep(5)
+
+@Client.on_message(filters.command("login"))
+async def manual_login(client, message):
+    if message.from_user.id not in ADMINS:
+        await message.reply("❌ You are not authorized to use this command.")
+        return
+    try:
+        await message.reply_text("🔐 Opening browser for manual login...")
+        user_id = message.from_user.id
+        sss = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        
+        # Start the YouTube download or login process
+        yt = YouTube(
+            sss,
+            use_oauth=True,
+            allow_oauth_cache=True,
+            oauth_verifier=custom_oauth_verifier
+        )
+        title = yt.title or "No title available"
+        await message.reply_text(f"✅ Login successful!")
+    except Exception as e:
+        await message.reply_text(f"❌ Login failed: {e}")
+
+@Client.on_message(filters.command("reset"))
+async def reset_login(client, message):
+    if message.from_user.id not in ADMINS:
+        await message.reply("❌ You are not authorized to use this command.")
+        return
+    try:
+        reset_cache()
+        await message.reply_text("🔁 **Cache cleared successfully!**\nAll cached data has been removed.")
+    except Exception as e:
+        await message.reply_text(f"⚠️ **Error clearing cache:** {e}")
+        
