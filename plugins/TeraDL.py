@@ -14,7 +14,7 @@ def get_terabox_info(link):
 
         return {
             "title": info.get("Title"),
-            "download_url": info.get("Direct Download Link")
+            "url": info.get("Direct Download Link")
         }
 
     except Exception as e:
