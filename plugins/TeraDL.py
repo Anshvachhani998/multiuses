@@ -22,7 +22,7 @@ from math import ceil
 from database.db import db
 
 TERABOX_REGEX = r"(https?://[^\s]*tera[^\s]*)"
-
+active_tasks = {}
 
 import logging
 
