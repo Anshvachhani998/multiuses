@@ -2,7 +2,6 @@ import os
 import io
 import re
 import logging
-import yt_dlp
 import aiohttp
 import aiofiles
 import asyncio
