@@ -41,6 +41,23 @@ def convert_to_bytes(size, unit):
         return int(size)
 
 
+async def get_video_duration(file_path):
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            file_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, _ = await process.communicate()
+        return int(float(stdout.decode().strip()))
+    except Exception as e:
+        print("Duration fetch error:", e)
+        return 0
+        
 def format_size(size_in_bytes):
     """✅ File Size को KB, MB, या GB में Convert करता है"""
     if size_in_bytes < 1024:
@@ -68,6 +85,171 @@ def TimeFormatter(milliseconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+def generate_thumbnail_path():
+    timestamp = int(time.time())
+    unique_id = uuid.uuid4().hex
+    return os.path.join("downloads", f"thumb_{unique_id}_{timestamp}.jpg")
+
+async def download_and_resize_thumbnail(url):
+    save_path = generate_thumbnail_path()
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    async with aiofiles.open(save_path, 'wb') as f:
+                        await f.write(await resp.read())
+                else:
+                    return None
+
+        def resize():
+            img = Image.open(save_path).convert("RGB")
+            img.save(save_path, "JPEG", quality=85)
+
+        await asyncio.to_thread(resize)
+        return save_path
+
+    except Exception as e:
+        logging.exception("Thumbnail download failed: %s", e)
+        return None
+
+MAX_TG_FILE_SIZE = 2097152000  # 2GB (Telegram limit)
+
+async def run_ffmpeg_async(cmd):
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        raise Exception(f"FFmpeg failed: {stderr.decode()}")
+    return stdout, stderr
+
+async def split_video(output_filename, max_size=MAX_TG_FILE_SIZE):
+    file_size = os.path.getsize(output_filename)
+    if file_size <= max_size:
+        return [output_filename]  # No need to split
+
+    duration = float(ffmpeg.probe(output_filename)["format"]["duration"])
+    duration = int(duration)
+    parts = ceil(file_size / max_size)
+    split_duration = duration // parts
+    base_name = os.path.splitext(output_filename)[0]
+
+    split_files = []
+
+    for i in range(parts):
+        part_file = f"{base_name}_part{i+1}.mp4"
+        start_time = i * split_duration
+
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i", output_filename,
+            "-ss", str(start_time),
+            "-t", str(split_duration),
+            "-c", "copy",
+            part_file
+        ]
+
+        await run_ffmpeg_async(cmd)
+        split_files.append(part_file)
+
+    return split_files
+
+async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, terabox_link, thumbnail_path):
+    if output_filename and os.path.exists(output_filename):
+        await status_msg.edit_text("📤 **Uploading video...**")
+        start_time = time.time()
+
+        async def upload_progress(sent, total):
+            await progress_for_pyrogram(sent, total, "📤 **Uploading...**", status_msg, start_time)
+
+        try:
+            split_files = await split_video(output_filename)
+            total_parts = len(split_files)
+            user = await client.get_users(chat_id)
+            mention_user = f"[{user.first_name}](tg://user?id={user.id})"
+
+            for idx, part_file in enumerate(split_files, start=1):
+                part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
+                
+                with open(part_file, "rb") as video_file:
+                    sent_message = await client.send_video(
+                        chat_id=chat_id,
+                        video=video_file,
+                        progress=upload_progress,
+                        caption=part_caption,
+                        duration=duration // total_parts if total_parts > 1 else duration,
+                        supports_streaming=True,
+                        height=height,
+                        width=width,
+                        disable_notification=True,
+                        thumb=thumbnail_path if thumbnail_path else None,
+                        file_name=os.path.basename(part_file),                        
+                    )
+
+                formatted_caption = (
+                    f"{part_caption}\n\n"
+                    f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
+                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({youtube_link})**"
+                )
+                await client.send_video(
+                    chat_id=DUMP_CHANNEL,
+                    video=sent_message.video.file_id,
+                    caption=formatted_caption,
+                    duration=duration // total_parts if total_parts > 1 else duration,
+                    supports_streaming=True,
+                    height=height,
+                    width=width,
+                    disable_notification=True,
+                    thumb=thumbnail_path if thumbnail_path else None,
+                    file_name=os.path.basename(part_file)
+                )
+
+                os.remove(part_file)
+
+            await status_msg.edit_text("✅ **Upload Successful!**")
+            await db.increment_task(chat_id)
+            await db.increment_download_count()
+            await status_msg.delete()
+
+        except Exception as e:
+            user = await client.get_users(chat_id)
+            error_report = (
+                f"❌ **Upload Failed!**\n\n"
+                f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
+                f"**Filename:** `{output_filename}`\n"
+                f"**Source:** [YouTube Link]({youtube_link})\n"
+                f"**Error:** `{str(e)}`"
+            )
+            await client.send_message(LOG_CHANNEL, error_report)
+            await status_msg.edit_text("❌ **Oops! Something went wrong during upload.**")
+
+        finally:
+            if os.path.exists(output_filename):
+                os.remove(output_filename)
+            if thumbnail_path and os.path.exists(thumbnail_path):
+                os.remove(thumbnail_path)
+            
+
+    else:
+        try:
+            user = await client.get_users(chat_id)
+            error_report = (
+                f"❌ **Upload Failed - File Not Found!**\n\n"
+                f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
+                f"**Expected File:** `{output_filename}`\n"
+                f"**Source:** [YouTube Link]({youtube_link})"
+            )
+            await client.send_message(LOG_CHANNEL, error_report)
+        except Exception as e:
+            await client.send_message(LOG_CHANNEL, f"❌ Error while logging failed upload:\n`{str(e)}`")
+
+        await status_msg.edit_text("❌ **Oops! Upload failed. Please try again later.**")
+
 
 def manual_download_with_progress(url, output_path, label, queue, client):
     output_dir = os.path.dirname(output_path)
@@ -128,6 +310,42 @@ async def get_terabox_info(link):
     except Exception as e:
         return {"error": str(e)}
 
+async def progress_for_pyrogram(current, total, ud_type, message, start):
+    now = time.time()
+    diff = now - start
+
+    if current == total or round(diff % 5.00) == 0:
+        percentage = (current / total) * 100
+        speed = current / diff if diff > 0 else 0
+        estimated_total_time = TimeFormatter(milliseconds=(total - current) / speed * 1000) if speed > 0 else "∞"
+
+        # CPU & RAM Usage
+        cpu_usage = psutil.cpu_percent()
+        ram_usage = psutil.virtual_memory().percent
+
+        # Progress Bar
+        progress_bar = "■" + "■" * math.floor(percentage / 5) + "□" * (20 - math.floor(percentage / 5))
+
+        text = (
+            f"**╭───────Uᴘʟᴏᴀᴅɪɴɢ───────〄**\n"
+            f"**│**\n"
+            f"**├📁 Sɪᴢᴇ : {humanbytes(current)} ✗ {humanbytes(total)}**\n"
+            f"**│**\n"
+            f"**├📦 Pʀᴏɢʀᴇꜱꜱ : {round(percentage, 2)}%**\n"
+            f"**│**\n"
+            f"**├🚀 Sᴘᴇᴇᴅ : {humanbytes(speed)}/s**\n"
+            f"**│**\n"
+            f"**├⏱️ Eᴛᴀ : {estimated_total_time}**\n"
+            f"**│**\n"
+            f"**├🏮 Cᴘᴜ : {cpu_usage}%  |  Rᴀᴍ : {ram_usage}%**\n"
+            f"**│**\n"
+            f"**╰─[{progress_bar}]**"
+        )
+
+        try:
+            await message.edit(text=text)
+        except:
+            pass
 
 async def progress_bar(current, total, status_message, start_time, last_update_time, lebel):
     """Display a progress bar for downloads/uploads."""
@@ -299,13 +517,22 @@ async def download_video(client, callback_query, chat_id, teralink):
     await download_task
     await progress_task
 
-    # If the download is successful, prepare the file for upload
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
-        # Upload the video (assuming upload_video is defined elsewhere)
+        thumbnail_file_id = await db.get_user_thumbnail(chat_id)
+        if thumbnail_file_id:
+            try:
+                thumb_message = await client.download_media(thumbnail_file_id)
+                thumbnail_path = thumb_message
+            except Exception as e:
+                logging.error(f"Thumbnail download error: {e}")
+
+        if not thumbnail_path and youtube_thumbnail_url:
+            thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+        
         await upload_video(
             client, chat_id, output_filename, caption,
-            duration, width, height, status_msg, teralink
+            duration, width, height, status_msg, teralink, thumbnail_path
         )
     else:
         error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
