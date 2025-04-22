@@ -8,12 +8,18 @@ def get_terabox_info(link):
         response.raise_for_status()
         data = response.json()
 
+        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
+        if not info:
+            return {"error": "No extracted info found."}
+
         return {
-            "title": data.get("Title"),
-            "url": data.get("Direct Download Link")
+            "title": info.get("Title"),
+            "download_url": info.get("Direct Download Link")
         }
+
     except Exception as e:
         return {"error": str(e)}
+
       
 
 @Client.on_message(filters.command("terabox"))
