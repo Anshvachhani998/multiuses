@@ -307,7 +307,7 @@ async def get_terabox_info(link):
         return {
             "title": info.get("Title"),
             "size": info.get("Size"),
-            "download_url": info.get("fast_link"),
+            "download_url": info.get("Direct Download Link"),
             "thumbnail": info.get("Thumbnails", {}).get("360x270")
         }
 
