@@ -24,7 +24,7 @@ def get_terabox_info(link):
     except Exception as e:
         return {"error": str(e)}
 
-TERABOX_REGEX = r"(https?://(?:www\.)?(?:terabox\.com|d\.terabox\.(?:com|app)|(?:d|data)\.1024tera\.com|1024tera\.com|terafileshare\.com)[^\s]*)"
+TERABOX_REGEX = r"(https?://[^\s]*tera[^\s]*)"
 
 @Client.on_message(filters.regex(TERABOX_REGEX))
 async def detect_terabox_link(client, message):
