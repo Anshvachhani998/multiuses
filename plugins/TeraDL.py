@@ -430,6 +430,7 @@ async def update_progress(message, queue):
 
 @Client.on_message(filters.regex(TERABOX_REGEX))
 async def detect_terabox_link(client, message):
+    chat_id = message.chat.id
     match = re.search(TERABOX_REGEX, message.text)
     if not match:
         return
