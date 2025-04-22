@@ -519,7 +519,6 @@ async def handle_download_button(client, callback_query):
     await download_video(client, callback_query, chat_id, teralink)
 
 
-
 async def download_video(client, callback_query, chat_id, teralink):
     active_tasks[chat_id] = True
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
@@ -540,25 +539,41 @@ async def download_video(client, callback_query, chat_id, teralink):
             info = await get_terabox_info(teralink)
 
             if "error" in info:
-                await status_msg.edit_text(f"❌ **Error:** {info['error']}")
+                await status_msg.edit_text("⚠️ **Oops! Something went wrong. Please try again later.**")
+                await client.send_message(
+                    LOG_CHANNEL,
+                    f"❌ Error from get_terabox_info:\n`{info['error']}`\n\nLink: {teralink}",
+                    disable_web_page_preview=True
+                )
                 active_tasks.pop(chat_id, None)
                 return
 
             caption = info.get("title") or "TeraBox File"
             download_url = info.get("download_url")
-            terabox_thumb = info.get("thumbnail")          
+            terabox_thumb = info.get("thumbnail")
             filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
             final_filename = os.path.join("downloads", filename_only)
-            
-            await asyncio.to_thread(manual_download_with_progress, download_url, final_filename, "📥 Downloading", queue, client)
+
+            await asyncio.to_thread(
+                manual_download_with_progress,
+                download_url,
+                final_filename,
+                "📥 Downloading",
+                queue,
+                client
+            )
 
             output_filename = final_filename
             await queue.put({"status": "finished"})
 
         except Exception as e:
-            logging.error(f"Error: {e}")
+            await status_msg.edit_text("⚠️ **Oops! Something went wrong. Please try again later.**")
+            await client.send_message(
+                LOG_CHANNEL,
+                f"❌ Exception in download:\n`{str(e)}`\n\nLink: {teralink}",
+                disable_web_page_preview=True
+            )
             await queue.put({"status": "error", "message": str(e)})
-            await status_msg.edit_text(f"❌ **Error:** {str(e)}")
             active_tasks.pop(chat_id, None)
 
     download_task = asyncio.create_task(run_terabox())
@@ -579,17 +594,21 @@ async def download_video(client, callback_query, chat_id, teralink):
 
         if not thumbnail_path and terabox_thumb:
             thumbnail_path = await download_and_resize_thumbnail(terabox_thumb)
-            
+
         duration = await get_video_duration(output_filename)
         logging.info(thumbnail_path)
         logging.info(terabox_thumb)
+
         await upload_video(
             client, chat_id, output_filename, caption,
             duration, width, height, status_msg, teralink, thumbnail_path
         )
     else:
-        error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
-        logging.error(error_message)
-        await status_msg.edit_text(error_message)
+        await status_msg.edit_text("⚠️ **Oops! Download failed. Please try again later.**")
+        await client.send_message(
+            LOG_CHANNEL,
+            f"❌ Download Failed!\nOutput filename: `{output_filename}`\nExists: `{os.path.exists(output_filename)}`\nLink: {teralink}",
+            disable_web_page_preview=True
+        )
         active_tasks.pop(chat_id, None)
         
