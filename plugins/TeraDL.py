@@ -252,6 +252,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
             await client.send_message(LOG_CHANNEL, f"❌ Error while logging failed upload:\n`{str(e)}`")
 
         await status_msg.edit_text("❌ **Oops! Upload failed. Please try again later.**")
+        active_tasks.pop(chat_id, None)
 
 
 def manual_download_with_progress(url, output_path, label, queue, client):
