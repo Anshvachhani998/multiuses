@@ -442,12 +442,12 @@ async def detect_terabox_link(client, message):
             "❌ **You have reached your daily task limit! Try again tomorrow.**\n\n"
             "**Use /mytasks to check your remaining quota.**"
         )
-        await fetching_message.delete()
+        await sent.delete()
         return
 
     if active_tasks.get(chat_id):
         await message.reply_text("⏳ **Your previous task is still running. Please wait!**")
-        await fetching_message.delete()
+        await sent.delete()
         return
 
     link = match.group(1)
