@@ -478,6 +478,7 @@ async def detect_terabox_link(client, message):
 
         # Start download immediately
         await download_video(client, message, chat_id, link)
+        await sent.delete()
 
     except Exception as e:
         error_message = str(e)
@@ -491,19 +492,10 @@ async def detect_terabox_link(client, message):
             "💬 [Support Group](https://t.me/AnSBotsSupports)",
             disable_web_page_preview=True
         )
-        
 
-@Client.on_callback_query(filters.regex(r'^download'))
-async def handle_download_button(client, callback_query):
-    chat_id = callback_query.message.chat.id
-    teralink = callback_query.message.reply_to_message.text
-    await download_video(client, callback_query, chat_id, teralink)
-
-
-async def download_video(client, callback_query, chat_id, teralink):
+async def download_video(client, message, chat_id, teralink):
     active_tasks[chat_id] = True
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
-    await callback_query.message.delete()
 
     queue = asyncio.Queue()
     output_filename = None
