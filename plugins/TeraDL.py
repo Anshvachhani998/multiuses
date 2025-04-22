@@ -26,7 +26,7 @@ def get_terabox_info(link):
 TERABOX_REGEX = r"(https?://(?:www\.)?(?:terabox\.com|d\.terabox\.(?:com|app)|(?:d|data)\.1024tera\.com|1024tera\.com|terafileshare\.com)[^\s]*)"
 
 
-@Client.on_message(filters.text & ~filters.command)
+@Client.on_message(filters.text & ~filters.command):
 async def detect_terabox_link(client, message):
     match = re.search(TERABOX_REGEX, message.text)
     if not match:
