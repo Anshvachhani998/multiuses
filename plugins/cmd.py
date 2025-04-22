@@ -11,8 +11,6 @@ from info import LOG_CHANNEL, ADMINS, DAILY_LIMITS, BOT_TOKEN
 from database.db import db
 from pyrogram.enums import ParseMode 
 from plugins.youtube import active_tasks
-from pytubefix import YouTube
-from pytubefix.helpers import reset_cache
 
 logger = logging.getLogger(__name__)
 
@@ -192,53 +190,3 @@ async def show_active_tasks(client, message):
 
     total_tasks = len(active_tasks)
     await message.reply(f"**🧾 Active Tasks (Total: {total_tasks})**")
-
-def custom_oauth_verifier(verification_url, user_code):
-    send_message_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    params = {
-        "chat_id": ADMINS,
-        "text": f"<b>OAuth Verification</b>\n\nOpen this URL in your browser:\n{verification_url}\n\nEnter this code:\n<code>{user_code}</code>",
-        "parse_mode": "HTML"
-    }
-    response = requests.get(send_message_url, params=params)
-    if response.status_code == 200:
-        logging.info("Message sent successfully.")
-    else:
-        logging.error(f"Failed to send message. Status code: {response.status_code}")
-    for i in range(30, 0, -5):
-        logging.info(f"{i} seconds remaining")
-        time.sleep(5)
-
-@Client.on_message(filters.command("login"))
-async def manual_login(client, message):
-    if message.from_user.id not in ADMINS:
-        await message.reply("❌ You are not authorized to use this command.")
-        return
-    try:
-        await message.reply_text("🔐 Opening browser for manual login...")
-        user_id = message.from_user.id
-        sss = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        
-        # Start the YouTube download or login process
-        yt = YouTube(
-            sss,
-            use_oauth=True,
-            allow_oauth_cache=True,
-            oauth_verifier=custom_oauth_verifier
-        )
-        title = yt.title or "No title available"
-        await message.reply_text(f"✅ Login successful!")
-    except Exception as e:
-        await message.reply_text(f"❌ Login failed: {e}")
-
-@Client.on_message(filters.command("reset"))
-async def reset_login(client, message):
-    if message.from_user.id not in ADMINS:
-        await message.reply("❌ You are not authorized to use this command.")
-        return
-    try:
-        reset_cache()
-        await message.reply_text("🔁 **Cache cleared successfully!**\nAll cached data has been removed.")
-    except Exception as e:
-        await message.reply_text(f"⚠️ **Error clearing cache:** {e}")
-        
