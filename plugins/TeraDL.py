@@ -56,7 +56,7 @@ async def get_video_duration(file_path):
         stdout, _ = await process.communicate()
         return int(float(stdout.decode().strip()))
     except Exception as e:
-        print("Duration fetch error:", e)
+        logging.info("Duration fetch error:", e)
         return 0
         
 def format_size(size_in_bytes):
