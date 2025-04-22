@@ -484,8 +484,8 @@ async def download_video(client, callback_query, chat_id, teralink):
     caption = ""
     width, height = 640, 360
     timestamp = time.strftime("%y%m%d")
-    terabox_thumb = None
     thumbnail_path = None
+    terabox_thumb = None
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_terabox():
@@ -499,8 +499,7 @@ async def download_video(client, callback_query, chat_id, teralink):
 
             caption = info.get("title") or "TeraBox File"
             download_url = info.get("download_url")
-            terabox_thumb = info.get("Thumbnails", {}).get("360x270")
-          
+            terabox_thumb = info.get("thumbnail")          
             filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
             final_filename = os.path.join("downloads", filename_only)
             
