@@ -484,10 +484,12 @@ async def download_video(client, callback_query, chat_id, teralink):
     duration = 0
     width, height = 640, 360
     timestamp = time.strftime("%y%m%d")
+    terabox_thumb = None
+    thumbnail_path = None
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_terabox():
-        nonlocal output_filename, caption, duration, width, height
+        nonlocal output_filename, caption, duration, width, height, thumbnail_path, terabox_thumb
         try:
             info = await get_terabox_info(teralink)
 
@@ -497,6 +499,8 @@ async def download_video(client, callback_query, chat_id, teralink):
 
             caption = info.get("title") or "TeraBox File"
             download_url = info.get("download_url")
+            terabox_thumb = info.get("Thumbnails", {}).get("360x270")
+        
             file_ext = ".mp4" if ".mp4" in download_url else ".bin"
             filename_only = f"{caption}_{timestamp}-{random_str}{file_ext}"
             final_filename = os.path.join("downloads", filename_only)
@@ -527,8 +531,8 @@ async def download_video(client, callback_query, chat_id, teralink):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
-        if not thumbnail_path and youtube_thumbnail_url:
-            thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+        if not thumbnail_path and terabox_thumb:
+            thumbnail_path = await download_and_resize_thumbnail(terabox_thumb)
             
         durations = await get_video_duration(output_filename)
         
