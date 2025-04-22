@@ -257,7 +257,6 @@ async def handle_download_button(client, callback_query):
 
 
 async def download_video(client, callback_query, chat_id, teralink):
-    active_tasks[chat_id] = True
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
     await callback_query.message.delete()
 
