@@ -216,7 +216,8 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
             await db.increment_task(chat_id)
             await db.increment_download_count()
             await status_msg.delete()
-
+            
+            
         except Exception as e:
             user = await client.get_users(chat_id)
             error_report = (
@@ -234,6 +235,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 os.remove(output_filename)
             if thumbnail_path and os.path.exists(thumbnail_path):
                 os.remove(thumbnail_path)
+            active_tasks.pop(chat_id, None)
             
 
     else:
@@ -429,11 +431,25 @@ async def update_progress(message, queue):
 async def detect_terabox_link(client, message):
     match = re.search(TERABOX_REGEX, message.text)
     if not match:
-        return  # No Terabox link found
+        return
+    
+    sent = await message.reply_text("🔍 **Fetching file info Please wait a moment!**", quote=True)
+
+    if not await db.check_task_limit(chat_id):
+        await message.reply_text(
+            "❌ **You have reached your daily task limit! Try again tomorrow.**\n\n"
+            "**Use /mytasks to check your remaining quota.**"
+        )
+        await fetching_message.delete()
+        return
+
+    if active_tasks.get(chat_id):
+        await message.reply_text("⏳ **Your previous task is still running. Please wait!**")
+        await fetching_message.delete()
+        return
 
     link = match.group(1)
-    sent = await message.reply("Fetching file info...", quote=True)
-
+    
     result = await get_terabox_info(link)
 
     if "error" in result:
@@ -476,6 +492,7 @@ async def handle_download_button(client, callback_query):
 
 
 async def download_video(client, callback_query, chat_id, teralink):
+    active_tasks[chat_id] = True
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
     await callback_query.message.delete()
 
@@ -495,6 +512,7 @@ async def download_video(client, callback_query, chat_id, teralink):
 
             if "error" in info:
                 await status_msg.edit_text(f"❌ **Error:** {info['error']}")
+                active_tasks.pop(chat_id, None)
                 return
 
             caption = info.get("title") or "TeraBox File"
@@ -512,6 +530,7 @@ async def download_video(client, callback_query, chat_id, teralink):
             logging.error(f"Error: {e}")
             await queue.put({"status": "error", "message": str(e)})
             await status_msg.edit_text(f"❌ **Error:** {str(e)}")
+            active_tasks.pop(chat_id, None)
 
     download_task = asyncio.create_task(run_terabox())
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
@@ -543,4 +562,5 @@ async def download_video(client, callback_query, chat_id, teralink):
         error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
         logging.error(error_message)
         await status_msg.edit_text(error_message)
+        active_tasks.pop(chat_id, None)
         
