@@ -482,7 +482,6 @@ async def download_video(client, callback_query, chat_id, teralink):
     queue = asyncio.Queue()
     output_filename = None
     caption = ""
-    duration = 0
     width, height = 640, 360
     timestamp = time.strftime("%y%m%d")
     terabox_thumb = None
@@ -490,7 +489,7 @@ async def download_video(client, callback_query, chat_id, teralink):
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_terabox():
-        nonlocal output_filename, caption, duration, width, height, thumbnail_path, terabox_thumb
+        nonlocal output_filename, caption, width, height, thumbnail_path, terabox_thumb
         try:
             info = await get_terabox_info(teralink)
 
