@@ -227,7 +227,7 @@ async def detect_terabox_link(client, message):
     thumbnail = result.get('thumbnail')  # 360x270 or None
 
     btn = InlineKeyboardMarkup([
-        [InlineKeyboardButton("⬇️ Download", callback_data=download)]
+        [InlineKeyboardButton("⬇️ Download", callback_data="download")]
     ])
 
     caption = f"**{title}**\n\n**Size:** {size}"
