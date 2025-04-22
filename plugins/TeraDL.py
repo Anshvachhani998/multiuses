@@ -248,7 +248,7 @@ async def detect_terabox_link(client, message):
         )
         
 
-@Client.on_callback_query(filters.regex(r'^download\|'))
+@Client.on_callback_query(filters.regex(r'^download'))
 async def handle_download_button(client, callback_query):
     chat_id = callback_query.message.chat.id
     teralink = callback_query.message.reply_to_message.text
