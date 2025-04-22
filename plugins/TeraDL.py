@@ -19,7 +19,7 @@ from PIL import Image
 import uuid
 import ffmpeg
 from math import ceil
-
+from database.db import db
 
 TERABOX_REGEX = r"(https?://[^\s]*tera[^\s]*)"
 
@@ -529,6 +529,8 @@ async def download_video(client, callback_query, chat_id, teralink):
 
         if not thumbnail_path and youtube_thumbnail_url:
             thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+            
+        durations = await get_video_duration(output_filename)
         
         await upload_video(
             client, chat_id, output_filename, caption,
