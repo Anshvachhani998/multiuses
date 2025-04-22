@@ -428,13 +428,14 @@ async def update_progress(message, queue):
             await progress_bar(current, total, message, start_time, last_update_time, current_label)
 
 
+
 @Client.on_message(filters.regex(TERABOX_REGEX))
 async def detect_terabox_link(client, message):
     chat_id = message.chat.id
     match = re.search(TERABOX_REGEX, message.text)
     if not match:
         return
-    
+
     sent = await message.reply_text("🔍 **Fetching file info. Please wait a moment!**", quote=True)
 
     if not await db.check_task_limit(chat_id):
@@ -464,38 +465,19 @@ async def detect_terabox_link(client, message):
             )
             await sent.edit(
                 "⚠️ **Oops! Something went wrong while fetching the file. Please try again later.**\n\n"
-                "If the issue persists, please ask for help in our support group.\n\n"
-                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)",
+                "💬 [Support Group](https://t.me/AnSBotsSupports)",
                 disable_web_page_preview=True
             )
             return
 
         title = result['title']
         size = result['size']
-        download_url = result['download_url']
-        thumbnail = result.get('thumbnail')
+        caption = f"**{title}**\n\n**Size:** {size}\n\n⏳ **Starting download...**"
+        
+        await sent.edit(caption, disable_web_page_preview=True)
 
-        btn = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬇️ Download", callback_data="download")]
-        ])
-
-        caption = f"**{title}**\n\n**Size:** {size}"
-
-        await sent.delete()
-        if thumbnail:
-            await message.reply_photo(
-                photo=thumbnail,
-                caption=caption,
-                reply_markup=btn,
-                quote=True
-            )
-        else:
-            await message.reply_text(
-                caption,
-                reply_markup=btn,
-                disable_web_page_preview=True,
-                quote=True
-            )
+        # Start download immediately
+        await download_video(client, message, chat_id, link)
 
     except Exception as e:
         error_message = str(e)
@@ -506,10 +488,9 @@ async def detect_terabox_link(client, message):
         )
         await sent.edit(
             "⚠️ **Oops! Something went wrong while processing the request. Please try again later.**\n\n"
-            "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)",
+            "💬 [Support Group](https://t.me/AnSBotsSupports)",
             disable_web_page_preview=True
         )
-        
         
 
 @Client.on_callback_query(filters.regex(r'^download'))
