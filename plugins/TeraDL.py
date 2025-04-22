@@ -289,7 +289,7 @@ def manual_download_with_progress(url, output_path, label, queue, client):
     
 
 async def get_terabox_info(link):
-    api_url = f"https://tera-dl.vercel.app/api?link={link}"
+    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url) as response:
@@ -304,7 +304,7 @@ async def get_terabox_info(link):
         return {
             "title": info.get("Title"),
             "size": info.get("Size"),
-            "download_url": info.get("Direct Download Link"),
+            "download_url": info.get("fast_link"),
             "thumbnail": info.get("Thumbnails", {}).get("360x270")
         }
 
