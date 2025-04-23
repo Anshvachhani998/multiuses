@@ -7,6 +7,7 @@ import asyncio
 import logging
 from utils import convert_to_bytes
 from yt_dlp import YoutubeDL
+from database.db import db
 from plugins.progress_bar import yt_progress_hook, update_progress
 from plugins.upload import upload_video
 
