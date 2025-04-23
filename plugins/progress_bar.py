@@ -108,7 +108,7 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
         if text.strip():  # avoid empty message error
             await status_message.edit(text)
 
-        if total != 0 and percentage >= 100:
+        if percentage >= 100:
             await status_message.edit("✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**")
 
     except Exception as e:
