@@ -2,7 +2,7 @@ import sys
 import os
 from yt_dlp import YoutubeDL
 from pyrogram import Client, filters
-from plugins.download.py import download_video
+from plugins.download import download_video
 
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
