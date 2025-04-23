@@ -51,6 +51,11 @@ async def handle_url(url, chat_id):
 @Client.on_message(filters.command("url"))
 async def dwn(client, message):
     try:
+        # Check if the user provided a URL
+        if len(message.text.split(' ')) < 2:
+            await message.reply("❌ Please provide a valid URL after the command.")
+            return
+
         # Extract the URL from the command
         url = message.text.split(' ', 1)[1]  # Get the URL after the /url command
         chat_id = message.chat.id  # Get the chat ID of the user
@@ -60,9 +65,6 @@ async def dwn(client, message):
         
         # Start handling the URL
         await handle_url(url, chat_id)
-    except IndexError:
-        # If no URL is provided after the /url command
-        await message.reply("❌ Please provide a valid URL after the command.")
     except Exception as e:
         # General error handling
         await message.reply(f"❌ An error occurred: {str(e)}")
