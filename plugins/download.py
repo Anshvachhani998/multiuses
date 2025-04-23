@@ -86,6 +86,9 @@ async def download_video(client, chat_id, youtube_link):
             # If no custom thumbnail, use the YouTube thumbnail URL
             thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
 
+         if not thumbnail_path:
+             thumbnail_path = await extract_fixed_thumbnail(output_filename)
+
 
         duration = await get_video_duration(output_filename)
         await upload_video(client, chat_id, output_filename, caption, durations, width, height, status_msg, thumbnail_path, youtube_link)
