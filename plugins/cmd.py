@@ -201,13 +201,13 @@ async def settings(client, message):
     # Create buttons for toggling between video and document
     upload_mode_btn = [
         [
-            types.InlineKeyboardButton(
+            InlineKeyboardButton(
                 text="🔄 Upload as Video" if not user_settings.get("upload_as_doc") else "🔄 Upload as Document",
                 callback_data="toggle_upload_mode"
             )
         ]
     ]
-    markup = types.InlineKeyboardMarkup(upload_mode_btn)
+    markup = InlineKeyboardMarkup(upload_mode_btn)
     
     # Send the settings message with the buttons
     await message.reply("Choose your preferred upload mode:", reply_markup=markup)
