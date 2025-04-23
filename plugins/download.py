@@ -87,8 +87,7 @@ async def download_video(client, chat_id, youtube_link):
             thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
 
 
-        durations = 0
-        logging.info(f'MSG test {status_msg}')
+        duration = await get_video_duration(output_filename)
         await upload_video(client, chat_id, output_filename, caption, durations, width, height, status_msg, thumbnail_path, youtube_link)
     else:
         error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
