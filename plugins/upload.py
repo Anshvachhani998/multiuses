@@ -10,7 +10,7 @@ from utils import split_video
 from plugins.progress_bar import progress_for_pyrogram
 
 
-async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link):
+async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
     if output_filename and os.path.exists(output_filename):
         logging.info(f'MSG test {status_msg}')
         await status_msg.edit_text("📤 **Uploading video...**")
@@ -46,7 +46,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 formatted_caption = (
                     f"{part_caption}\n\n"
                     f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
-                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({terabox_link})**"
+                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({link})**"
                 )
                 await client.send_video(
                     chat_id=DUMP_CHANNEL,
@@ -75,7 +75,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 f"❌ **Upload Failed!**\n\n"
                 f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
                 f"**Filename:** `{output_filename}`\n"
-                f"**Source:** [Terabox Link]({terabox_link})\n"
+                f"**Source:** [Link]({link})\n"
                 f"**Error:** `{str(e)}`"
             )
             await client.send_message(LOG_CHANNEL, error_report)
@@ -94,7 +94,7 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
                 f"❌ **Upload Failed - File Not Found!**\n\n"
                 f"**User:** [{user.first_name}](tg://user?id={user.id}) (`{user.id}`)\n"
                 f"**Expected File:** `{output_filename}`\n"
-                f"**Source:** [YouTube Link]({terabox_link})"
+                f"**Source:** [YouTube Link]({link})"
             )
             await client.send_message(LOG_CHANNEL, error_report)
         except Exception as e:
