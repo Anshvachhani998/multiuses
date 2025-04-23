@@ -109,6 +109,6 @@ async def download_video(client, chat_id, youtube_link):
         await upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
 
     else:
-        error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
+        error_message = f"❌ **Download Failed!**"
         logging.error(error_message)
         await status_msg.edit_text(error_message)
