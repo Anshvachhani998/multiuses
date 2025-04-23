@@ -13,7 +13,7 @@ fi
 
 # Pull the latest updates
 echo "🔄 Updating repository..."
-sudo git pull https://Anshvachhani998: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@github.com/Anshvachhani998/TeraBoxDL.git
+sudo git pull https://github.com/Anshvachhani998/URL-UPLOADER
 
 # Restart Docker Container
 echo "🚀 Restarting UploaderDL Docker container..."
