@@ -12,7 +12,6 @@ from plugins.progress_bar import progress_for_pyrogram
 
 async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
     if output_filename and os.path.exists(output_filename):
-        logging.info(f'MSG test {status_msg}')
         await status_msg.edit_text("📤 **Uploading video...**")
         start_time = time.time()
 
