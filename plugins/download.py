@@ -81,11 +81,7 @@ async def download_video(client, chat_id, youtube_link):
 
         durations = 0
         logging.info(f'MSG test {status_msg}')
-        await upload_video(
-            client, chat_id, output_filename, caption,
-            durations, width, height, thumbnail_path,
-            status_msg, youtube_link
-        )
+        await upload_video(client, chat_id, output_filename, caption, durations, width, height, status_msg, thumbnail_path, youtube_link)
     else:
         error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
         logging.error(error_message)
