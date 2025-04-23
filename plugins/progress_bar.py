@@ -51,6 +51,7 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
     try:
         elapsed_time = time.time() - start_time
         speed = current / elapsed_time / 1024 / 1024  # MB/s
+        speed = min(speed, 1000)  # Clamp speed to prevent overflow
         uploaded = current / 1024 / 1024
 
         cpu_usage = psutil.cpu_percent()
@@ -60,8 +61,8 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             return
         last_update_time[0] = time.time()
 
+        percentage = 0  # default
         if total == 0:
-            # Unknown total size fallback
             animation = ["□■□□□□□□□□□□□□□□□", "□□■□□□□□□□□□□□□□□", "□□□■□□□□□□□□□□□□□",
                          "□□□□■□□□□□□□□□□□□", "□□□□□■□□□□□□□□□□□", "□□□□□□■□□□□□□□□□□"]
             index = int(time.time()) % len(animation)
@@ -83,7 +84,7 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             eta_min = int(eta // 60)
             eta_sec = int(eta % 60)
 
-            progress_blocks = int(percentage // 5)
+            progress_blocks = min(int(percentage // 5), 20)
             progress_bar_str = "■" * progress_blocks + "□" * (20 - progress_blocks)
 
             total_str = humanbytes(total)
@@ -104,12 +105,15 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{progress_bar_str}]**"
             )
 
-        await status_message.edit(text)
-        if percentage >= 100:
+        if text.strip():  # avoid empty message error
+            await status_message.edit(text)
+
+        if total != 0 and percentage >= 100:
             await status_message.edit("✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**")
 
     except Exception as e:
         print(f"Error updating progress: {e}")
+
 
 
 async def update_progress(message, queue):
