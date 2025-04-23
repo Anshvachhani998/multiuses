@@ -3,6 +3,10 @@ import asyncio
 import logging
 from math import ceil
 import ffmpeg 
+from PIL import Image
+import uuid
+import time
+import math
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -111,3 +115,33 @@ def TimeFormatter(milliseconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
+
+def generate_thumbnail_path():
+    timestamp = int(time.time())
+    unique_id = uuid.uuid4().hex
+    return os.path.join("downloads", f"thumb_{unique_id}_{timestamp}.jpg")
+
+async def download_and_resize_thumbnail(url):
+    save_path = generate_thumbnail_path()
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    async with aiofiles.open(save_path, 'wb') as f:
+                        await f.write(await resp.read())
+                else:
+                    return None
+
+        def resize():
+            img = Image.open(save_path).convert("RGB")
+            img.save(save_path, "JPEG", quality=85)
+
+        await asyncio.to_thread(resize)
+        return save_path
+
+    except Exception as e:
+        logging.exception("Thumbnail download failed: %s", e)
+        return None
+        
+    
