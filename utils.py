@@ -172,3 +172,21 @@ async def extract_fixed_thumbnail(video_path):
             return None
 
     return await asyncio.to_thread(generate_thumb)
+
+
+async def get_video_duration(file_path):
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            file_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, _ = await process.communicate()
+        return int(float(stdout.decode().strip()))
+    except Exception as e:
+        logging.info("Duration fetch error:", e)
+        return 0
