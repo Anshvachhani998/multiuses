@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 
-async def manual_download_with_progress(url, output_path, label, queue):
+async def download_with_aria2c(url, output_path, label, queue):
     output_dir = os.path.dirname(output_path)
     output_file = os.path.basename(output_path)
 
