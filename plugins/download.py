@@ -78,6 +78,18 @@ async def download_video(client, chat_id, youtube_link):
 
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
+        thumbnail_file_id = await db.get_user_thumbnail(chat_id)
+        if thumbnail_file_id:
+            try:
+                thumb_message = await client.download_media(thumbnail_file_id)
+                thumbnail_path = thumb_message
+            except Exception as e:
+                logging.error(f"Thumbnail download error: {e}")
+
+        if not thumbnail_path and youtube_thumbnail_url:
+            # If no custom thumbnail, use the YouTube thumbnail URL
+            thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+
 
         durations = 0
         logging.info(f'MSG test {status_msg}')
