@@ -11,4 +11,5 @@ RUN pip install -r requirements.txt
 RUN apt-get update && \
     apt-get install -y aria2
     
+RUN pip install yt-dlp
 CMD ["python", "bot.py"]
