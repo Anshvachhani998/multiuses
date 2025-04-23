@@ -50,7 +50,8 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
 async def progress_bar(current, total, status_message, start_time, last_update_time, lebel):
     try:
         elapsed_time = time.time() - start_time
-        speed = current / elapsed_time / 1024 / 1024  # MB/s
+        speed = current / elapsed_time / 1024 / 1024 if elapsed_time > 0 else 0  # MB/s
+        uploaded = current / 1024 / 1024
 
         cpu_usage = psutil.cpu_percent()
         ram_usage = psutil.virtual_memory().percent
@@ -59,11 +60,8 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             return
         last_update_time[0] = time.time()
 
-        text = ""
-        show_done = False  # ✅ prevent repeat edit
-
-        if total == 0 or str(total).startswith("~"):
-            # Unknown size fallback
+        if total == 0 or "~" in str(total):
+            # Unknown total size fallback
             animation = ["□■□□□□□□□□□□□□□□□", "□□■□□□□□□□□□□□□□□", "□□□■□□□□□□□□□□□□□",
                          "□□□□■□□□□□□□□□□□□", "□□□□□■□□□□□□□□□□□", "□□□□□□■□□□□□□□□□□"]
             index = int(time.time()) % len(animation)
@@ -79,9 +77,10 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{animation[index]}]**"
             )
         else:
-            percentage = (current / total) * 100
+            percentage = (current / total) * 100 if total else 0
             remaining_size = (total - current) / 1024 / 1024
             eta = (remaining_size / speed) if speed > 0 else 0
+            eta = min(eta, 60 * 60 * 24)  # max 24 hours
             eta_min = int(eta // 60)
             eta_sec = int(eta % 60)
 
@@ -106,12 +105,12 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{progress_bar_str}]**"
             )
 
-            if percentage >= 100:
-                show_done = True
+        try:
+            await status_message.edit(text)
+        except Exception as e:
+            print(f"Error editing message: {e}\nText content: {text[:200]}...")
 
-        await status_message.edit(text)
-
-        if show_done:
+        if total != 0 and percentage >= 100:
             await status_message.edit("✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**")
 
     except Exception as e:
