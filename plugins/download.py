@@ -7,7 +7,7 @@ import asyncio
 import logging
 from utils import convert_to_bytes
 from yt_dlp import YoutubeDL
-from progress_bar import yt_progress_hook, update_progress
+from plugins.progress_bar import yt_progress_hook, update_progress
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
