@@ -71,19 +71,29 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                         f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
                         f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({link})**"
                     )
-                    await client.send_video(
-                        chat_id=DUMP_CHANNEL,
-                        video=file_id if part_file.endswith('.mp4') or part_file.endswith('.mkv') else None,
-                        audio=file_id if part_file.endswith('.mp3') or part_file.endswith('.wav') else None,
-                        caption=formatted_caption,
-                        duration=duration // total_parts if total_parts > 1 else duration,
-                        supports_streaming=True,
-                        height=height,
-                        width=width,
-                        disable_notification=True,
-                        thumb=thumbnail_path if thumbnail_path else None,
-                        file_name=os.path.basename(part_file)
-                    )
+                    if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
+                        await client.send_video(
+                            chat_id=DUMP_CHANNEL,
+                            video=file_id,
+                            caption=formatted_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            supports_streaming=True,
+                            height=height,
+                            width=width,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
+                    elif part_file.endswith('.mp3') or part_file.endswith('.wav'):
+                        await client.send_audio(
+                            chat_id=DUMP_CHANNEL,
+                            audio=file_id,
+                            caption=formatted_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
 
                     os.remove(part_file)
 
