@@ -68,4 +68,3 @@ async def dwn(client, message):
     except Exception as e:
         # General error handling
         await message.reply(f"❌ An error occurred: {str(e)}")
-
