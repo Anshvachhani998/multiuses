@@ -10,16 +10,16 @@ from utils import split_video
 from plugins.progress_bar import progress_for_pyrogram
 
 
-async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
+async def upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
     if output_filename and os.path.exists(output_filename):
-        await status_msg.edit_text("📤 **Uploading video...**")
+        await status_msg.edit_text("📤 **Uploading media...**")
         start_time = time.time()
 
         async def upload_progress(sent, total):
             await progress_for_pyrogram(sent, total, "📤 **Uploading...**", status_msg, start_time)
 
         try:
-            split_files = await split_video(output_filename)
+            split_files = await split_video(output_filename)  # Assuming split_video can handle both audio and video
             total_parts = len(split_files)
             user = await client.get_users(chat_id)
             mention_user = f"[{user.first_name}](tg://user?id={user.id})"
@@ -27,29 +27,43 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
             for idx, part_file in enumerate(split_files, start=1):
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
                 
-                with open(part_file, "rb") as video_file:
-                    sent_message = await client.send_video(
-                        chat_id=chat_id,
-                        video=video_file,
-                        progress=upload_progress,
-                        caption=part_caption,
-                        duration=duration // total_parts if total_parts > 1 else duration,
-                        supports_streaming=True,
-                        height=height,
-                        width=width,
-                        disable_notification=True,
-                        thumb=thumbnail_path if thumbnail_path else None,
-                        file_name=os.path.basename(part_file),                        
-                    )
+                with open(part_file, "rb") as media_file:
+                    if part_file.endswith('.mp4') or part_file.endswith('.mkv'):  # For video files
+                        sent_message = await client.send_video(
+                            chat_id=chat_id,
+                            video=media_file,
+                            progress=upload_progress,
+                            caption=part_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            supports_streaming=True,
+                            height=height,
+                            width=width,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
+                    else:  # For audio files
+                        sent_message = await client.send_audio(
+                            chat_id=chat_id,
+                            audio=media_file,
+                            progress=upload_progress,
+                            caption=part_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
 
                 formatted_caption = (
                     f"{part_caption}\n\n"
                     f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
                     f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({link})**"
                 )
+
                 await client.send_video(
                     chat_id=DUMP_CHANNEL,
-                    video=sent_message.video.file_id,
+                    video=sent_message.video.file_id if hasattr(sent_message, 'video') else None,
+                    audio=sent_message.audio.file_id if hasattr(sent_message, 'audio') else None,
                     caption=formatted_caption,
                     duration=duration // total_parts if total_parts > 1 else duration,
                     supports_streaming=True,
@@ -66,7 +80,6 @@ async def upload_video(client, chat_id, output_filename, caption, duration, widt
             await db.increment_task(chat_id)
             await db.increment_download_count()
             await status_msg.delete()
-            
             
         except Exception as e:
             user = await client.get_users(chat_id)
