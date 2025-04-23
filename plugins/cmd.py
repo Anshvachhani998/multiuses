@@ -190,7 +190,7 @@ async def delete_all_users_handler(client, message):
 
 
 @Client.on_message(filters.command("settings") & filters.private)
-async def settings_handler(client, message: Message):
+async def settings_handler(client, message):
     user_id = message.from_user.id
     settings = await db.get_user_settings(user_id)
 
