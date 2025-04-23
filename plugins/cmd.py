@@ -209,7 +209,7 @@ async def settings_handler(client, message: Message):
 
 
 @Client.on_message(filters.command("settings"))
-async def settings(client: Client, message: types.Message):
+async def settings(client, message):
     user_id = message.from_user.id
 
     # Get user settings (upload mode and thumbnail)
@@ -230,7 +230,7 @@ async def settings(client: Client, message: types.Message):
     await message.reply("Choose your preferred upload mode:", reply_markup=markup)
 
 @Client.on_callback_query(filters.regex("toggle_upload_mode"))
-async def toggle_upload_mode(client: Client, callback_query: types.CallbackQuery):
+async def toggle_upload_mode(client, callback_query):
     user_id = callback_query.from_user.id
     
     # Toggle the upload mode (video/document)
