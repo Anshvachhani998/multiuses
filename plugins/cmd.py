@@ -204,3 +204,44 @@ async def settings_handler(client, message: Message):
     ])
 
     await message.reply_text("⚙️ **Your Settings:**", reply_markup=keyboard)
+
+
+
+
+@Client.on_message(filters.command("settings"))
+async def settings(client: Client, message: types.Message):
+    user_id = message.from_user.id
+
+    # Get user settings (upload mode and thumbnail)
+    user_settings = await db.get_user_settings(user_id)
+    
+    # Create buttons for toggling between video and document
+    upload_mode_btn = [
+        [
+            types.InlineKeyboardButton(
+                text="🔄 Upload as Video" if not user_settings.get("upload_as_doc") else "🔄 Upload as Document",
+                callback_data="toggle_upload_mode"
+            )
+        ]
+    ]
+    markup = types.InlineKeyboardMarkup(upload_mode_btn)
+    
+    # Send the settings message with the buttons
+    await message.reply("Choose your preferred upload mode:", reply_markup=markup)
+
+@Client.on_callback_query(filters.regex("toggle_upload_mode"))
+async def toggle_upload_mode(client: Client, callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    
+    # Toggle the upload mode (video/document)
+    new_value = await db.toggle_upload_mode(user_id)
+    
+    # Update the button text based on the new value
+    button_text = "🔄 Upload as Video" if not new_value else "🔄 Upload as Document"
+    await callback_query.edit_message_text(
+        "Upload mode has been updated!",
+        reply_markup=types.InlineKeyboardMarkup([
+            [types.InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")]
+        ])
+    )
+
