@@ -80,7 +80,7 @@ async def download_video(client, chat_id, youtube_link):
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
         durations = 0
-        
+        logging.info(f'MSG test {status_msg}')
         await upload_video(
             client, chat_id, output_filename, caption,
             durations, width, height, thumbnail_path,
