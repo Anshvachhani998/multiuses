@@ -101,15 +101,20 @@ def format_size(size_in_bytes):
         return f"{round(size_in_bytes / 1024**3, 2)} GB"
         
 def humanbytes(size):
-    if not size:
-        return "N/A"
-    power = 2**10
+    try:
+        size = float(size)
+    except:
+        return "0 B"
+
+    if size <= 0:
+        return "0 B"
+    power = 1024
     n = 0
-    units = ["", "K", "M", "G", "T"]
-    while size > power and n < len(units) - 1:
+    units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+    while size >= power and n < len(units) - 1:
         size /= power
         n += 1
-    return f"{round(size, 2)}{units[n]}B"
+    return f"{size:.2f} {units[n]}"
 
 def TimeFormatter(milliseconds):
     seconds = milliseconds // 1000
