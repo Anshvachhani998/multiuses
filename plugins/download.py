@@ -37,7 +37,7 @@ async def download_video(client, chat_id, youtube_link):
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
-                'outtmpl': f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
+                'outtmpl': f'{DOWNLOAD_DIR}/%(title)s_{timestamp}-{random_str}.%(ext)s',
                 'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
@@ -52,12 +52,7 @@ async def download_video(client, chat_id, youtube_link):
                 filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
                 final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
-                # Rename file if necessary
-                if os.path.exists(filename):
-                    os.rename(filename, final_filename)
-                    output_filename = final_filename
-                else:
-                    output_filename = filename
+                output_filename = filename
 
                 youtube_thumbnail_url = info.get('thumbnail')
                 duration = info.get('duration', 0)
