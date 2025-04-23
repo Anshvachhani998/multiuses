@@ -74,6 +74,8 @@ async def download_video(client, chat_id, youtube_link):
 
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
+
+        # Thumbnail fetching
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
@@ -82,16 +84,31 @@ async def download_video(client, chat_id, youtube_link):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
+        # Fallback to YouTube's thumbnail if no custom thumbnail
         if not thumbnail_path and youtube_thumbnail_url:
-            # If no custom thumbnail, use the YouTube thumbnail URL
-            thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+            try:
+                thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
+            except Exception as e:
+                logging.error(f"Error downloading/resizing YouTube thumbnail: {e}")
 
-         if not thumbnail_path:
-             thumbnail_path = await extract_fixed_thumbnail(output_filename)
+        # Extract fixed thumbnail from the video if still no thumbnail
+        if not thumbnail_path:
+            try:
+                thumbnail_path = await extract_fixed_thumbnail(output_filename)
+            except Exception as e:
+                logging.error(f"Error extracting fixed thumbnail: {e}")
 
+        # Get video metadata
+        try:
+            duration = await get_video_duration(output_filename)
+            width, height = await get_video_resolution(output_filename)
+        except Exception as e:
+            logging.error(f"Error fetching video metadata: {e}")
+            duration, width, height = None, None, None
 
-        duration = await get_video_duration(output_filename)
-        await upload_video(client, chat_id, output_filename, caption, durations, width, height, status_msg, thumbnail_path, youtube_link)
+        # Upload video
+        await upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
+
     else:
         error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
         logging.error(error_message)
