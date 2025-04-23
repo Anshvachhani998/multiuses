@@ -7,6 +7,7 @@ from PIL import Image
 import uuid
 import time
 import math
+import ffmpeg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -145,3 +146,22 @@ async def download_and_resize_thumbnail(url):
         return None
         
     
+async def extract_fixed_thumbnail(video_path):
+    base_name = os.path.splitext(video_path)[0]
+    thumb_path = f"{base_name}_screenshot.jpg"
+
+    def generate_thumb():
+        try:
+            (
+                ffmpeg
+                .input(video_path, ss=3)
+                .filter('scale', 320, -1)
+                .output(thumb_path, vframes=1)
+                .run(quiet=True, overwrite_output=True)
+            )
+            return thumb_path
+        except Exception as e:
+            print(f"❌ Error generating thumbnail: {e}")
+            return None
+
+    return await asyncio.to_thread(generate_thumb)
