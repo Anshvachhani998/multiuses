@@ -133,3 +133,15 @@ async def update_progress(message, queue):
             current, total, label = data
             current_label = label
             await progress_bar(current, total, message, start_time, last_update_time, current_label)
+
+
+def yt_progress_hook(d, queue, client):
+    """Reports progress of yt-dlp to async queue in a thread-safe way."""
+    if d['status'] == 'downloading':
+        current = d['downloaded_bytes']
+        total = d.get('total_bytes', 1)
+        asyncio.run_coroutine_threadsafe(queue.put((current, total, "⬇ **Downloading...**")), client.loop)
+    elif d['status'] == 'finished':
+        asyncio.run_coroutine_threadsafe(queue.put((1, 1, "✅ **Download Complete! Uploading...**")), client.loop)
+        asyncio.run_coroutine_threadsafe(queue.put(None), client.loop)
+        
