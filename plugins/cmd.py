@@ -10,7 +10,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import LOG_CHANNEL, ADMINS, DAILY_LIMITS, BOT_TOKEN
 from database.db import db
 from pyrogram.enums import ParseMode 
-from plugins.TeraDL import active_tasks
+
 
 logger = logging.getLogger(__name__)
 
@@ -182,11 +182,3 @@ async def check_dc(client, message):
         await message.reply_text(f"❌ Error while checking DC ID:\n`{e}`")
 
 
-@Client.on_message(filters.command("taskinfo"))
-async def show_active_tasks(client, message):
-    if message.from_user.id not in ADMINS:
-        await message.reply("❌ You are not authorized to use this command.")
-        return
-
-    total_tasks = len(active_tasks)
-    await message.reply(f"**🧾 Active Tasks (Total: {total_tasks})**")
