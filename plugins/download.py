@@ -1,34 +1,91 @@
 import os
 import re
+import time
+import random
+import string
 import asyncio
-import subprocess
-import shlex
-from utils import convert_to_bytes
 import logging
+from utils import convert_to_bytes, yt_progress_hook
+from yt_dlp import YoutubeDL
 
+# Configure Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
+DOWNLOAD_DIR = "downloads"
 
-async def download_with_aria2c(url, output_path, label, queue):
-    output_dir = os.path.dirname(output_path)
-    output_file = os.path.basename(output_path)
+async def download_video(client, callback_query, chat_id, youtube_link, format_id, video_id):
+    status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
+    await callback_query.message.delete()
 
-    cmd = f"aria2c --dir={output_dir} --out={output_file} --max-connection-per-server=16 --split=16 --min-split-size=1M --console-log-level=warn --summary-interval=1 {shlex.quote(url)}"
-    process = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT
-    )
+    queue = asyncio.Queue()
+    output_filename = None
+    caption = ""
+    duration = 0
+    width, height = 640, 360
+    thumbnail_path = None
+    youtube_thumbnail_url = None
 
-    async for line in process.stdout:
-        line = line.decode("utf-8").strip()
-        match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
-        if match:
-            downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
-            total = convert_to_bytes(float(match.group(3)), match.group(4))
+    timestamp = time.strftime("%y%m%d")
+    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
-            await queue.put((downloaded, total, label))
 
-    await process.wait()
+    def run_pytubefix():
+        nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
+        try:
+            yt_dlp_options = {
+                'outtmpl': f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
+                'format': format_id,
+                'noplaylist': True,
+                'quiet': True,
+                'no_warnings': True,
+                'progress_hooks': [lambda d: yt_progress_hook(d, queue, client)]
+            }
+
+            with YoutubeDL(yt_dlp_options) as ydl:
+                info = ydl.extract_info(youtube_link, download=True)
+                caption = info.get('title', 'Untitled')
+                filename = ydl.prepare_filename(info)
+                filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
+                final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
+
+                # Rename file if necessary
+                if os.path.exists(filename):
+                    os.rename(filename, final_filename)
+                    output_filename = final_filename
+                else:
+                    output_filename = filename
+
+                youtube_thumbnail_url = info.get('thumbnail')
+                duration = info.get('duration', 0)
+                width = info.get('width', 640)
+                height = info.get('height', 360)
+
+                logging.info(f"Downloaded file: {output_filename}")
+                asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
+
+        except Exception as e:
+            logging.error(f"Download Error: {e}")
+            asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "message": str(e)}), client.loop)
+
+    download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
+    progress_task = asyncio.create_task(update_progress(status_msg, queue))
+
+    await download_task
+    await progress_task
+
+    if output_filename and os.path.exists(output_filename):
+        await status_msg.edit_text("📤 **Preparing for upload...**")
+
+        durations = 0
+        
+        await upload_video(
+            client, chat_id, output_filename, caption,
+            durations, width, height, thumbnail_path,
+            status_msg, youtube_link
+        )
+    else:
+        error_message = f"❌ **Download Failed!**\nOutput filename: {output_filename}\nFile exists: {os.path.exists(output_filename)}"
+        logging.error(error_message)
+        await status_msg.edit_text(error_message)
