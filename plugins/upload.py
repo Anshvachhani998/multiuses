@@ -28,7 +28,8 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
                 
                 with open(part_file, "rb") as media_file:
-                    if part_file.endswith('.mp4') or part_file.endswith('.mkv'):  # For video files
+                    # For video files (e.g. .mp4, .mkv)
+                    if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
                         sent_message = await client.send_video(
                             chat_id=chat_id,
                             video=media_file,
@@ -42,7 +43,8 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             thumb=thumbnail_path if thumbnail_path else None,
                             file_name=os.path.basename(part_file)
                         )
-                    else:  # For audio files
+                    # For audio files (e.g. .mp3, .wav)
+                    elif part_file.endswith('.mp3') or part_file.endswith('.wav'):
                         sent_message = await client.send_audio(
                             chat_id=chat_id,
                             audio=media_file,
@@ -72,7 +74,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                     await client.send_video(
                         chat_id=DUMP_CHANNEL,
                         video=file_id if part_file.endswith('.mp4') or part_file.endswith('.mkv') else None,
-                        audio=file_id if not part_file.endswith('.mp4') and not part_file.endswith('.mkv') else None,
+                        audio=file_id if part_file.endswith('.mp3') or part_file.endswith('.wav') else None,
                         caption=formatted_caption,
                         duration=duration // total_parts if total_parts > 1 else duration,
                         supports_streaming=True,
