@@ -5,7 +5,7 @@ import random
 import string
 import asyncio
 import logging
-from utils import convert_to_bytes, download_and_resize_thumbnail
+from utils import convert_to_bytes, download_and_resize_thumbnail, get_video_duration
 from yt_dlp import YoutubeDL
 from database.db import db
 from plugins.progress_bar import yt_progress_hook, update_progress
