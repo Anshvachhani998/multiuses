@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Folder Name
-DIR="TeraBoxDL"
+DIR="UploaderDL"
 
 # Check if the folder exists
 if [ -d "$DIR" ]; then
@@ -16,7 +16,7 @@ echo "🔄 Updating repository..."
 sudo git pull https://Anshvachhani998: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@github.com/Anshvachhani998/TeraBoxDL.git
 
 # Restart Docker Container
-echo "🚀 Restarting YouTubeDL Docker container..."
-sudo docker restart TeraBoxDL
+echo "🚀 Restarting UploaderDL Docker container..."
+sudo docker restart UploaderDL
 
 echo "✅ Update & Restart Completed!"
