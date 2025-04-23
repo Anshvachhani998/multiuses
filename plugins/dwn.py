@@ -23,7 +23,7 @@ def download_video(url):
 
 async def upload_to_telegram(filename, chat_id, url):
     try:
-        await app.send_document(chat_id=chat_id, document=filename, caption=f"Downloaded from: {url}")
+        await Client.send_document(chat_id=chat_id, document=filename, caption=f"Downloaded from: {url}")
         os.remove(filename)  # Clean up after upload
         print("✅ File uploaded and removed from disk.")
     except Exception as e:
