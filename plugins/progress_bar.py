@@ -47,7 +47,7 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
         except:
             pass
 
-async def progress_bar(current, total, status_message, start_time, last_update_time, lebel):
+async def progress_bar(current, total, status_message, start_time, last_update_time, label):
     try:
         elapsed_time = time.time() - start_time
         speed = current / elapsed_time / 1024 / 1024 if elapsed_time > 0 else 0  # MB/s
@@ -60,13 +60,12 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             return
         last_update_time[0] = time.time()
 
-        if total == 0 or "~" in str(total):
-            # Unknown total size fallback
+        if not total or "~" in str(total) or total < current:
             animation = ["□■□□□□□□□□□□□□□□□", "□□■□□□□□□□□□□□□□□", "□□□■□□□□□□□□□□□□□",
                          "□□□□■□□□□□□□□□□□□", "□□□□□■□□□□□□□□□□□", "□□□□□□■□□□□□□□□□□"]
             index = int(time.time()) % len(animation)
             text = (
-                f"**╭─────{lebel}─────〄**\n"
+                f"**╭─────{label}─────〄**\n"
                 "**│**\n"
                 f"**├📁 Sɪᴢᴇ : {humanbytes(current)} ✗ Unknown**\n"
                 "**│**\n"
@@ -77,20 +76,22 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{animation[index]}]**"
             )
         else:
-            percentage = (current / total) * 100 if total else 0
-            remaining_size = (total - current) / 1024 / 1024
+            # Make sure values are sane
+            safe_total = max(total, current + 1)
+            percentage = min((current / safe_total) * 100, 100.0)
+            remaining_size = (safe_total - current) / 1024 / 1024
             eta = (remaining_size / speed) if speed > 0 else 0
-            eta = min(eta, 60 * 60 * 24)  # max 24 hours
+            eta = min(max(eta, 0), 60 * 60 * 24)  # clamp 0–24 hrs
             eta_min = int(eta // 60)
             eta_sec = int(eta % 60)
 
             progress_blocks = int(percentage // 5)
             progress_bar_str = "■" * progress_blocks + "□" * (20 - progress_blocks)
 
-            total_str = humanbytes(total)
+            total_str = humanbytes(safe_total)
 
             text = (
-                f"**╭─────{lebel}─────〄**\n"
+                f"**╭─────{label}─────〄**\n"
                 "**│**\n"
                 f"**├📁 Sɪᴢᴇ : {humanbytes(current)} ✗ {total_str}**\n"
                 "**│**\n"
@@ -105,18 +106,16 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{progress_bar_str}]**"
             )
 
-        try:
+        # Only edit if content is different
+        if status_message.text != text:
             await status_message.edit(text)
-        except Exception as e:
-            print(f"Error editing message: {e}\nText content: {text[:200]}...")
 
-        if total != 0 and percentage >= 100:
+        # Completion message
+        if total and percentage >= 100:
             await status_message.edit("✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**")
 
     except Exception as e:
         print(f"Error updating progress: {e}")
-
-
 
 async def update_progress(message, queue):
     """Updates progress bar while downloading."""
