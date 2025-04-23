@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
 
-async def download_video(client, callback_query, chat_id, youtube_link, format_id, video_id):
+async def download_video(client, callback_query, chat_id, youtube_link):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
     await callback_query.message.delete()
 
@@ -36,7 +36,7 @@ async def download_video(client, callback_query, chat_id, youtube_link, format_i
         try:
             yt_dlp_options = {
                 'outtmpl': f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
-                'format': format_id,
+                'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
                 'no_warnings': True,
