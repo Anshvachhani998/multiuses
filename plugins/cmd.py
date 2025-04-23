@@ -189,23 +189,6 @@ async def delete_all_users_handler(client, message):
     await message.reply(f"✅ Deleted `{deleted}` users from database.")
 
 
-@Client.on_message(filters.command("settings") & filters.private)
-async def settings_handler(client, message):
-    user_id = message.from_user.id
-    settings = await db.get_user_settings(user_id)
-
-    upload_mode = "✅ Upload as Document" if settings["upload_as_doc"] else "📤 Upload as Video"
-    thumb_status = "📸 Custom Thumbnail Set" if settings["thumbnail"] else "❌ No Thumbnail"
-
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(upload_mode, callback_data="toggle_upload_mode")],
-        [InlineKeyboardButton("📸 Set Thumbnail", callback_data="set_thumbnail")],
-        [InlineKeyboardButton("❌ Remove Thumbnail", callback_data="remove_thumbnail")],
-    ])
-
-    await message.reply_text("⚙️ **Your Settings:**", reply_markup=keyboard)
-
-
 
 
 @Client.on_message(filters.command("settings"))
