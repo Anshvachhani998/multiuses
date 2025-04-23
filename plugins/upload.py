@@ -10,7 +10,7 @@ from utils import split_video
 from plugins.progress_bar import progress_for_pyrogram
 
 
-async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, terabox_link, thumbnail_path):
+async def upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link):
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Uploading video...**")
         start_time = time.time()
