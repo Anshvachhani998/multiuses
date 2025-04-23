@@ -101,10 +101,9 @@ async def download_video(client, chat_id, youtube_link):
         # Get video metadata
         try:
             duration = await get_video_duration(output_filename)
-            width, height = await get_video_resolution(output_filename)
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
-            duration, width, height = None, None, None
+            duration = None
 
         # Upload video
         await upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
