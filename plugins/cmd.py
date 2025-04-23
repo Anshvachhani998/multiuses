@@ -223,8 +223,8 @@ async def toggle_upload_mode(client, callback_query):
     button_text = "🔄 Upload as Video" if not new_value else "🔄 Upload as Document"
     await callback_query.edit_message_text(
         "Upload mode has been updated!",
-        reply_markup=types.InlineKeyboardMarkup([
-            [types.InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")]
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")]
         ])
     )
 
