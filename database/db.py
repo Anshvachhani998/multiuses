@@ -16,11 +16,16 @@ class Database:
             "name": name,
             "joined_at": datetime.utcnow(),
             "user_type": "free",
+            "upload_type": "video",
             "tasks_used": 0,
             "total_tasks": 0,
             "last_reset": datetime.utcnow().strftime("%Y-%m-%d")
         }
-        
+
+    async def delete_all_users(self):
+        result = await self.col.delete_many({})
+        return result.deleted_count
+    
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
@@ -191,7 +196,6 @@ class Database:
         )
         
         await self.downloads_collection.update_one({}, {"$inc": {"total_downloads": 1}})
-
     
     async def get_total_downloads(self):  
         result = await self.db["downloads"].find_one({}, {"total_downloads": 1})
