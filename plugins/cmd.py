@@ -182,3 +182,8 @@ async def check_dc(client, message):
         await message.reply_text(f"❌ Error while checking DC ID:\n`{e}`")
 
 
+
+@Client.on_message(filters.command("delete") & filters.private)
+async def delete_all_users_handler(client, message):
+    deleted = await db.delete_all_users()
+    await message.reply(f"✅ Deleted `{deleted}` users from database.")
