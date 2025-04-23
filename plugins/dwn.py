@@ -2,26 +2,11 @@ import sys
 import os
 from yt_dlp import YoutubeDL
 from pyrogram import Client, filters
+from plugins.download.py import download_video
 
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-def download_video(url):
-    ydl_opts = {
-        'outtmpl': f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
-        'format': 'best',
-        'noplaylist': True,
-        'quiet': True,
-        'no_warnings': True,
-    }
-
-    with YoutubeDL(ydl_opts) as ydl:
-        try:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-            return filename
-        except Exception as e:
-            raise Exception(f"❌ Error downloading video: {str(e)}")
 
 async def upload_to_telegram(client, filename, chat_id, url):
     try:
