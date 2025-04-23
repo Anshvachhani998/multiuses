@@ -9,7 +9,7 @@ from utils import convert_to_bytes, download_and_resize_thumbnail, get_video_dur
 from yt_dlp import YoutubeDL
 from database.db import db
 from plugins.progress_bar import yt_progress_hook, update_progress
-from plugins.upload import upload_video
+from plugins.upload import upload_media
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -106,7 +106,7 @@ async def download_video(client, chat_id, youtube_link):
             duration = None
 
         # Upload video
-        await upload_video(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
+        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
 
     else:
         error_message = f"❌ **Download Failed!**"
