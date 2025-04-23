@@ -111,12 +111,3 @@ def TimeFormatter(milliseconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-def yt_progress_hook(d, queue, client):
-    """Reports progress of yt-dlp to async queue in a thread-safe way."""
-    if d['status'] == 'downloading':
-        current = d['downloaded_bytes']
-        total = d.get('total_bytes', 1)
-        asyncio.run_coroutine_threadsafe(queue.put((current, total, "⬇ **Downloading...**")), client.loop)
-    elif d['status'] == 'finished':
-        asyncio.run_coroutine_threadsafe(queue.put((1, 1, "✅ **Download Complete! Uploading...**")), client.loop)
-        asyncio.run_coroutine_threadsafe(queue.put(None), client.loop)
