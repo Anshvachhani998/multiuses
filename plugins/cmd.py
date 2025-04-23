@@ -194,37 +194,73 @@ async def delete_all_users_handler(client, message):
 @Client.on_message(filters.command("settings"))
 async def settings(client, message):
     user_id = message.from_user.id
-
-    # Get user settings (upload mode and thumbnail)
     user_settings = await db.get_user_settings(user_id)
-    
-    # Create buttons for toggling between video and document
+    has_thumbnail = await db.get_user_thumbnail(user_id)
+
     upload_mode_btn = [
         [
             InlineKeyboardButton(
                 text="🔄 Upload as Video" if not user_settings.get("upload_as_doc") else "🔄 Upload as Document",
                 callback_data="toggle_upload_mode"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🖼️ Set Thumbnail" if not has_thumbnail else "🗑️ Remove Thumbnail",
+                callback_data="remove_thumbnail" if has_thumbnail else "set_thumbnail"
+            )
         ]
     ]
+
     markup = InlineKeyboardMarkup(upload_mode_btn)
-    
-    # Send the settings message with the buttons
-    await message.reply("Choose your preferred upload mode:", reply_markup=markup)
+    await message.reply("⚙️ Customize your upload settings:", reply_markup=markup)
+
 
 @Client.on_callback_query(filters.regex("toggle_upload_mode"))
 async def toggle_upload_mode(client, callback_query):
     user_id = callback_query.from_user.id
-    
-    # Toggle the upload mode (video/document)
     new_value = await db.toggle_upload_mode(user_id)
-    
-    # Update the button text based on the new value
+
     button_text = "🔄 Upload as Video" if not new_value else "🔄 Upload as Document"
+    has_thumbnail = await db.get_user_thumbnail(user_id)
+
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")],
+        [InlineKeyboardButton(
+            text="🖼️ Set Thumbnail" if not has_thumbnail else "🗑️ Remove Thumbnail",
+            callback_data="remove_thumbnail" if has_thumbnail else "set_thumbnail"
+        )]
+    ])
+
     await callback_query.edit_message_text(
-        "Upload mode has been updated!",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")]
-        ])
+        "⚙️ Upload mode has been updated!",
+        reply_markup=markup
     )
+
+
+@Client.on_callback_query(filters.regex("set_thumbnail"))
+async def set_thumbnail_callback(client, callback_query):
+    await callback_query.message.edit_text("📥 Send me a photo to set as your thumbnail.")
+    # Force next message from this user to be treated as a thumbnail (you'll handle this in on_message)
+
+
+@Client.on_callback_query(filters.regex("remove_thumbnail"))
+async def remove_thumbnail_callback(client, callback_query):
+    user_id = callback_query.from_user.id
+    removed = await db.remove_thumbnail(user_id)
+
+    if removed:
+        text = "🗑️ Thumbnail removed successfully!"
+    else:
+        text = "⚠️ No thumbnail was set."
+
+    user_settings = await db.get_user_settings(user_id)
+    button_text = "🔄 Upload as Video" if not user_settings.get("upload_as_doc") else "🔄 Upload as Document"
+
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(text=button_text, callback_data="toggle_upload_mode")],
+        [InlineKeyboardButton(text="🖼️ Set Thumbnail", callback_data="set_thumbnail")]
+    ])
+
+    await callback_query.edit_message_text(text, reply_markup=markup)
 
