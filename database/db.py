@@ -16,7 +16,7 @@ class Database:
             "name": name,
             "joined_at": datetime.utcnow(),
             "user_type": "free",
-            "upload_type": "video",
+            "upload_as_doc": "False",
             "tasks_used": 0,
             "total_tasks": 0,
             "last_reset": datetime.utcnow().strftime("%Y-%m-%d")
@@ -159,11 +159,9 @@ class Database:
         await self.col.delete_many({'id': int(user_id)})
 
     async def save_thumbnail(self, user_id, file_id):
-        """Save the thumbnail file_id for a user"""
         existing_user = await self.col.find_one({"user_id": int(user_id)})
         
         if existing_user:
-            # If user exists, update their thumbnail
             await self.col.update_one(
                 {"user_id": int(user_id)},
                 {"$set": {"thumbnail": file_id}}
@@ -203,4 +201,16 @@ class Database:
             return result.get("total_downloads", 0)
         return 0
 
+    async def get_user_settings(self, user_id):
+        """Get the user's settings (upload mode and thumbnail)."""
+        user = await self.col.find_one({"user_id": user_id})
+        return user
+
+    async def toggle_upload_mode(self, user_id):
+        """Toggle the upload mode between video and document."""
+        user = await self.get_user_settings(user_id)
+        new_value = not user["upload_as_doc"]
+        await self.col.update_one({"user_id": user_id}, {"$set": {"upload_as_doc": new_value}})
+        return new_value
+        
 db = Database()
