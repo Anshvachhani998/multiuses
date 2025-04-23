@@ -39,7 +39,7 @@ async def handle_url(url, chat_id):
         print(f"❌ Error: {e}")
 
 # Handle /url command
-@app.on_message(filters.command("url"))
+@Client.on_message(filters.command("url"))
 async def dwn(client, message):
     # Extract the URL from the command
     url = message.text.split(' ', 1)[1]  # Get the URL after the /url command
