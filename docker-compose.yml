@@ -1,8 +1,8 @@
 version: '3'
 services:
-  teraboxdl:
+  urluploaderdl:
     build: .
-    container_name: TeraBoxDL
+    container_name: UploaderDL
     restart: always
     volumes:
       - .:/app
