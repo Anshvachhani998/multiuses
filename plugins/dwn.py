@@ -35,7 +35,7 @@ async def upload_to_telegram(client, filename, chat_id, url):
 async def handle_url(client, url, chat_id):
     try:
         print(f"🔍 Checking URL: {url}")
-        filename = download_video(url)
+        filename = download_video(client, chat_id, url)
         print(f"⬇️ Downloaded: {filename}")
         await upload_to_telegram(client, filename, chat_id, url)
     except Exception as e:
