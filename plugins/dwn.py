@@ -8,16 +8,6 @@ from plugins.download import download_video
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-
-async def upload_to_telegram(client, filename, chat_id, url):
-    try:
-        await client.send_document(chat_id=chat_id, document=filename, caption=f"Downloaded from: {url}")
-        os.remove(filename)  # Clean up after upload
-        print("✅ File uploaded and removed from disk.")
-    except Exception as e:
-        print(f"❌ Error uploading: {e}")
-        await client.send_message(chat_id, f"❌ Error uploading: {str(e)}")
-
 async def handle_url(client, url, chat_id):
     try:
         print(f"🔍 Checking URL: {url}")
