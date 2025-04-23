@@ -5,7 +5,7 @@ import random
 import string
 import asyncio
 import logging
-from utils import convert_to_bytes, yt_progress_hook
+from utils import convert_to_bytes, yt_progress_hook, update_progress
 from yt_dlp import YoutubeDL
 
 # Configure Logging
