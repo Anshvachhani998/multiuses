@@ -14,3 +14,4 @@ wget
 psutil
 apscheduler
 gdown
+bs4
