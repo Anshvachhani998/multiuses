@@ -55,7 +55,7 @@ async def toggle_upload_mode(client, callback_query):
         "You can change them using the buttons below 👇"
     )
 
-    upload_btn_text = "🔄 Upload as Video" if not new_value else "🔄 Upload as Document"
+    upload_btn_text = "🎬 Upload as Video" if not new_value else "📄 Upload as Document"
     buttons = [[InlineKeyboardButton(upload_btn_text, callback_data="toggle_upload_mode")]]
 
     if has_thumbnail:
@@ -107,7 +107,7 @@ async def remove_thumbnail_callback(client, callback_query):
     )
 
     buttons = [
-        [InlineKeyboardButton("🔄 Upload as Video" if upload_as_doc else "🔄 Upload as Document", callback_data="toggle_upload_mode")],
+        [InlineKeyboardButton("🎬  Upload as Video" if upload_as_doc else "📄 Upload as Document", callback_data="toggle_upload_mode")],
         [InlineKeyboardButton("🖼️ Set Thumbnail", callback_data="set_thumbnail")]
     ]
 
