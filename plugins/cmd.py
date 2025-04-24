@@ -225,5 +225,11 @@ async def git_pull(client, message):
     if stderr:
         await message.reply_text(f"❌ Error occurred: \n{stderr.decode()}")
     else:
-        # If git pull is successful, return stdout
-        await message.reply_text(f"🔄 Git Pull Output: \n{stdout.decode()}")
+        # Clean stdout and show only important output
+        output = stdout.decode()
+        
+        # Check if 'Already up to date' is in the output, if yes, don't show it
+        if "Already up to date" in output:
+            output = "🚀 Repository is already up to date!"
+        
+        await message.reply_text(f"🔄 Git Pull Output: \n{output}")
