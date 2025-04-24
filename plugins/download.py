@@ -293,7 +293,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
-        async def run_gdown():
+    async def run_gdown():
         nonlocal output_filename, caption, error_occurred
         try:
             # Extract file ID
