@@ -208,11 +208,13 @@ async def restart_bot(client, message):
 
 
 
-import subprocess
-import logging
-from pyrogram import Client, filters
 
-logging.basicConfig(level=logging.INFO)
+
+@Client.on_message(filters.command("restart"))
+async def restart_bot(client, message):
+    await message.reply_text("♻️ Restarting bot...")
+    subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
+    os._exit(0)
 
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
@@ -230,34 +232,28 @@ async def git_pull(client, message):
     logging.info("Raw Output (stdout): %s", output)
     logging.info("Raw Error (stderr): %s", error)
 
-    # Handle error
+    # Error check
     if error and "Already up to date." not in output and "FETCH_HEAD" not in error:
         await message.reply_text(f"❌ Error occurred: \n{error}")
         return
 
-    # Already up to date case
+    # No updates
     if "Already up to date." in output:
         await message.reply_text("🚀 Repository is already up to date!")
         return
 
-    # If update detected
-    if any(word in output.lower() for word in ["updating", "changed", "insert", "delete", "merge", "fast-forward", "files", "create mode", "rename", "pulling"]):
-        # Send original output
+    # Update found
+    if any(word in output.lower() for word in [
+        "updating", "changed", "insert", "delete", "merge", "fast-forward",
+        "files", "create mode", "rename", "pulling"
+    ]):
         await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
-        
-        # Notify restart
-        await message.reply_text("🔄 Git Pull successful!\n♻ Restarting Docker container...")
+        await message.reply_text("🔄 Git Pull successful!\n♻ Restarting bot...")
 
-        # Restart Docker
-        restart_process = subprocess.Popen("docker restart urluploader", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        restart_out, restart_err = restart_process.communicate()
-        logging.info(restart_out)
-        logging.info(restart_err)
-        if restart_err:
-            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```")
-        else:
-            await message.reply_text("✅ Docker restarted successfully!")
+        # Restart like restart command
+        subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
+        os._exit(0)
 
-    else:
-        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
+    # Fallback (safe output)
+    await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
 
