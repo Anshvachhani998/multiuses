@@ -182,14 +182,12 @@ async def aria2c_media(client, chat_id, download_url):
             final_filenames = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
-                DOWNLOAD_DIR,
+                "downloads",
                 caption,
                 queue,
                 client
             )
-            filename_only = f"{final_filenames}_{timestamp}-{random_str}.mp4"
-            final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
-            output_filename = final_filename
+            output_filename = final_filenames
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
