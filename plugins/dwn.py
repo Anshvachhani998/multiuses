@@ -14,8 +14,6 @@ async def handle_url(client, url, chat_id):
         filename = await aria2c_media(client, chat_id, url)
         print(f"⬇️ Downloaded: {filename}")
         await upload_to_telegram(client, filename, chat_id, url)
-    except Exception as e:
-        print(f"❌ Error: {e}")
 
 @Client.on_message(filters.command("url"))
 async def dwn(client, message):
