@@ -147,7 +147,10 @@ def yt_progress_hook(d, queue, client):
         current = d['downloaded_bytes']
         total = d.get('total_bytes', 1)
         asyncio.run_coroutine_threadsafe(queue.put((current, total, "⬇ **Downloading...**")), client.loop)
+
     elif d['status'] == 'finished':
-        asyncio.run_coroutine_threadsafe(queue.put((1, 1, "✅ **Download Complete! Uploading...**")), client.loop)
+        current = d.get('downloaded_bytes', 1)
+        total = d.get('total_bytes', current)
+        asyncio.run_coroutine_threadsafe(queue.put((current, total, "✅ **Download Complete! Uploading...**")), client.loop)
         asyncio.run_coroutine_threadsafe(queue.put(None), client.loop)
-        
+
