@@ -10,6 +10,8 @@ import math
 import ffmpeg
 import aiohttp
 import aiofiles
+import requests
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -190,3 +192,27 @@ async def get_video_duration(file_path):
     except Exception as e:
         logging.info("Duration fetch error:", e)
         return 0
+
+
+
+async def get_confirm_token_download_url(file_id):
+    session = requests.Session()
+    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
+
+    response = session.get(URL, stream=True)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    confirm_token = None
+    for tag in soup.find_all("a"):
+        href = tag.get("href")
+        if href and "confirm=" in href:
+            confirm_token = href.split("confirm=")[-1].split("&")[0]
+            break
+
+    if confirm_token:
+        download_url = f"https://drive.google.com/uc?export=download&confirm={confirm_token}&id={file_id}"
+    else:
+        # fallback for direct download if no token required
+        download_url = URL
+
+    return download_url
