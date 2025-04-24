@@ -11,6 +11,7 @@ from plugins.progress_bar import progress_for_pyrogram
 
 
 async def upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
+    logging.info(output_filename)
     if output_filename and os.path.exists(output_filename):
         logging.info(output_filename)
         await status_msg.edit_text("📤 **Uploading media...**")
