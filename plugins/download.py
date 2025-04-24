@@ -332,6 +332,7 @@ async def google_drive(client, chat_id, gdrive_url):
                 client
             )
             output_filename = final_filenames
+            caption = os.path.splitext(os.path.basename(output_filename))[0]
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
@@ -362,7 +363,6 @@ async def google_drive(client, chat_id, gdrive_url):
     # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")  
-        logging.info("done1")
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
@@ -386,9 +386,8 @@ async def google_drive(client, chat_id, gdrive_url):
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
-        logging.info("done4")
         await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url)
-        logging.info("done5")
+
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
