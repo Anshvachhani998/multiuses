@@ -231,9 +231,8 @@ async def aria2c_media(client, chat_id, download_url):
     await download_task
     await progress_task
 
-    # If an error has occurred, we stop further processing
     if error_occurred:
-        return  # Exit the function if there was an error
+        return
 
     # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
