@@ -245,8 +245,8 @@ async def git_pull(client, message):
         restart_process = subprocess.Popen("docker restart UploaderDL", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         restart_out, restart_err = restart_process.communicate()
 
-        if restart_err:
-            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```")
+        if restart_out:
+            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_out.decode().strip()}\n```")
         else:
             await message.reply_text("✅ Docker restarted successfully!")
 
