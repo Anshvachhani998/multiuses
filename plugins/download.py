@@ -307,7 +307,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
             if not file_id:
                 raise Exception("Invalid Google Drive URL")
 
-            output_filename = f"downloads/gdrive_{timestamp}_{random_str}"
+            output_filename = f"downloads/gdrive_{timestamp}_{random_str}.mp4"
             downloaded = await asyncio.to_thread(
                 gdown.download,
                 f"https://drive.google.com/uc?id={file_id}",
@@ -358,8 +358,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
                 thumbnail_path = thumb_message
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
-
-        # Extract thumbnail if not found
+                
         if not thumbnail_path:
             try:
                 thumbnail_path = await extract_fixed_thumbnail(output_filename)
