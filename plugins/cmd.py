@@ -206,14 +206,12 @@ async def restart_bot(client, message):
 
 
 
-import subprocess
-from pyrogram import Client, filters
 
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
-    # Run the git pull command from the correct repository and capture the output
+    # Run the git pull command and capture the output
     process = subprocess.Popen(
-        "git remote set-url origin https://github.com/Anshvachhani998/URL-UPLOADER && git fetch --all && git reset --hard origin/main", 
+        "git pull https://github.com/Anshvachhani998/URL-UPLOADER", 
         shell=True, 
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE
@@ -226,11 +224,16 @@ async def git_pull(client, message):
     if stderr:
         await message.reply_text(f"❌ Error occurred: \n{stderr.decode()}")
     else:
-        # Clean stdout and show only important output
-        output = stdout.decode()
-        
-        # Check if 'Already up to date' is in the output, if yes, don't show it
-        if "Already up to date" in output:
+        # Clean output to show only useful information
+        output = stdout.decode().strip()
+
+        # Check if the repository is already up to date
+        if "Already up to date." in output:
             output = "🚀 Repository is already up to date!"
         
+        # Check for "HEAD is now" message and clean it
+        if "HEAD is now" in output:
+            output = "🔄 Git Pull successful!"
+
         await message.reply_text(f"🔄 Git Pull Output: \n{output}")
+
