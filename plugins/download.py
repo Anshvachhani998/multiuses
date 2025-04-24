@@ -296,7 +296,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
     async def run_gdown():
         nonlocal output_filename, caption, error_occurred
         try:
-            # Extract file ID
+            # Extract file ID from the Google Drive URL
             match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
             if match:
                 file_id = match.group(1)
@@ -307,30 +307,25 @@ async def gdrive_media(client, chat_id, gdrive_url):
             if not file_id:
                 raise Exception("Invalid Google Drive URL")
 
-            gdrive_url_clean = f"https://drive.google.com/uc?id={file_id}"
+            # Final download link for aria2c
+            download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+            download_dir = "downloads"
 
-            # Fetch metadata for original filename
-            metadata = await asyncio.to_thread(gdown.get_metadata, gdrive_url_clean)
-            original_filename = metadata.get("title", f"gdrive_{timestamp}_{random_str}.mp4")
-
-            # Clean filename from unsafe chars
-            safe_filename = re.sub(r"[^\w\-_\. ]", "_", original_filename)
-
-            output_filename = f"downloads/{safe_filename}"
-
-            # Download file
-            downloaded = await asyncio.to_thread(
-                gdown.download,
-                gdrive_url_clean,
-                output_filename,
-                quiet=False
+            # Use aria2c in thread to avoid blocking
+            downloaded_file = await asyncio.to_thread(
+                aria2c_download,
+                download_url,
+                download_dir,
+                download_dir,
+                queue,
+                client
             )
 
-            if not downloaded or not os.path.exists(downloaded):
-                raise Exception("File download failed")
+            if not downloaded_file or not os.path.exists(downloaded_file):
+                raise Exception("File download failed!")
 
-            # Use cleaned original name as caption (without extension)
-            caption = os.path.splitext(os.path.basename(downloaded))[0]
+            output_filename = downloaded_file
+            caption = os.path.splitext(os.path.basename(downloaded_file))[0]
 
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
@@ -342,7 +337,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
                 disable_web_page_preview=True
             )
             await queue.put({"status": "error", "message": str(e)})
-            return
+
 
     # Tasks for download and progress
     download_task = asyncio.create_task(run_gdown())
