@@ -210,12 +210,6 @@ async def aria2c_media(client, chat_id, download_url):
 
         except Exception as e:
             error_occurred = True  # Set the flag to True if an error occurs
-            error_message = (
-                "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
-                "If the issue persists, please ask for help in our support group.\n\n"
-                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
-            )
-            await status_msg.edit_text(error_message)
             await client.send_message(
                 LOG_CHANNEL,
                 f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
@@ -232,6 +226,12 @@ async def aria2c_media(client, chat_id, download_url):
     await progress_task
 
     if error_occurred:
+        error_message = (
+                "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
+                "If the issue persists, please ask for help in our support group.\n\n"
+                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
+            )
+        await status_msg.edit_text(error_message)
         return
 
     # Prepare for upload if no error occurred
