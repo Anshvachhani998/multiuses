@@ -308,7 +308,7 @@ async def google_drive(client, chat_id, gdrive_url):
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_gdrive():
-        nonlocal output_filename, caption, width, height, thumbnail_path, error_occurred
+        nonlocal output_filename, width, height, thumbnail_path, error_occurred
         try:
             match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
             if match:
@@ -332,7 +332,6 @@ async def google_drive(client, chat_id, gdrive_url):
                 client
             )
             output_filename = final_filenames
-            caption = os.path.splitext(os.path.basename(output_filename))[0]
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
