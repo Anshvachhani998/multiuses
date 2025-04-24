@@ -66,7 +66,6 @@ async def download_video(client, chat_id, youtube_link):
                 await queue.put({"status": "finished"})  # Use await here
 
         except Exception as e:
-            # Send generic error to user
             error_message = (
                 "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
                 "If the issue persists, please ask for help in our support group.\n\n"
