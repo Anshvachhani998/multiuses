@@ -115,6 +115,13 @@ async def download_video(client, chat_id, youtube_link):
         logging.error(error_message)
         await status_msg.edit_text(error_message)
 
+
+def generate_unique_name(original_name):
+    timestamp = time.strftime("%y%m%d")
+    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+    base, ext = os.path.splitext(original_name)
+    return f"{base}_{timestamp}-{random_str}{ext}"
+
 def aria2c_download(url, download_dir, label, queue, client):
     before_files = set(os.listdir(download_dir))
 
@@ -150,13 +157,19 @@ def aria2c_download(url, download_dir, label, queue, client):
         if not new_files:
             raise Exception("❌ File not found after download!")
 
-        # Return full path
         downloaded_file = os.path.join(download_dir, new_files[0])
-        return downloaded_file
+
+        # 🔁 Rename with unique name
+        unique_name = generate_unique_name(new_files[0])
+        final_path = os.path.join(download_dir, unique_name)
+        os.rename(downloaded_file, final_path)
+
+        return final_path
 
     except Exception as e:
         print("ARIA2C ERROR:", str(e))
         raise e
+
         
 async def aria2c_media(client, chat_id, download_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
