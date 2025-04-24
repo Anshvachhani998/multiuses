@@ -65,7 +65,17 @@ async def download_video(client, chat_id, youtube_link):
                 asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
-            logging.error(f"Download Error: {e}")
+            error_message = (
+                "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
+                "If the issue persists, please ask for help in our support group.\n\n"
+                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
+            )
+            await status_msg.edit_text(error_message)
+            await client.send_message(
+                LOG_CHANNEL,
+                f"❌ Exception in download wit YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
+                disable_web_page_preview=True
+            )
             asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "message": str(e)}), client.loop)
 
     download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
@@ -159,7 +169,6 @@ def aria2c_download(url, download_dir, label, queue, client):
 
         downloaded_file = os.path.join(download_dir, new_files[0])
 
-        # 🔁 Rename with unique name
         unique_name = generate_unique_name(new_files[0])
         final_path = os.path.join(download_dir, unique_name)
         os.rename(downloaded_file, final_path)
@@ -201,7 +210,12 @@ async def aria2c_media(client, chat_id, download_url):
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
-            await status_msg.edit_text("⚠️ **Oops! Something went wrong. Please try again later.**")
+            error_message = (
+                "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
+                "If the issue persists, please ask for help in our support group.\n\n"
+                "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
+            )
+            await status_msg.edit_text(error_message)
             await client.send_message(
                 LOG_CHANNEL,
                 f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
