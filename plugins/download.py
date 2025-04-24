@@ -116,20 +116,20 @@ async def download_video(client, chat_id, youtube_link):
         await status_msg.edit_text(error_message)
 
 
-def aria2c_download(url, output_path, label, queue, client):
-    output_dir = os.path.dirname(output_path)
-    output_file = os.path.basename(output_path)
+def aria2c_download(url, download_dir, label, queue, client):
     cmd = [
         "aria2c",
-        f"--dir={output_dir}",
-        f"--out={output_file}",
+        f"--dir={download_dir}",
         "--max-connection-per-server=16",
         "--split=16",
         "--min-split-size=1M",
         "--console-log-level=warn",
         "--summary-interval=1",
+        "--enable-mmap=false",
         url
     ]
+
+    downloaded_filename = None
 
     process = subprocess.Popen(
         cmd,
@@ -139,10 +139,19 @@ def aria2c_download(url, output_path, label, queue, client):
     )
 
     for line in process.stdout:
-        match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
+        # Print for debug (optional)
+        print(line.strip())
+
+        # Look for file name in output like: Download complete: downloads/xyz.mp4
+        match = re.search(r'Download complete: (.+)', line)
         if match:
-            downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
-            total = convert_to_bytes(float(match.group(3)), match.group(4))
+            downloaded_filename = match.group(1).strip()
+
+        # Update progress
+        match_progress = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
+        if match_progress:
+            downloaded = convert_to_bytes(float(match_progress.group(1)), match_progress.group(2))
+            total = convert_to_bytes(float(match_progress.group(3)), match_progress.group(4))
 
             asyncio.run_coroutine_threadsafe(
                 queue.put((downloaded, total, label)),
@@ -151,6 +160,7 @@ def aria2c_download(url, output_path, label, queue, client):
 
     process.wait()
 
+    return downloaded_filename
 
 async def aria2c_media(client, chat_id, download_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
@@ -174,7 +184,7 @@ async def aria2c_media(client, chat_id, download_url):
             await asyncio.to_thread(
                 aria2c_download,
                 download_url,
-                final_filename,
+                DOWNLOAD_DIR,
                 caption,
                 queue,
                 client
