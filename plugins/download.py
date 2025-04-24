@@ -426,6 +426,7 @@ async def google_drive(client, chat_id, gdrive_url):
 
             # Final download link for aria2c
             download_url = f"https://drive.google.com/uc?id={file_id}&export=download"
+            logging.info(download_url)
             final_filenames = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
