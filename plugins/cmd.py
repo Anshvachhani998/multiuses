@@ -205,12 +205,14 @@ async def restart_bot(client, message):
 
 
 
+import subprocess
+from pyrogram import Client, filters
 
-@Client.on_message(filters.command("gitpulls"))
+@Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
-    # Run the git pull command and capture the output
+    # Run the git pull command from the correct repository and capture the output
     process = subprocess.Popen(
-        "git fetch --all && git reset --hard origin/main", 
+        "git remote set-url origin https://github.com/Anshvachhani998/URL-UPLOADER && git fetch --all && git reset --hard origin/main", 
         shell=True, 
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE
@@ -223,5 +225,5 @@ async def git_pull(client, message):
     if stderr:
         await message.reply_text(f"❌ Error occurred: \n{stderr.decode()}")
     else:
+        # If git pull is successful, return stdout
         await message.reply_text(f"🔄 Git Pull Output: \n{stdout.decode()}")
-
