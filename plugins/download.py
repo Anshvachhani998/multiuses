@@ -114,7 +114,7 @@ async def download_video(client, chat_id, youtube_link):
         await status_msg.edit_text(error_message)
 
 
-async def download_with_aria2c(url, output_path, label, queue, client):
+async def aria2c_download(url, output_path, label, queue, client):
     output_dir = os.path.dirname(output_path)
     output_file = os.path.basename(output_path)
     cmd = [
@@ -150,3 +150,53 @@ async def download_with_aria2c(url, output_path, label, queue, client):
             await queue.put((downloaded, total, label))
 
     await process.wait()
+
+
+async def aria2c_media(client, chat_id, download_url):
+    status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
+
+    queue = asyncio.Queue()
+    output_filename = None
+    caption = "Downloaded via aria2c"
+    duration = 0
+    width, height = 640, 360
+    thumbnail_path = None
+    youtube_thumbnail_url = None
+
+    timestamp = time.strftime("%y%m%d")
+    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+    filename_only = f"video_{timestamp}-{random_str}.mp4"
+    output_filename = os.path.join(DOWNLOAD_DIR, filename_only)
+
+    download_task = asyncio.create_task(aria2c_download(download_url, output_filename, caption, queue, client))
+    progress_task = asyncio.create_task(update_progress(status_msg, queue))
+
+    await download_task
+    await progress_task
+
+    if output_filename and os.path.exists(output_filename):
+        await status_msg.edit_text("📤 **Preparing for upload...**")
+
+        thumbnail_file_id = await db.get_user_thumbnail(chat_id)
+        if thumbnail_file_id:
+            try:
+                thumb_message = await client.download_media(thumbnail_file_id)
+                thumbnail_path = thumb_message
+            except Exception as e:
+                logging.error(f"Thumbnail download error: {e}")
+
+        if not thumbnail_path:
+            try:
+                thumbnail_path = await extract_fixed_thumbnail(output_filename)
+            except Exception as e:
+                logging.error(f"Error extracting fixed thumbnail: {e}")
+
+        try:
+            duration = await get_video_duration(output_filename)
+        except Exception as e:
+            logging.error(f"Error fetching video metadata: {e}")
+            duration = None
+
+        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, download_url)
+    else:
+        await status_msg.edit_text("❌ **Download Failed!**")
