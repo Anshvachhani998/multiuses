@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Folder Name
-DIR="UploaderDL"
+DIR="URL-UPLOADER"
 
 # Check if the folder exists
 if [ -d "$DIR" ]; then
