@@ -225,7 +225,7 @@ async def git_pull(client, message):
     error = stderr.decode().strip()
 
     # If there's an error output
-    if error and "Already up to date." not in output and "HEAD is now" not in output:
+    if error and "Already up to date." not in output and "FETCH_HEAD" not in error:
         await message.reply_text(f"❌ Error occurred: \n{error}")
         return
 
