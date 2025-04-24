@@ -66,6 +66,7 @@ async def download_video(client, chat_id, youtube_link):
                 await queue.put({"status": "finished"})  # Use await here
 
         except Exception as e:
+            # Send generic error to user
             error_message = (
                 "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
                 "If the issue persists, please ask for help in our support group.\n\n"
@@ -77,9 +78,9 @@ async def download_video(client, chat_id, youtube_link):
                 f"❌ Exception in download with YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
                 disable_web_page_preview=True
             )
-            await queue.put({"status": "error", "message": str(e)})
+            await queue.put({"status": "error", "message": str(e)})  # Use await here
             
-    download_task = asyncio.create_task(run_pytubefix())
+    download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
     await download_task
@@ -124,7 +125,6 @@ async def download_video(client, chat_id, youtube_link):
     else:
         error_message = f"❌ **Download Failed!**"
         await status_msg.edit_text(error_message)
-
 
 def generate_unique_name(original_name):
     timestamp = time.strftime("%y%m%d")
