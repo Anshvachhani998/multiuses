@@ -236,7 +236,7 @@ async def git_pull(client, message):
     # If update detected
     if any(word in output.lower() for word in ["updating", "changed", "insert", "delete", "merge", "fast-forward", "files", "create mode", "rename", "pulling"]):
         # Send original output
-        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```", parse_mode="markdown")
+        await message.reply_text(f"📦 Git Pull Output:\n\n{output}\n")
         
         # Notify restart
         await message.reply_text("🔄 Git Pull successful!\n♻ Restarting Docker container...")
