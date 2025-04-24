@@ -383,7 +383,7 @@ async def google_drive(client, chat_id, gdrive_url):
         # Get video duration
         try:
             duration = await get_video_duration(output_filename)
-            logging.info("done3")
+            logging.info(duration)
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
