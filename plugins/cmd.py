@@ -205,6 +205,8 @@ async def restart_bot(client, message):
 
 
 
+
+
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
     process = subprocess.Popen(
@@ -215,25 +217,39 @@ async def git_pull(client, message):
     )
 
     stdout, stderr = process.communicate()
-
-    # Log the output properly
-    logging.info("Raw Output (stdout): %s", stdout.decode())
-    logging.info("Raw Error (stderr): %s", stderr.decode())
-
-    # Decode outputs
     output = stdout.decode().strip()
     error = stderr.decode().strip()
 
-    # If there's an error output
+    logging.info("Raw Output (stdout): %s", output)
+    logging.info("Raw Error (stderr): %s", error)
+
+    # Handle error
     if error and "Already up to date." not in output and "FETCH_HEAD" not in error:
         await message.reply_text(f"❌ Error occurred: \n{error}")
         return
 
-    # Format output if no major error
+    # Already up to date case
     if "Already up to date." in output:
-        output = "🚀 Repository is already up to date!"
-    elif "HEAD is now" in output:
-        outputs = "🔄 Git Pull successful!"
+        await message.reply_text("🚀 Repository is already up to date!")
+        return
 
-    await message.reply_text(f"🔄 Git Pull Output: \n{output}")
+    # If update detected
+    if any(word in output.lower() for word in ["updating", "changed", "insert", "delete", "merge", "fast-forward", "files", "create mode", "rename", "pulling"]):
+        # Send original output
+        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```", parse_mode="markdown")
+        
+        # Notify restart
+        await message.reply_text("🔄 Git Pull successful!\n♻ Restarting Docker container...")
+
+        # Restart Docker
+        restart_process = subprocess.Popen("docker restart urluploader", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        restart_out, restart_err = restart_process.communicate()
+
+        if restart_err:
+            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```", parse_mode="markdown")
+        else:
+            await message.reply_text("✅ Docker restarted successfully!")
+
+    else:
+        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```", parse_mode="markdown")
 
