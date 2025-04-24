@@ -204,37 +204,36 @@ async def restart_bot(client, message):
 
 
 
+
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
-    # Run the git pull command and capture the output
     process = subprocess.Popen(
-        "git pull https://github.com/Anshvachhani998/URL-UPLOADER", 
-        shell=True, 
-        stdout=subprocess.PIPE, 
+        "git pull https://github.com/Anshvachhani998/URL-UPLOADER",
+        shell=True,
+        stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
 
-    # Capture both stdout and stderr
     stdout, stderr = process.communicate()
 
-    # Log the raw stdout and stderr (with correct formatting)
+    # Log the output properly
     logging.info("Raw Output (stdout): %s", stdout.decode())
     logging.info("Raw Error (stderr): %s", stderr.decode())
 
-    # If there's an error, return stderr
-    if stdout:
-        await message.reply_text(f"\n {stdout.decode()}")
-    else:
-        # Clean output to show only useful information
-        output = stdout.decode().strip()
+    # Decode outputs
+    output = stdout.decode().strip()
+    error = stderr.decode().strip()
 
-        # Check if the repository is already up to date
-        if "Already up to date." in output:
-            output = "🚀 Repository is already up to date!"
-        
-        # Check for "HEAD is now" message and clean it
-        if "HEAD is now" in output:
-            output = "🔄 Git Pull successful!"
+    # If there's an error output
+    if error and "Already up to date." not in output and "HEAD is now" not in output:
+        await message.reply_text(f"❌ Error occurred: \n{error}")
+        return
 
-        await message.reply_text(f"🔄 Git Pull Output: \n{output}")
+    # Format output if no major error
+    if "Already up to date." in output:
+        output = "🚀 Repository is already up to date!"
+    elif "HEAD is now" in output:
+        output = "🔄 Git Pull successful!"
+
+    await message.reply_text(f"🔄 Git Pull Output: \n{output}")
 
