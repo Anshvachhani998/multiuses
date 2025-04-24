@@ -223,8 +223,8 @@ async def git_pull(client, message):
     logging.info("Raw Error (stderr): %s", stderr.decode())
 
     # If there's an error, return stderr
-    if stderr:
-        await message.reply_text(f"❌ Error occurred: \n{stderr.decode()}")
+    if stdout:
+        await message.reply_text(f"\n {stdout.decode()}")
     else:
         # Clean output to show only useful information
         output = stdout.decode().strip()
