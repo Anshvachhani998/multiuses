@@ -203,6 +203,8 @@ async def restart_bot(client, message):
     # Exit the current bot process
     os._exit(0)
 
+
+
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
     # Run the git pull command and capture the output
@@ -216,9 +218,9 @@ async def git_pull(client, message):
     # Capture both stdout and stderr
     stdout, stderr = process.communicate()
 
-    # Debugging: Print the raw stdout and stderr
-    logging.info("Raw Output (stdout):", stdout.decode())
-    logging.info("Raw Error (stderr):", stderr.decode())
+    # Log the raw stdout and stderr (with correct formatting)
+    logging.info("Raw Output (stdout): %s", stdout.decode())
+    logging.info("Raw Error (stderr): %s", stderr.decode())
 
     # If there's an error, return stderr
     if stderr:
