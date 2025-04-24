@@ -321,7 +321,7 @@ async def google_drive(client, chat_id, gdrive_url):
             if not file_id:
                 raise Exception("Invalid Google Drive URL")
 \
-            download_url_task = await asyncio.to_thread(get_confirm_token_download_url(file_id))
+            download_url_task = await get_confirm_token_download_url(file_id)
             
             logging.info(download_url)
             final_filenames = await asyncio.to_thread(
