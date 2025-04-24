@@ -13,3 +13,4 @@ motor
 wget
 psutil
 apscheduler
+gdown
