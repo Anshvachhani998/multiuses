@@ -11,7 +11,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 async def handle_url(client, url, chat_id):
     try:
         print(f"🔍 Checking URL: {url}")
-        filename = await download_video(client, chat_id, url)
+        filename = await aria2c_media(client, chat_id, url)
         print(f"⬇️ Downloaded: {filename}")
         await upload_to_telegram(client, filename, chat_id, url)
     except Exception as e:
