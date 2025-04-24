@@ -159,7 +159,7 @@ def aria2c_download(url, download_dir, label, queue, client):
             )
 
     process.wait()
-
+    
     return downloaded_filename
 
 async def aria2c_media(client, chat_id, download_url):
@@ -181,7 +181,7 @@ async def aria2c_media(client, chat_id, download_url):
             filename_only = f"{caption.replace(' ', '_')}_{timestamp}-{random_str}.mp4"
             final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
-            await asyncio.to_thread(
+            final_filename = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
                 DOWNLOAD_DIR,
