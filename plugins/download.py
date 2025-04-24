@@ -122,7 +122,6 @@ async def download_video(client, chat_id, youtube_link):
 
     else:
         error_message = f"❌ **Download Failed!**"
-        logging.error(error_message)
         await status_msg.edit_text(error_message)
 
 
