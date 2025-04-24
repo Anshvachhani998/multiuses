@@ -188,3 +188,14 @@ async def delete_all_users_handler(client, message):
     deleted = await db.delete_all_users()
     await message.reply(f"✅ Deleted `{deleted}` users from database.")
 
+
+@Client.on_message(filters.command("restart"))
+async def restart_bot(client, message):
+    await message.reply_text("♻️ Restarting bot...")
+
+    # Restart ke liye ek naya process run karo
+    os.system("nohup bash start.sh &")
+
+    # Bot khud ko terminate kar de
+    os._exit(0)
+
