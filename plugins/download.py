@@ -360,7 +360,7 @@ async def google_drive(client, chat_id, gdrive_url):
             )
         await status_msg.edit_text(error_message)
         return
-
+ 
     # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
