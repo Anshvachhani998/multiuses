@@ -190,3 +190,22 @@ async def get_video_duration(file_path):
     except Exception as e:
         logging.info("Duration fetch error:", e)
         return 0
+
+
+
+import re
+
+async def get_confirm_token_download_url(file_id):
+    session_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(session_url) as response:
+            text = await response.text()
+            # Search for confirm token
+            confirm_match = re.search(r"confirm=([0-9A-Za-z_]+)", text)
+            if confirm_match:
+                confirm_token = confirm_match.group(1)
+                download_url = f"https://drive.google.com/uc?export=download&confirm={confirm_token}&id={file_id}"
+                return download_url
+            else:
+                # No confirmation needed
+                return session_url
