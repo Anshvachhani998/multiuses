@@ -27,5 +27,5 @@ async def dwn(client, message):
 
         await message.reply("🔄 Processing your link... Please wait.")
         await handle_url(client, url, chat_id)
-    except Exception as e:
-        await message.reply(f"❌ An error occurred: {str(e)}")
+
+
