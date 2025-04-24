@@ -308,7 +308,7 @@ async def google_drive(client, chat_id, gdrive_url):
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_gdrive():
-        nonlocal output_filename, width, height, thumbnail_path, error_occurred
+        nonlocal output_filename, width, height, thumbnail_path, error_occurred, caption
         try:
             match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
             if match:
