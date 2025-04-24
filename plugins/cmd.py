@@ -233,7 +233,7 @@ async def git_pull(client, message):
     if "Already up to date." in output:
         output = "🚀 Repository is already up to date!"
     elif "HEAD is now" in output:
-        output = "🔄 Git Pull successful!"
+        outputs = "🔄 Git Pull successful!"
 
     await message.reply_text(f"🔄 Git Pull Output: \n{output}")
 
