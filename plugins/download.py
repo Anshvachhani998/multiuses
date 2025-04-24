@@ -148,8 +148,8 @@ async def aria2c_download(url, output_path, label, queue, client):
             total = convert_to_bytes(float(match.group(3)), match.group(4))
 
             await queue.put((downloaded, total, label))
-
     await process.wait()
+
 
 
 async def aria2c_media(client, chat_id, download_url):
@@ -161,22 +161,50 @@ async def aria2c_media(client, chat_id, download_url):
     duration = 0
     width, height = 640, 360
     thumbnail_path = None
-    youtube_thumbnail_url = None
 
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
-    filename_only = f"video_{timestamp}-{random_str}.mp4"
-    output_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
-    download_task = asyncio.create_task(aria2c_download(download_url, output_filename, caption, queue, client))
+    async def run_aria():
+        nonlocal output_filename, caption, width, height, thumbnail_path
+        try:
+            filename_only = f"{caption.replace(' ', '_')}_{timestamp}-{random_str}.mp4"
+            final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
+
+            await asyncio.to_thread(
+                aria2c_download,
+                download_url,
+                final_filename,
+                caption,
+                queue,
+                client
+            )
+
+            output_filename = final_filename
+            asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
+
+        except Exception as e:
+            await status_msg.edit_text("⚠️ **Oops! Something went wrong. Please try again later.**")
+            await client.send_message(
+                LOG_CHANNEL,
+                f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
+                disable_web_page_preview=True
+            )
+            await queue.put({"status": "error", "message": str(e)})
+            active_tasks.pop(chat_id, None)
+
+    # Start async tasks
+    download_task = asyncio.create_task(run_aria())
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
     await download_task
     await progress_task
 
+    # Prepare for upload
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
+        # Get user thumbnail
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
@@ -185,18 +213,32 @@ async def aria2c_media(client, chat_id, download_url):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
+        # Extract from video if no thumbnail
         if not thumbnail_path:
             try:
                 thumbnail_path = await extract_fixed_thumbnail(output_filename)
             except Exception as e:
                 logging.error(f"Error extracting fixed thumbnail: {e}")
 
+        # Get video duration
         try:
             duration = await get_video_duration(output_filename)
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
 
-        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, download_url)
+        # Upload
+        await upload_media(
+            client,
+            chat_id,
+            output_filename,
+            caption,
+            duration,
+            width,
+            height,
+            status_msg,
+            thumbnail_path,
+            download_url
+        )
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
