@@ -3,7 +3,8 @@ import os
 import asyncio
 from yt_dlp import YoutubeDL
 from pyrogram import Client, filters
-from plugins.download import download_video, aria2c_media
+from plugins.download import download_video, aria2c_media, gdrive_media
+
 
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
