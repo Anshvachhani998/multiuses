@@ -15,7 +15,7 @@ async def handle_url(client, url, chat_id):
         print(f"⬇️ Downloaded: {filename}")
         await upload_to_telegram(client, filename, chat_id, url)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Errower: {e}")
 
 @Client.on_message(filters.command("url"))
 async def dwn(client, message):
