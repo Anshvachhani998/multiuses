@@ -115,8 +115,9 @@ async def download_video(client, chat_id, youtube_link):
         logging.error(error_message)
         await status_msg.edit_text(error_message)
 
-
 def aria2c_download(url, download_dir, label, queue, client):
+    before_files = set(os.listdir(download_dir))
+
     cmd = [
         "aria2c",
         f"--dir={download_dir}",
@@ -126,10 +127,9 @@ def aria2c_download(url, download_dir, label, queue, client):
         "--console-log-level=warn",
         "--summary-interval=1",
         "--enable-mmap=false",
+        "--allow-overwrite=true",
         url
     ]
-
-    downloaded_filename = None
 
     try:
         process = subprocess.Popen(
@@ -140,23 +140,24 @@ def aria2c_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
-            print("ARIA2C OUTPUT:", line.strip())
-
-            match = re.search(r'Download complete: (.+)', line)
-            if match:
-                downloaded_filename = match.group(1).strip()
+            print("ARIA2C >>", line.strip())
 
         process.wait()
 
-        if not downloaded_filename:
-            raise Exception("Filename not detected in aria2c output!")
+        after_files = set(os.listdir(download_dir))
+        new_files = list(after_files - before_files)
 
-        return downloaded_filename
+        if not new_files:
+            raise Exception("❌ File not found after download!")
+
+        # Return full path
+        downloaded_file = os.path.join(download_dir, new_files[0])
+        return downloaded_file
 
     except Exception as e:
-        logging.info("ERROR IN ARIA2C_DOWNLOAD:", str(e))
+        print("ARIA2C ERROR:", str(e))
         raise e
-
+        
 async def aria2c_media(client, chat_id, download_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
