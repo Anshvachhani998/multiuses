@@ -194,7 +194,7 @@ async def restart_bot(client, message):
     await message.reply_text("♻️ Restarting bot...")
 
     # Corrected path for start.sh and logging
-    os.system("nohup bash /root/URL-UPLOADER/start.sh > /root/restart.log 2>&1 &")
+    os.system("bash /root/URL-UPLOADER/start.sh > /root/restart.log 2>&1 &")
 
     os._exit(0)
 
