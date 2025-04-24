@@ -159,6 +159,18 @@ def aria2c_download(url, download_dir, label, queue, client):
         for line in process.stdout:
             print("ARIA2C >>", line.strip())
 
+            # 👇 Progress line parsing
+            match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
+            if match:
+                downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
+                total = convert_to_bytes(float(match.group(3)), match.group(4))
+
+                # 👇 Send progress update to queue
+                asyncio.run_coroutine_threadsafe(
+                    queue.put((downloaded, total, label)),
+                    client.loop
+                )
+
         process.wait()
 
         after_files = set(os.listdir(download_dir))
@@ -178,6 +190,7 @@ def aria2c_download(url, download_dir, label, queue, client):
     except Exception as e:
         print("ARIA2C ERROR:", str(e))
         raise e
+
 
         
 async def aria2c_media(client, chat_id, download_url):
