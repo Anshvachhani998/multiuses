@@ -63,7 +63,7 @@ async def download_video(client, chat_id, youtube_link):
                 height = info.get('height', 360)
 
                 logging.info(f"Downloaded file: {output_filename}")
-                await queue.put({"status": "finished"})
+    
 
         except Exception as e:
             # Send generic error to user
