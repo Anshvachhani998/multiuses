@@ -243,6 +243,7 @@ async def git_pull(client, message):
 
         # Restart Docker
         restart_process = subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
+        logging.info(restart_process)
 
         if restart_process:
             await message.reply_text(f"✅ Docker restarted successfully!")
