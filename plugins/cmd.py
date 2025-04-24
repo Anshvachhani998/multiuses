@@ -207,6 +207,12 @@ async def restart_bot(client, message):
 
 
 
+import subprocess
+import logging
+from pyrogram import Client, filters
+
+logging.basicConfig(level=logging.INFO)
+
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
     process = subprocess.Popen(
@@ -236,19 +242,20 @@ async def git_pull(client, message):
     # If update detected
     if any(word in output.lower() for word in ["updating", "changed", "insert", "delete", "merge", "fast-forward", "files", "create mode", "rename", "pulling"]):
         # Send original output
-        await message.reply_text(f"📦 Git Pull Output:\n\n{output}\n")
+        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
         
         # Notify restart
         await message.reply_text("🔄 Git Pull successful!\n♻ Restarting Docker container...")
 
         # Restart Docker
-        restart_process = subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
-        logging.info(restart_process)
-
-        if restart_process:
-            await message.reply_text(f"✅ Docker restarted successfully!")
+        restart_process = subprocess.Popen("docker restart urluploader", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        restart_out, restart_err = restart_process.communicate()
+        logging.info(restart_out)
+        logging.info(restart_err)
+        if restart_err:
+            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```")
         else:
-            await message.reply_text("Docker restarted successfully!")
+            await message.reply_text("✅ Docker restarted successfully!")
 
     else:
         await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
