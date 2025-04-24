@@ -131,36 +131,31 @@ def aria2c_download(url, download_dir, label, queue, client):
 
     downloaded_filename = None
 
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
 
-    for line in process.stdout:
-        # Print for debug (optional)
-        print(line.strip())
+        for line in process.stdout:
+            print("ARIA2C OUTPUT:", line.strip())
 
-        # Look for file name in output like: Download complete: downloads/xyz.mp4
-        match = re.search(r'Download complete: (.+)', line)
-        if match:
-            downloaded_filename = match.group(1).strip()
+            match = re.search(r'Download complete: (.+)', line)
+            if match:
+                downloaded_filename = match.group(1).strip()
 
-        # Update progress
-        match_progress = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
-        if match_progress:
-            downloaded = convert_to_bytes(float(match_progress.group(1)), match_progress.group(2))
-            total = convert_to_bytes(float(match_progress.group(3)), match_progress.group(4))
+        process.wait()
 
-            asyncio.run_coroutine_threadsafe(
-                queue.put((downloaded, total, label)),
-                client.loop
-            )
+        if not downloaded_filename:
+            raise Exception("Filename not detected in aria2c output!")
 
-    process.wait()
-    
-    return downloaded_filename
+        return downloaded_filename
+
+    except Exception as e:
+        logging.info("ERROR IN ARIA2C_DOWNLOAD:", str(e))
+        raise e
 
 async def aria2c_media(client, chat_id, download_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
@@ -187,6 +182,7 @@ async def aria2c_media(client, chat_id, download_url):
                 queue,
                 client
             )
+            logging.info(final_filenames)
             output_filename = final_filenames
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
