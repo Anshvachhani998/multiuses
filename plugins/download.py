@@ -293,7 +293,7 @@ async def gdrive_media(client, chat_id, gdrive_url):
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
-    async def run_gdown():
+        async def run_gdown():
         nonlocal output_filename, caption, error_occurred
         try:
             # Extract file ID
@@ -307,10 +307,21 @@ async def gdrive_media(client, chat_id, gdrive_url):
             if not file_id:
                 raise Exception("Invalid Google Drive URL")
 
-            output_filename = f"downloads/gdrive_{timestamp}_{random_str}.mp4"
+            gdrive_url_clean = f"https://drive.google.com/uc?id={file_id}"
+
+            # Fetch metadata for original filename
+            metadata = await asyncio.to_thread(gdown.get_metadata, gdrive_url_clean)
+            original_filename = metadata.get("title", f"gdrive_{timestamp}_{random_str}.mp4")
+
+            # Clean filename from unsafe chars
+            safe_filename = re.sub(r"[^\w\-_\. ]", "_", original_filename)
+
+            output_filename = f"downloads/{safe_filename}"
+
+            # Download file
             downloaded = await asyncio.to_thread(
                 gdown.download,
-                f"https://drive.google.com/uc?id={file_id}",
+                gdrive_url_clean,
                 output_filename,
                 quiet=False
             )
@@ -318,7 +329,9 @@ async def gdrive_media(client, chat_id, gdrive_url):
             if not downloaded or not os.path.exists(downloaded):
                 raise Exception("File download failed")
 
+            # Use cleaned original name as caption (without extension)
             caption = os.path.splitext(os.path.basename(downloaded))[0]
+
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
