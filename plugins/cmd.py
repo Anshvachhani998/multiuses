@@ -246,10 +246,10 @@ async def git_pull(client, message):
         restart_out, restart_err = restart_process.communicate()
 
         if restart_err:
-            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```", parse_mode="markdown")
+            await message.reply_text(f"⚠ Docker restart failed:\n```\n{restart_err.decode().strip()}\n```")
         else:
             await message.reply_text("✅ Docker restarted successfully!")
 
     else:
-        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```", parse_mode="markdown")
+        await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
 
