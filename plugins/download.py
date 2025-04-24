@@ -1,4 +1,5 @@
 import os
+import gdown
 import re
 import time
 import random
@@ -276,4 +277,116 @@ async def aria2c_media(client, chat_id, download_url):
         )
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
+
+
+async def gdrive_media(client, chat_id, gdrive_url):
+    status_msg = await client.send_message(chat_id, "⏳ **Starting Google Drive download...**")
+
+    queue = asyncio.Queue()
+    output_filename = None
+    caption = "Downloaded from Google Drive"
+    duration = 0
+    width, height = 640, 360
+    thumbnail_path = None
+    error_occurred = False
+
+    timestamp = time.strftime("%y%m%d")
+    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+
+    async def run_gdown():
+        nonlocal output_filename, caption, error_occurred
+        try:
+            # Extract file ID
+            match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
+            if match:
+                file_id = match.group(1)
+            else:
+                match = re.search(r"id=([a-zA-Z0-9_-]+)", gdrive_url)
+                file_id = match.group(1) if match else None
+
+            if not file_id:
+                raise Exception("Invalid Google Drive URL")
+
+            output_filename = f"downloads/gdrive_{timestamp}_{random_str}"
+            downloaded = await asyncio.to_thread(
+                gdown.download,
+                f"https://drive.google.com/uc?id={file_id}",
+                output_filename,
+                quiet=False
+            )
+
+            if not downloaded or not os.path.exists(downloaded):
+                raise Exception("File download failed")
+
+            caption = os.path.splitext(os.path.basename(downloaded))[0]
+            asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
+
+        except Exception as e:
+            error_occurred = True
+            await client.send_message(
+                LOG_CHANNEL,
+                f"❌ Exception in GDrive download:\n`{str(e)}`\n\nLink: {gdrive_url}",
+                disable_web_page_preview=True
+            )
+            await queue.put({"status": "error", "message": str(e)})
+            return
+
+    # Tasks for download and progress
+    download_task = asyncio.create_task(run_gdown())
+    progress_task = asyncio.create_task(update_progress(status_msg, queue))
+
+    await download_task
+    await progress_task
+
+    if error_occurred:
+        error_message = (
+            "⚠️ **Oops! Something went wrong while downloading from Google Drive. Please check the link and try again.**\n\n"
+            "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
+        )
+        await status_msg.edit_text(error_message)
+        return
+
+    # Upload section
+    if output_filename and os.path.exists(output_filename):
+        await status_msg.edit_text("📤 **Preparing for upload...**")
+
+        # Get user thumbnail
+        thumbnail_file_id = await db.get_user_thumbnail(chat_id)
+        if thumbnail_file_id:
+            try:
+                thumb_message = await client.download_media(thumbnail_file_id)
+                thumbnail_path = thumb_message
+            except Exception as e:
+                logging.error(f"Thumbnail download error: {e}")
+
+        # Extract thumbnail if not found
+        if not thumbnail_path:
+            try:
+                thumbnail_path = await extract_fixed_thumbnail(output_filename)
+            except Exception as e:
+                logging.error(f"Error extracting fixed thumbnail: {e}")
+
+        # Get video duration
+        try:
+            duration = await get_video_duration(output_filename)
+        except Exception as e:
+            logging.error(f"Error fetching video metadata: {e}")
+            duration = None
+
+        # Upload
+        await upload_media(
+            client,
+            chat_id,
+            output_filename,
+            caption,
+            duration,
+            width,
+            height,
+            status_msg,
+            thumbnail_path,
+            gdrive_url
+        )
+    else:
+        await status_msg.edit_text("❌ **Download Failed!**")
+
 
