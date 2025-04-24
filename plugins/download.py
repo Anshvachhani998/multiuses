@@ -112,3 +112,41 @@ async def download_video(client, chat_id, youtube_link):
         error_message = f"❌ **Download Failed!**"
         logging.error(error_message)
         await status_msg.edit_text(error_message)
+
+
+async def download_with_aria2c(url, output_path, label, queue, client):
+    output_dir = os.path.dirname(output_path)
+    output_file = os.path.basename(output_path)
+    cmd = [
+        "aria2c",
+        f"--dir={output_dir}",
+        f"--out={output_file}",
+        "--max-connection-per-server=16",
+        "--split=16",
+        "--min-split-size=1M",
+        "--console-log-level=warn",
+        "--summary-interval=1",
+        url
+    ]
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT
+    )
+
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+
+        line = line.decode("utf-8").strip()
+
+        match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
+        if match:
+            downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
+            total = convert_to_bytes(float(match.group(3)), match.group(4))
+
+            await queue.put((downloaded, total, label))
+
+    await process.wait()
