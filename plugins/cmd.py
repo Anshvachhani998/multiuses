@@ -191,26 +191,6 @@ async def delete_all_users_handler(client, message):
     await message.reply(f"✅ Deleted `{deleted}` users from database.")
 
 
-import subprocess
-import os
-
-@Client.on_message(filters.command("restart"))
-async def restart_bot(client, message):
-    await message.reply_text("♻️ Restarting bot...")
-
-    # Execute the bash script to update and restart Docker
-    subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
-
-    # Exit the current bot process
-    os._exit(0)
-
-
-
-
-
-
-
-
 
 
 @Client.on_message(filters.command("restart"))
