@@ -188,14 +188,14 @@ async def aria2c_media(client, chat_id, download_url):
     duration = 0
     width, height = 640, 360
     thumbnail_path = None
+    error_occurred = False  # Flag to check if an error occurred
 
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
     async def run_aria():
-        nonlocal output_filename, caption, width, height, thumbnail_path
+        nonlocal output_filename, caption, width, height, thumbnail_path, error_occurred
         try:
-
             final_filenames = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
@@ -209,6 +209,7 @@ async def aria2c_media(client, chat_id, download_url):
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
+            error_occurred = True  # Set the flag to True if an error occurs
             error_message = (
                 "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
                 "If the issue persists, please ask for help in our support group.\n\n"
@@ -230,7 +231,11 @@ async def aria2c_media(client, chat_id, download_url):
     await download_task
     await progress_task
 
-    # Prepare for upload
+    # If an error has occurred, we stop further processing
+    if error_occurred:
+        return  # Exit the function if there was an error
+
+    # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
@@ -272,3 +277,4 @@ async def aria2c_media(client, chat_id, download_url):
         )
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
+
