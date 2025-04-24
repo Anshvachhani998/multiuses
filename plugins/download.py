@@ -178,10 +178,8 @@ async def aria2c_media(client, chat_id, download_url):
     async def run_aria():
         nonlocal output_filename, caption, width, height, thumbnail_path
         try:
-            filename_only = f"{caption.replace(' ', '_')}_{timestamp}-{random_str}.mp4"
-            final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
-            final_filename = await asyncio.to_thread(
+            final_filenames = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
                 DOWNLOAD_DIR,
@@ -189,7 +187,8 @@ async def aria2c_media(client, chat_id, download_url):
                 queue,
                 client
             )
-
+            filename_only = f"{final_filenames}_{timestamp}-{random_str}.mp4"
+            final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
             output_filename = final_filename
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
