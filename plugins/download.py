@@ -195,7 +195,6 @@ async def aria2c_media(client, chat_id, download_url):
                 disable_web_page_preview=True
             )
             await queue.put({"status": "error", "message": str(e)})
-            active_tasks.pop(chat_id, None)
 
     # Start async tasks
     download_task = asyncio.create_task(run_aria())
