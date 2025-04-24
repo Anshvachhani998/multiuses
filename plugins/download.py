@@ -114,7 +114,7 @@ async def download_video(client, chat_id, youtube_link):
         await status_msg.edit_text(error_message)
 
 
-async def aria2c_download(url, output_path, label, queue, client):
+def manual_download_with_progress(url, output_path, label, queue, client):
     output_dir = os.path.dirname(output_path)
     output_file = os.path.basename(output_path)
     cmd = [
@@ -129,27 +129,25 @@ async def aria2c_download(url, output_path, label, queue, client):
         url
     ]
 
-    process = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
     )
 
-    while True:
-        line = await process.stdout.readline()
-        if not line:
-            break
-
-        line = line.decode("utf-8").strip()
-
+    for line in process.stdout:
         match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
         if match:
             downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
             total = convert_to_bytes(float(match.group(3)), match.group(4))
 
-            await queue.put((downloaded, total, label))
-    await process.wait()
+            asyncio.run_coroutine_threadsafe(
+                queue.put((downloaded, total, label)),
+                client.loop
+            )
 
+    process.wait()
 
 
 async def aria2c_media(client, chat_id, download_url):
@@ -172,7 +170,7 @@ async def aria2c_media(client, chat_id, download_url):
             final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
             await asyncio.to_thread(
-                await aria2c_download,
+                aria2c_download,
                 download_url,
                 final_filename,
                 caption,
