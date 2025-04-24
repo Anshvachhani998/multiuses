@@ -192,7 +192,7 @@ async def delete_all_users_handler(client, message):
 import subprocess
 import os
 
-@Client.on_message(filters.command("restartq"))
+@Client.on_message(filters.command("restart"))
 async def restart_bot(client, message):
     await message.reply_text("♻️ Restarting bot...")
 
