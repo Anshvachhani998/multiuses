@@ -10,6 +10,7 @@ from yt_dlp import YoutubeDL
 from database.db import db
 from plugins.progress_bar import yt_progress_hook, update_progress
 from plugins.upload import upload_media
+from info import LOG_CHANNEL
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
