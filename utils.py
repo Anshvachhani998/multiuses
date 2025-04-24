@@ -196,12 +196,11 @@ async def get_video_duration(file_path):
 
 
 async def get_confirm_token_download_url(file_id):
+    session = requests.Session()
     URL = f"https://drive.google.com/uc?export=download&id={file_id}"
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(URL) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "html.parser")
+    response = session.get(URL, stream=True)
+    soup = BeautifulSoup(response.text, "html.parser")
 
     confirm_token = None
     for tag in soup.find_all("a"):
