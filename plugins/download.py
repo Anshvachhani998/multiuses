@@ -35,7 +35,7 @@ async def download_video(client, chat_id, youtube_link):
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
 
-    def run_pytubefix():
+    async def run_pytubefix():
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
@@ -55,16 +55,16 @@ async def download_video(client, chat_id, youtube_link):
                 final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
                 output_filename = filename
-
                 youtube_thumbnail_url = info.get('thumbnail')
                 duration = info.get('duration', 0)
                 width = info.get('width', 640)
                 height = info.get('height', 360)
 
                 logging.info(f"Downloaded file: {output_filename}")
-                asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
+                await queue.put({"status": "finished"})  # Use await here
 
         except Exception as e:
+            # Send generic error to user
             error_message = (
                 "⚠️ **Oops! Something went wrong while fetching the formats. Please try again later.**\n\n"
                 "If the issue persists, please ask for help in our support group.\n\n"
@@ -73,11 +73,11 @@ async def download_video(client, chat_id, youtube_link):
             await status_msg.edit_text(error_message)
             await client.send_message(
                 LOG_CHANNEL,
-                f"❌ Exception in download wit YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
+                f"❌ Exception in download with YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
                 disable_web_page_preview=True
             )
-            asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "message": str(e)}), client.loop)
-
+            await queue.put({"status": "error", "message": str(e)})  # Use await here
+            
     download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
