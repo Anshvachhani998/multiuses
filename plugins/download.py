@@ -321,7 +321,7 @@ async def google_drive(client, chat_id, gdrive_url):
                 raise Exception("Invalid Google Drive URL")
 
             # Final download link for aria2c
-            download_url = await get_confirm_token_download_url(file_id)
+            download_url_task = asyncio.create_task(get_confirm_token_download_url(file_id))
             
             logging.info(download_url)
             final_filenames = await asyncio.to_thread(
