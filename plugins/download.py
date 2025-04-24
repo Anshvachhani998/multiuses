@@ -115,7 +115,7 @@ async def download_video(client, chat_id, youtube_link):
         await status_msg.edit_text(error_message)
 
 
-def manual_download_with_progress(url, output_path, label, queue, client):
+def aria2c_download(url, output_path, label, queue, client):
     output_dir = os.path.dirname(output_path)
     output_file = os.path.basename(output_path)
     cmd = [
