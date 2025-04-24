@@ -13,10 +13,10 @@ fi
 
 # Pull the latest updates
 echo "🔄 Updating repository..."
-sudo git pull https://github.com/Anshvachhani998/URL-UPLOADER
+git pull https://github.com/Anshvachhani998/URL-UPLOADER
 
 # Restart Docker Container
 echo "🚀 Restarting UploaderDL Docker container..."
-sudo docker restart UploaderDL
+docker restart UploaderDL
 
 echo "✅ Update & Restart Completed!"
