@@ -70,11 +70,14 @@ async def download_video(client, chat_id, youtube_link):
                 "If the issue persists, please ask for help in our support group.\n\n"
                 "💬 Support Group: [SUPPORT](https://t.me/AnSBotsSupports)"
             )
-            await status_msg.edit_text(error_message)
-            await client.send_message(
-                LOG_CHANNEL,
-                f"❌ Exception in download with YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
-                disable_web_page_preview=True
+            asyncio.run_coroutine_threadsafe(status_msg.edit_text(error_message), client.loop)
+            asyncio.run_coroutine_threadsafe(
+                client.send_message(
+                    LOG_CHANNEL,
+                    f"❌ Exception in download with YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
+                    disable_web_page_preview=True
+                ),
+                client.loop
             )
             asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "message": str(e)}), client.loop)
 
