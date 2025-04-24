@@ -400,6 +400,7 @@ async def google_drive(client, chat_id, gdrive_url):
             thumbnail_path,
             download_url
         )
+        logging.info("done5")
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
