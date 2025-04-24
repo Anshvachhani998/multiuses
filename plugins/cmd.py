@@ -194,7 +194,7 @@ async def restart_bot(client, message):
     await message.reply_text("♻️ Restarting bot...")
 
     # Restart ke liye ek naya process run karo
-    os.system("nohup bash start.sh &")
+    os.system("bash start.sh &")
 
     # Bot khud ko terminate kar de
     os._exit(0)
