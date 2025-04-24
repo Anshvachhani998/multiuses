@@ -275,7 +275,6 @@ async def aria2c_media(client, chat_id, download_url):
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
 
-        # Upload
         await upload_media(
             client,
             chat_id,
@@ -365,7 +364,6 @@ async def google_drive(client, chat_id, gdrive_url):
     if output_filename and os.path.exists(output_filename):
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
-        # Get user thumbnail
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
@@ -374,21 +372,18 @@ async def google_drive(client, chat_id, gdrive_url):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
-        # Extract from video if no thumbnail
         if not thumbnail_path:
             try:
                 thumbnail_path = await extract_fixed_thumbnail(output_filename)
             except Exception as e:
                 logging.error(f"Error extracting fixed thumbnail: {e}")
 
-        # Get video duration
         try:
             duration = await get_video_duration(output_filename)
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
 
-        # Upload
         await upload_media(
             client,
             chat_id,
