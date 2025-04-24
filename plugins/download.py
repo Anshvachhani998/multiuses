@@ -248,7 +248,7 @@ async def aria2c_media(client, chat_id, download_url):
             client,
             chat_id,
             output_filename,
-            caption,
+            output_filename,
             duration,
             width,
             height,
