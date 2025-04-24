@@ -80,7 +80,7 @@ async def download_video(client, chat_id, youtube_link):
             )
             await queue.put({"status": "error", "message": str(e)})  # Use await here
             
-    download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix()))
+    download_task = asyncio.create_task(run_pytubefix())
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
     await download_task
