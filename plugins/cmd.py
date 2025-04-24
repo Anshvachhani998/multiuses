@@ -206,7 +206,7 @@ async def restart_bot(client, message):
 
 
 
-@Client.on_message(filters.command("gitpull"))
+@Client.on_message(filters.command("gitpulls"))
 async def git_pull(client, message):
     # Run the git pull command and capture the output
     process = subprocess.Popen(
@@ -223,6 +223,5 @@ async def git_pull(client, message):
     if stderr:
         await message.reply_text(f"❌ Error occurred: \n{stderr.decode()}")
     else:
-        # If git pull is successful, return stdout
         await message.reply_text(f"🔄 Git Pull Output: \n{stdout.decode()}")
 
