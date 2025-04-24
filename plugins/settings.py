@@ -22,7 +22,7 @@ async def settings(client, message):
     )
 
     # Buttons
-    upload_btn_text = "🔄 Upload as Video" if upload_as_doc else "🔄 Upload as Document"
+    upload_btn_text = "🎬 Upload as Video" if upload_as_doc else "📄 Upload as Document"
     buttons = [[InlineKeyboardButton(upload_btn_text, callback_data="toggle_upload_mode")]]
 
     if has_thumbnail:
