@@ -77,9 +77,9 @@ async def download_video(client, chat_id, youtube_link):
                 f"❌ Exception in download with YTDLP:\n`{str(e)}`\n\nLink: {youtube_link}",
                 disable_web_page_preview=True
             )
-            await queue.put({"status": "error", "message": str(e)})  # Use await here
+            await queue.put({"status": "error", "message": str(e)})
             
-    download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
+    download_task = asyncio.create_task(run_pytubefix)
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
     await download_task
