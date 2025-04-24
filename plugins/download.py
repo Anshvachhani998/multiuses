@@ -387,7 +387,7 @@ async def google_drive(client, chat_id, gdrive_url):
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
         logging.info("done4")
-        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, download_url)
+        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url)
         logging.info("done5")
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
