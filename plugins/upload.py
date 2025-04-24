@@ -32,8 +32,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
                 
                 with open(part_file, "rb") as media_file:
-                    sent_message = None  # Initialize the variable here
-                    
                     if upload_as_doc:
                         sent_message = await client.send_document(
                             chat_id=chat_id,
@@ -71,62 +69,60 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 file_name=os.path.basename(part_file)
                             )
 
-                # Ensure sent_message is not None before proceeding
-                if sent_message:
-                    # Extract file_id
-                    if hasattr(sent_message, 'video') and sent_message.video:
-                        file_id = sent_message.video.file_id
-                    elif hasattr(sent_message, 'audio') and sent_message.audio:
-                        file_id = sent_message.audio.file_id
-                    elif hasattr(sent_message, 'document') and sent_message.document:
-                        file_id = sent_message.document.file_id
-                    else:
-                        logging.error("No valid file_id found in sent_message.")
-                        file_id = None
+                # Extract file_id
+                if hasattr(sent_message, 'video') and sent_message.video:
+                    file_id = sent_message.video.file_id
+                elif hasattr(sent_message, 'audio') and sent_message.audio:
+                    file_id = sent_message.audio.file_id
+                elif hasattr(sent_message, 'document') and sent_message.document:
+                    file_id = sent_message.document.file_id
+                else:
+                    logging.error("No valid file_id found in sent_message.")
+                    file_id = None
 
-                    # Upload to dump channel
-                    if file_id:
-                        formatted_caption = (
-                            f"{part_caption}\n\n"
-                            f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
-                            f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({link})**"
+                # Upload to dump channel
+                if file_id:
+                    formatted_caption = (
+                        f"{part_caption}\n\n"
+                        f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
+                        f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({link})**"
+                    )
+
+                    if upload_as_doc:
+                        await client.send_document(
+                            chat_id=DUMP_CHANNEL,
+                            document=file_id,
+                            caption=formatted_caption,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
                         )
-
-                        if upload_as_doc:
-                            await client.send_document(
+                    else:
+                        if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
+                            await client.send_video(
                                 chat_id=DUMP_CHANNEL,
-                                document=file_id,
+                                video=file_id,
                                 caption=formatted_caption,
+                                duration=duration // total_parts if total_parts > 1 else duration,
+                                supports_streaming=True,
+                                height=height,
+                                width=width,
                                 disable_notification=True,
                                 thumb=thumbnail_path if thumbnail_path else None,
                                 file_name=os.path.basename(part_file)
                             )
-                        else:
-                            if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
-                                await client.send_video(
-                                    chat_id=DUMP_CHANNEL,
-                                    video=file_id,
-                                    caption=formatted_caption,
-                                    duration=duration // total_parts if total_parts > 1 else duration,
-                                    supports_streaming=True,
-                                    height=height,
-                                    width=width,
-                                    disable_notification=True,
-                                    thumb=thumbnail_path if thumbnail_path else None,
-                                    file_name=os.path.basename(part_file)
-                                )
-                            elif part_file.endswith('.mp3') or part_file.endswith('.wav'):
-                                await client.send_audio(
-                                    chat_id=DUMP_CHANNEL,
-                                    audio=file_id,
-                                    caption=formatted_caption,
-                                    duration=duration // total_parts if total_parts > 1 else duration,
-                                    disable_notification=True,
-                                    thumb=thumbnail_path if thumbnail_path else None,
-                                    file_name=os.path.basename(part_file)
-                                )
+                        elif part_file.endswith('.mp3') or part_file.endswith('.wav'):
+                            await client.send_audio(
+                                chat_id=DUMP_CHANNEL,
+                                audio=file_id,
+                                caption=formatted_caption,
+                                duration=duration // total_parts if total_parts > 1 else duration,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
 
-                        os.remove(part_file)
+                    os.remove(part_file)
 
             await status_msg.edit_text("✅ **Upload Successful!**")
             await db.increment_task(chat_id)
