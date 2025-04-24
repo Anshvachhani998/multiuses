@@ -196,8 +196,8 @@ async def aria2c_media(client, chat_id, download_url):
                 queue,
                 client
             )
-            logging.info(final_filenames)
             output_filename = final_filenames
+            caption = os.path.splitext(os.path.basename(output_filename))[0]
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
@@ -248,7 +248,7 @@ async def aria2c_media(client, chat_id, download_url):
             client,
             chat_id,
             output_filename,
-            output_filename,
+            caption,
             duration,
             width,
             height,
