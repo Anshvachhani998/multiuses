@@ -203,13 +203,6 @@ async def restart_bot(client, message):
     # Exit the current bot process
     os._exit(0)
 
-
-
-
-import subprocess
-from pyrogram import Client, filters
-
-
 @Client.on_message(filters.command("gitpull"))
 async def git_pull(client, message):
     # Run the git pull command and capture the output
@@ -224,8 +217,8 @@ async def git_pull(client, message):
     stdout, stderr = process.communicate()
 
     # Debugging: Print the raw stdout and stderr
-    print("Raw Output (stdout):", stdout.decode())
-    print("Raw Error (stderr):", stderr.decode())
+    logging.info("Raw Output (stdout):", stdout.decode())
+    logging.info("Raw Error (stderr):", stderr.decode())
 
     # If there's an error, return stderr
     if stderr:
