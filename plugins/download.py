@@ -172,7 +172,7 @@ async def aria2c_media(client, chat_id, download_url):
             final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
             await asyncio.to_thread(
-                aria2c_download,
+                await aria2c_download,
                 download_url,
                 final_filename,
                 caption,
