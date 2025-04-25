@@ -394,6 +394,7 @@ async def google_drive(client, chat_id, gdrive_url):
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
+
 def gdown_download(url, download_dir, label, queue, client):
     try:
         cmd = [
@@ -433,10 +434,29 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
+        # Sort files by modified time and select the most recent one
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         logging.info(f"GDOWN name {final_path}")
+
+        # Check for file conflicts and rename the file if needed
+        base_name, ext = os.path.splitext(files[0])
+        new_file_name = final_path
+        counter = 1
+
+        while os.path.exists(new_file_name):
+            new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
+            counter += 1
+
+        # Rename the file if needed
+        if new_file_name != final_path:
+            os.rename(final_path, new_file_name)
+            final_path = new_file_name
+
+        logging.info(f"File saved at: {final_path}")
         return final_path
 
+    except Exception as e:
+        print("GDOWN ERROR:", str(e))
     except Exception as e:
         print("GDOWN ERROR:", str(e))
