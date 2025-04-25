@@ -429,8 +429,8 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        # Check downloaded files
         files = os.listdir(download_dir)
+        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
         if not files:
             raise Exception("❌ File not found after gdown!")
 
