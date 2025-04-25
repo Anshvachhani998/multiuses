@@ -70,6 +70,8 @@ def convert_to_bytes(size, unit):
         return int(size * 1024 ** 2)
     elif "G" in unit:
         return int(size * 1024 ** 3)
+    elif "T" in unit:
+        return int(size * 1024 ** 4)
     else:
         return int(size)
 
