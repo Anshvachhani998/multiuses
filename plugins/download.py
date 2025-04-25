@@ -406,20 +406,14 @@ import re
 import asyncio
 import logging
 
-def gdown_download(url, download_dir, filename, queue, client):
+def gdown_download(url, download_dir, label, queue, client):
     try:
-        # Ensure the download directory exists
-        os.makedirs(download_dir, exist_ok=True)
-
-        # Build the full path with filename in the download directory
-        final_output_path = os.path.join(download_dir, filename)
-
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", final_output_path
+            "--output", "downloads/"
         ]
 
         process = subprocess.Popen(
@@ -430,7 +424,9 @@ def gdown_download(url, download_dir, filename, queue, client):
         )
 
         for line in process.stdout:
+
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
+
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
@@ -444,16 +440,32 @@ def gdown_download(url, download_dir, filename, queue, client):
 
         process.wait()
 
-        # Ensure the file exists in the download directory
         files = os.listdir(download_dir)
+        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Sort files by the most recent modification time
+        # Sort files by modified time and select the most recent one
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
+        logging.info(f"GDOWN name {final_path}")
 
+        # Check for file conflicts and rename the file if needed
+        base_name, ext = os.path.splitext(files[0])
+        new_file_name = final_path
+        counter = 1
+
+        while os.path.exists(new_file_name):
+            new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
+            counter += 1
+
+
+        final_path = new_file_name
+
+        logging.info(f"File saved at: {final_path}")
         return final_path
 
+    except Exception as e:
+        print("GDOWN ERROR:", str(e))
     except Exception as e:
         print("GDOWN ERROR:", str(e))
