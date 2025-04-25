@@ -474,8 +474,6 @@ def gdown_download(url, download_dir, label, queue, client):
     except Exception as e:
         print("GDOWN ERROR:", str(e))
 
-
-
 @Client.on_message(filters.command("info"))
 async def info_handler(client, message):
     if len(message.command) < 2:
