@@ -396,6 +396,7 @@ async def google_drive(client, chat_id, gdrive_url):
 
 
 def gdown_download(url, download_dir, label, queue, client):
+    before_files = set(os.listdir(download_dir))
     try:
         cmd = [
             "gdown",
@@ -429,14 +430,18 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        # Check downloaded files
-        files = os.listdir(download_dir)
-        if not files:
-            raise Exception("❌ File not found after gdown!")
+        after_files = set(os.listdir(download_dir))
+        new_files = list(after_files - before_files)
 
-        # Return the most recent downloaded file
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
-        final_path = os.path.join(download_dir, files[0])
+        if not new_files:
+            raise Exception("❌ File not found after download!")
+
+        downloaded_file = os.path.join(download_dir, new_files[0])
+
+        unique_name = generate_unique_name(new_files[0])
+        final_path = os.path.join(download_dir, unique_name)
+        os.rename(downloaded_file, final_path)
+
         return final_path
 
     except Exception as e:
