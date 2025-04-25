@@ -414,29 +414,29 @@ def gdown_download(url, download_dir, label, queue, client):
         for line in process.stdout:
             print("GDOWN >>", line.strip())
 
-            # Regex to extract progress percentage, downloaded size, and total size
-            match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]?)\/(\d+\.\d+)([KMGT]?)', line)
+            # Update the regex to match more flexible line formats
+            match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
 
             if match:
                 print(f"Match found: {match.groups()}")
-                downloaded = convert_to_bytes(float(match.group(2)), match.group(3))
-                total = convert_to_bytes(float(match.group(4)), match.group(5))
+                downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
+                total = convert_to_bytes(float(match.group(5)), match.group(7))
 
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
                 )
             else:
-                print("No match found in line:", line.strip())  # This line will show which line failed to match
+                print("No match found in line:", line.strip())  # This will show which line is not matching
 
         process.wait()
 
-        # Check downloaded file
+        # Check downloaded files
         files = os.listdir(download_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return latest downloaded file
+        # Return the most recent downloaded file
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         return final_path
