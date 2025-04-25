@@ -38,10 +38,16 @@ import pickle
 import re
 from googleapiclient.discovery import build
 
+import pickle
+import re
+from googleapiclient.discovery import build
+from pyrogram import Client, filters
+
+# Function to extract file ID from Google Drive link
 def extract_file_id(link):
     patterns = [
-        r'/file/d/([a-zA-Z0-9_-]+)',
-        r'id=([a-zA-Z0-9_-]+)'
+        r'/file/d/([a-zA-Z0-9_-]+)',  # Pattern for /file/d/ID
+        r'id=([a-zA-Z0-9_-]+)'        # Pattern for id=ID
     ]
     for pattern in patterns:
         match = re.search(pattern, link)
@@ -49,6 +55,7 @@ def extract_file_id(link):
             return match.group(1)
     return None
 
+# Function to get file details from Google Drive using Google API
 def get_file_info(file_id):
     creds = pickle.load(open("/root/URL-UPLOADER/plugins/token.pickle", "rb"))
     service = build("drive", "v3", credentials=creds)
@@ -58,6 +65,7 @@ def get_file_info(file_id):
     mime = file.get("mimeType")
     return name, size, mime
 
+# Function to format file size into human-readable format
 def human_readable_size(size_bytes):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size_bytes < 1024:
@@ -65,6 +73,7 @@ def human_readable_size(size_bytes):
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
 
+# Pyrogram command to handle /gdrive request
 @Client.on_message(filters.command("gdrive") & filters.private)
 async def info_handler(client, message):
     if len(message.command) < 2:
@@ -77,6 +86,7 @@ async def info_handler(client, message):
         return await message.reply("❌ Invalid Google Drive link!", quote=True)
 
     try:
+        # Get file details
         name, size, mime = get_file_info(file_id)
         size_str = human_readable_size(size)
         await message.reply(f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`", quote=True)
