@@ -57,7 +57,7 @@ def extract_file_id(link):
 
 # Function to get file details from Google Drive using Google API
 def get_file_info(file_id):
-    creds = pickle.load(open("/root/URL-UPLOADER/plugins/token.pickle", "rb"))
+    creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
     service = build("drive", "v3", credentials=creds)
     file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
     name = file.get("name")
