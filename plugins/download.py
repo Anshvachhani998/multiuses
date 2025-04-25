@@ -406,19 +406,14 @@ import re
 import asyncio
 import logging
 
-def gdown_download(url, download_dir, label, queue, client):
+def gdown_download(url, download_dir, filename, queue, client):
     try:
-        # Create a unique temp directory
-        temp_id = str(uuid.uuid4())
-        temp_dir = os.path.join(download_dir, temp_id)
-        os.makedirs(temp_dir, exist_ok=True)
-
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", temp_dir
+            "--output", "downloads/"
         ]
 
         process = subprocess.Popen(
@@ -457,17 +452,9 @@ def gdown_download(url, download_dir, label, queue, client):
         while os.path.exists(final_path):
             final_path = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
             counter += 1
-
-        # Move file from temp to final
-        shutil.move(original_path, final_path)
-        shutil.rmtree(temp_dir)
-
+         
         logging.info(f"File saved at: {final_path}")
         return final_path
-
-    except Exception as e:
-        print("GDOWN ERROR:", str(e))
-
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
