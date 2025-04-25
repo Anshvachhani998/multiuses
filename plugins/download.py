@@ -417,16 +417,18 @@ def gdown_download(url, download_dir, label, queue, client):
 
             # Regex to extract progress percentage, downloaded size, and total size
             match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]B)/(\d+\.\d+)([KMGT]B)', line)
+            print(f"Match found: {match.groups()}")
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(3))
                 total = convert_to_bytes(float(match.group(4)), match.group(5))
-                logging.info(f'{total} and {downloaded}')
 
                 # Send progress update to queue
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
                 )
+            else:
+                print("No match found in line:", line)
 
         process.wait()
 
