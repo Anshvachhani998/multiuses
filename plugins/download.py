@@ -395,14 +395,22 @@ async def google_drive(client, chat_id, gdrive_url):
         await status_msg.edit_text("❌ **Download Failed!**")
 
 
+import uuid
+import shutil
+
 def gdown_download(url, download_dir, label, queue, client):
     try:
+        # Create unique temp directory for this download
+        temp_id = str(uuid.uuid4())
+        temp_dir = os.path.join(download_dir, temp_id)
+        os.makedirs(temp_dir, exist_ok=True)
+
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", temp_dir  # download into temp folder
         ]
 
         process = subprocess.Popen(
@@ -413,9 +421,7 @@ def gdown_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
-
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
-
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
@@ -429,34 +435,28 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        files = os.listdir(download_dir)
-        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
+        files = os.listdir(temp_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Sort files by modified time and select the most recent one
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
-        final_path = os.path.join(download_dir, files[0])
-        logging.info(f"GDOWN name {final_path}")
+        # Sort and get the downloaded file path
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(temp_dir, x)), reverse=True)
+        final_path_temp = os.path.join(temp_dir, files[0])
 
-        # Check for file conflicts and rename the file if needed
+        # Create target path
         base_name, ext = os.path.splitext(files[0])
-        new_file_name = final_path
+        final_path = os.path.join(download_dir, files[0])
         counter = 1
-
-        while os.path.exists(new_file_name):
-            new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
+        while os.path.exists(final_path):
+            final_path = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
             counter += 1
 
-        # Rename the file if needed
-        if new_file_name != final_path:
-            os.rename(final_path, new_file_name)
-            final_path = new_file_name
+        # Move file from temp dir to main download_dir
+        shutil.move(final_path_temp, final_path)
+        shutil.rmtree(temp_dir)  # clean temp dir
 
         logging.info(f"File saved at: {final_path}")
         return final_path
 
-    except Exception as e:
-        print("GDOWN ERROR:", str(e))
     except Exception as e:
         print("GDOWN ERROR:", str(e))
