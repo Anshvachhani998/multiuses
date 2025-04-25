@@ -431,9 +431,11 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        files = os.listdir(download_dir)
-        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
-        if not files:
+        after_files = set(os.listdir(download_dir))
+        new_files = list(after_files - before_files)
+        logging.info(f"After download, new files in {download_dir}: {new_files}")
+        
+        if not new_files:
             raise Exception("❌ File not found after gdown!")
 
         # Return the most recent downloaded file
