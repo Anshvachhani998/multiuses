@@ -394,7 +394,6 @@ async def google_drive(client, chat_id, gdrive_url):
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
-
 def gdown_download(url, download_dir, label, queue, client):
     before_files = set(os.listdir(download_dir))
     logging.info(f"Before download, files in {download_dir}: {before_files}")
@@ -404,7 +403,7 @@ def gdown_download(url, download_dir, label, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", download_dir
         ]
 
         process = subprocess.Popen(
@@ -431,12 +430,9 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        after_files = set(os.listdir(download_dir))
-        
-        new_files = list(after_files - before_files)
-        logging.info(f"After download, new files in {download_dir}: {new_files}/////// {after_files}")
-        
-        if not new_files:
+        files = os.listdir(download_dir)
+        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
+        if not files:
             raise Exception("❌ File not found after gdown!")
 
         # Return the most recent downloaded file
