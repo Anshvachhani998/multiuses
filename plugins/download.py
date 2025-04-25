@@ -488,7 +488,7 @@ async def info_handler(client, message):
 
 
 import re
-import gdown
+import requests
 
 def extract_file_id(url):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
@@ -500,21 +500,18 @@ def extract_file_id(url):
     return None
 
 def get_gdrive_filename(file_id):
-    try:
-        # Build the URL to retrieve file metadata
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        # Get the file info without downloading
-        result = gdown.get(url)
-        
-        # If filename is present in the result
-        filename = result.get('filename')
-        if filename:
-            return filename
-        
-        return "❌ Filename could not be retrieved."
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers, allow_redirects=True)
+
+    # Check for the filename in Content-Disposition header
+    content_disposition = response.headers.get("Content-Disposition", "")
+    match = re.search('filename="(.+)"', content_disposition)
+    if match:
+        return match.group(1)
+    
+    # If filename is not found, return error
+    return "❌ Filename could not be retrieved."
 
 def handle_info_command(gdrive_url):
     file_id = extract_file_id(gdrive_url)
@@ -523,4 +520,3 @@ def handle_info_command(gdrive_url):
     
     filename = get_gdrive_filename(file_id)
     return f"📄 **Filename**: `{filename}`"
-
