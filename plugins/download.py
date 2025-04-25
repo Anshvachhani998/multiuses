@@ -487,8 +487,6 @@ async def info_handler(client, message):
     await message.reply_text(result)
 
 
-import re
-import requests
 
 def extract_file_id(url):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
@@ -500,18 +498,21 @@ def extract_file_id(url):
     return None
 
 def get_gdrive_filename(file_id):
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers, allow_redirects=True)
-
-    # Check for the filename in Content-Disposition header
-    content_disposition = response.headers.get("Content-Disposition", "")
-    match = re.search('filename="(.+)"', content_disposition)
-    if match:
-        return match.group(1)
-    
-    # If filename is not found, return error
-    return "❌ Filename could not be retrieved."
+    try:
+        # Build the download URL for gdown
+        download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        # Use gdown to start the download (it won't complete due to quiet=True)
+        output = f"file_{file_id}.ext"  # You can set your preferred output name or use file_id
+        
+        # Start the download but it won't complete as we're using quiet=True
+        gdown.download(download_url, output, quiet=True)
+        
+        # If the file is successfully "started" downloading, return the filename
+        return output
+        
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 def handle_info_command(gdrive_url):
     file_id = extract_file_id(gdrive_url)
