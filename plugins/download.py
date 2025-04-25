@@ -296,7 +296,7 @@ async def aria2c_media(client, chat_id, download_url):
 
 
 
-async def google_drive(client, chat_id, gdrive_url):
+async def google_drive(client, chat_id, filename, gdrive_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -418,7 +418,7 @@ def gdown_download(url, download_dir, label, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", temp_dir  # Download in unique temp dir
+            "--output", temp_dir
         ]
 
         process = subprocess.Popen(
@@ -447,12 +447,10 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Get original filename
         files.sort(key=lambda x: os.path.getmtime(os.path.join(temp_dir, x)), reverse=True)
         original_file = files[0]
         original_path = os.path.join(temp_dir, original_file)
 
-        # Resolve name conflicts in final download_dir
         base_name, ext = os.path.splitext(original_file)
         final_path = os.path.join(download_dir, original_file)
         counter = 1
@@ -473,49 +471,3 @@ def gdown_download(url, download_dir, label, queue, client):
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
-
-@Client.on_message(filters.command("info"))
-async def info_handler(client, message):
-    if len(message.command) < 2:
-        await message.reply_text("❌ Please provide a Google Drive link.")
-        return
-
-    gdrive_url = message.command[1]
-    result = handle_info_command(gdrive_url)
-    await message.reply_text(result)
-
-
-
-def extract_file_id(url):
-    match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
-    if match:
-        return match.group(1)
-    match = re.search(r'id=([a-zA-Z0-9_-]+)', url)
-    if match:
-        return match.group(1)
-    return None
-
-def get_gdrive_filename(file_id):
-    try:
-        # Build the download URL for gdown
-        download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        # Use gdown to start the download (it won't complete due to quiet=True)
-        output = f"file_{file_id}.ext"  # You can set your preferred output name or use file_id
-        
-        # Start the download but it won't complete as we're using quiet=True
-        gdown.download(download_url, output, quiet=True)
-        
-        # If the file is successfully "started" downloading, return the filename
-        return output
-        
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
-
-def handle_info_command(gdrive_url):
-    file_id = extract_file_id(gdrive_url)
-    if not file_id:
-        return "❌ Invalid Google Drive link."
-    
-    filename = get_gdrive_filename(file_id)
-    return f"📄 **Filename**: `{filename}`"
