@@ -300,7 +300,7 @@ async def google_drive(client, chat_id, gdrive_url):
 
     queue = asyncio.Queue()
     output_filename = None
-    caption = "Downloaded via aria2c"
+    caption = "Downloaded via gdRIVE"
     duration = 0
     width, height = 640, 360
     thumbnail_path = None
@@ -412,13 +412,10 @@ def gdown_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
-            print("GDOWN >>", line.strip())
 
-            # Update the regex to match more flexible line formats
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
 
             if match:
-                print(f"Match found: {match.groups()}")
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
 
@@ -427,7 +424,7 @@ def gdown_download(url, download_dir, label, queue, client):
                     client.loop
                 )
             else:
-                print("No match found in line:", line.strip())  # This will show which line is not matching
+                print("No match found in line:", line.strip())
 
         process.wait()
 
