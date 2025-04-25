@@ -397,10 +397,17 @@ async def google_drive(client, chat_id, gdrive_url):
 
 import uuid
 import shutil
+import uuid
+import shutil
+import os
+import subprocess
+import re
+import asyncio
+import logging
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
-        # Create unique temp directory for this download
+        # Create a unique temp directory
         temp_id = str(uuid.uuid4())
         temp_dir = os.path.join(download_dir, temp_id)
         os.makedirs(temp_dir, exist_ok=True)
@@ -410,7 +417,7 @@ def gdown_download(url, download_dir, label, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", temp_dir  # download into temp folder
+            "--output", temp_dir  # Download in unique temp dir
         ]
 
         process = subprocess.Popen(
@@ -439,24 +446,29 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Sort and get the downloaded file path
+        # Get original filename
         files.sort(key=lambda x: os.path.getmtime(os.path.join(temp_dir, x)), reverse=True)
-        final_path_temp = os.path.join(temp_dir, files[0])
+        original_file = files[0]
+        original_path = os.path.join(temp_dir, original_file)
 
-        # Create target path
-        base_name, ext = os.path.splitext(files[0])
-        final_path = os.path.join(download_dir, files[0])
+        # Resolve name conflicts in final download_dir
+        base_name, ext = os.path.splitext(original_file)
+        final_path = os.path.join(download_dir, original_file)
         counter = 1
         while os.path.exists(final_path):
             final_path = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
             counter += 1
 
-        # Move file from temp dir to main download_dir
-        shutil.move(final_path_temp, final_path)
-        shutil.rmtree(temp_dir)  # clean temp dir
+        # Move file from temp to final
+        shutil.move(original_path, final_path)
+        shutil.rmtree(temp_dir)
 
         logging.info(f"File saved at: {final_path}")
         return final_path
+
+    except Exception as e:
+        print("GDOWN ERROR:", str(e))
+
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
