@@ -467,5 +467,3 @@ def gdown_download(url, download_dir, label, queue, client):
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
-    except Exception as e:
-        print("GDOWN ERROR:", str(e))
