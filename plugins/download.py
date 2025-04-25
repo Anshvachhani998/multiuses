@@ -438,22 +438,13 @@ def gdown_download(url, download_dir, filename, queue, client):
 
         process.wait()
 
-        files = os.listdir(temp_dir)
+       files = os.listdir(download_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(temp_dir, x)), reverse=True)
-        original_file = files[0]
-        original_path = os.path.join(temp_dir, original_file)
-
-        base_name, ext = os.path.splitext(original_file)
-        final_path = os.path.join(download_dir, original_file)
-        counter = 1
-        while os.path.exists(final_path):
-            final_path = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
-            counter += 1
-         
-        logging.info(f"File saved at: {final_path}")
+        # Return the most recent downloaded file
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
+        final_path = os.path.join(download_dir, files[0])
         return final_path
 
     except Exception as e:
