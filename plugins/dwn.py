@@ -30,3 +30,56 @@ async def dwn(client, message):
         await handle_url(client, url, chat_id)
     except Exception as e:
         await message.reply(f"❌ An error occurred: {str(e)}")
+
+
+
+from pyrogram import Client, filters
+import pickle
+import re
+from googleapiclient.discovery import build
+
+def extract_file_id(link):
+    patterns = [
+        r'/file/d/([a-zA-Z0-9_-]+)',
+        r'id=([a-zA-Z0-9_-]+)'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, link)
+        if match:
+            return match.group(1)
+    return None
+
+def get_file_info(file_id):
+    creds = pickle.load(open("token.pickle", "rb"))
+    service = build("drive", "v3", credentials=creds)
+    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
+    name = file.get("name")
+    size = int(file.get("size", 0))
+    mime = file.get("mimeType")
+    return name, size, mime
+
+def human_readable_size(size_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.2f} PB"
+
+@Client.on_message(filters.command("gdrive") & filters.private)
+async def info_handler(client, message):
+    if len(message.command) < 2:
+        return await message.reply("❗ Usage: `/info <Google Drive Link>`", quote=True)
+
+    link = message.command[1]
+    file_id = extract_file_id(link)
+
+    if not file_id:
+        return await message.reply("❌ Invalid Google Drive link!", quote=True)
+
+    try:
+        name, size, mime = get_file_info(file_id)
+        size_str = human_readable_size(size)
+        await message.reply(f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`", quote=True)
+
+    except Exception as e:
+        await message.reply(f"❌ Error: {e}", quote=True)
