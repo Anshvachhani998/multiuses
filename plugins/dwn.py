@@ -45,6 +45,16 @@ def human_readable_size(size_bytes):
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
 
+import re
+
+# Function to clean the filename (remove unwanted characters)
+def clean_filename(filename):
+    # Replace spaces with underscores and remove special characters
+    filename = re.sub(r'[^\w\s-]', '', filename)  # Remove special characters
+    filename = re.sub(r'[-\s]+', '_', filename)   # Replace spaces and hyphens with underscores
+    filename = filename.strip('_')  # Remove leading/trailing underscores
+    return filename
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -68,12 +78,14 @@ async def universal_handler(client, message):
             # Fetch file details (name, size, MIME type)
             name, size, mime = get_file_info(file_id)
             size_str = human_readable_size(size)
-            info_message = f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+            clean_name = clean_filename(name)  # Clean the filename
+
+            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
 
-            # Pass the actual link (text) to google_drive function
-            await google_drive(client, chat_id, text)  # Correctly passing the URL (text)
-        
+            # Pass the cleaned filename along with the link to the google_drive function
+            await google_drive(client, chat_id, clean_name, text)  # Pass cleaned filename
+
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
     
@@ -81,3 +93,4 @@ async def universal_handler(client, message):
         # Handle direct/YouTube links here
         await message.reply("📥 Downloading via direct/YouTube method...")
         await aria2c_media(client, chat_id, text)
+
