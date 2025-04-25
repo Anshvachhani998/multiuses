@@ -406,14 +406,14 @@ import re
 import asyncio
 import logging
 
-def gdown_download(url, download_dir, label, queue, client):
+def gdown_download(url, download_dir, filename, queue, client):
     try:
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", f"downloads/{filename}"
         ]
 
         process = subprocess.Popen(
@@ -462,9 +462,7 @@ def gdown_download(url, download_dir, label, queue, client):
         if new_file_name != final_path:
             os.rename(final_path, new_file_name)
             final_path = new_file_name
-
-
-        logging.info(f"File saved at: {final_path}")
+         
         return final_path
 
     except Exception as e:
