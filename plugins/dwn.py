@@ -92,4 +92,5 @@ async def info_handler(client, message):
         await message.reply(f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`", quote=True)
 
     except Exception as e:
+         cwd = os.getcwd()
         await message.reply(f"❌ Error: {e} 📁 Current Dir: `{cwd}`", quote=True)
