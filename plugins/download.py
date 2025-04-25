@@ -341,7 +341,7 @@ async def google_drive(client, chat_id, gdrive_url):
             error_occurred = True
             await client.send_message(
                 LOG_CHANNEL,
-                f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
+                f"❌ Exception in download:\n`{str(e)}`\n\nLink:  {output_filename} {download_url}",
                 disable_web_page_preview=True
             )
             await queue.put({"status": "error", "message": str(e)})
@@ -396,17 +396,12 @@ async def google_drive(client, chat_id, gdrive_url):
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
-        # Extract filename from the URL using gdown to get the original filename
-        filename = gdown.download(url, None, quiet=True).split('/')[-1]
-        file_path = os.path.join(download_dir, filename)
-        
-        # Now use the filename extracted from gdown directly in the download
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", file_path
+            "--output", download_dir
         ]
 
         process = subprocess.Popen(
@@ -417,7 +412,9 @@ def gdown_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
+
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
+
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
@@ -436,12 +433,10 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
+        # Return the most recent downloaded file
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
-        print(final_path)
         return final_path
-
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
-        raise e
