@@ -341,7 +341,7 @@ async def google_drive(client, chat_id, gdrive_url):
             error_occurred = True
             await client.send_message(
                 LOG_CHANNEL,
-                f"❌ Exception in download:\n`{str(e)}`\n\nLink:  {output_filename} {download_url}",
+                f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
                 disable_web_page_preview=True
             )
             await queue.put({"status": "error", "message": str(e)})
@@ -364,7 +364,8 @@ async def google_drive(client, chat_id, gdrive_url):
  
     # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
-        await status_msg.edit_text("📤 **Preparing for upload...**")  
+        await status_msg.edit_text("📤 **Preparing for upload...**")
+        await client.send_message(chat_id, f"{output_filename}")
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
