@@ -427,8 +427,6 @@ def gdown_download(url, download_dir, label, queue, client):
                     queue.put((downloaded, total, label)),
                     client.loop
                 )
-            else:
-                print("No match found in line:", line)
 
         process.wait()
 
