@@ -397,14 +397,15 @@ async def google_drive(client, chat_id, gdrive_url):
 
 
 def gdown_download(url, download_dir, label, queue, client):
-    before_files = set(os.listdir(download_dir))
+    before_files = set(os.listdir(download_dir))  # Get existing files before download
+    
     try:
         cmd = [
             "gdown",
             url,
-            "--fuzzy",
-            "--no-cookies",
-            "--output", os.path.join(download_dir, "")
+            "--fuzzy",  # To handle Google Drive URLs with file IDs
+            "--no-cookies",  # Disable cookies for clean download
+            "--output", os.path.join(download_dir, "")  # Leave the output filename empty for auto handling
         ]
 
         process = subprocess.Popen(
@@ -414,8 +415,8 @@ def gdown_download(url, download_dir, label, queue, client):
             text=True
         )
 
+        # Track the progress of the download
         for line in process.stdout:
-
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
 
             if match:
@@ -429,21 +430,33 @@ def gdown_download(url, download_dir, label, queue, client):
             else:
                 print("No match found in line:", line.strip())
 
-        process.wait()
+        process.wait()  # Wait for the download process to complete
 
+        # Check the files after download
         after_files = set(os.listdir(download_dir))
         new_files = list(after_files - before_files)
 
         if not new_files:
             raise Exception("❌ File not found after download!")
 
-        downloaded_file = os.path.join(download_dir, new_files[0])
+        downloaded_file = os.path.join(download_dir, new_files[0])  # Get the newly downloaded file
 
+        # Check if the downloaded file exists
+        if not os.path.exists(downloaded_file):
+            raise Exception(f"❌ Downloaded file does not exist at {downloaded_file}")
+
+        # Generate a unique name and rename the file
         unique_name = generate_unique_name(new_files[0])
+        
+        # Check if unique_name is valid
+        if not unique_name:
+            raise Exception("❌ Failed to generate a unique name for the file")
+
         final_path = os.path.join(download_dir, unique_name)
         os.rename(downloaded_file, final_path)
 
-        return final_path
+        return final_path  # Return the final path with the unique filename
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
+        return None
