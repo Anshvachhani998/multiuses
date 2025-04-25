@@ -322,11 +322,11 @@ async def google_drive(client, chat_id, gdrive_url):
             if not file_id:
                 raise Exception("Invalid Google Drive URL")
 \
-            download_url_task = await get_confirm_token_download_url(file_id)
+            download_url = f"https://drive.google.com/uc?id={file_id}"
             
             logging.info(download_url)
             final_filenames = await asyncio.to_thread(
-                aria2c_download,
+                gdown_download,
                 download_url,
                 "downloads",
                 caption,
@@ -394,4 +394,49 @@ async def google_drive(client, chat_id, gdrive_url):
         await status_msg.edit_text("❌ **Download Failed!**")
 
 
+
+def gdown_download(url, download_dir, label, queue, client):
+    try:
+        cmd = [
+            "gdown",
+            url,
+            "--fuzzy",
+            "--no-cookies",
+            "--output", download_dir
+        ]
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+
+        for line in process.stdout:
+            print("GDOWN >>", line.strip())
+
+            # 👇 Try to catch progress %
+            match = re.search(r'(\d+)%', line)
+            if match:
+                percent = int(match.group(1))
+                asyncio.run_coroutine_threadsafe(
+                    queue.put((percent, 100, label)),
+                    client.loop
+                )
+
+        process.wait()
+
+        # Check downloaded file
+        files = os.listdir(download_dir)
+        if not files:
+            raise Exception("❌ File not found after gdown!")
+
+        # Return latest downloaded file
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
+        final_path = os.path.join(download_dir, files[0])
+        return final_path
+
+    except Exception as e:
+        print("GDOWN ERROR:", str(e))
+        raise e
 
