@@ -335,7 +335,6 @@ async def google_drive(client, chat_id, gdrive_url):
             )
             output_filename = final_filenames
             caption = os.path.splitext(os.path.basename(output_filename))[0]
-            await client.send_message(chat_id, f"{output_filename}")
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
