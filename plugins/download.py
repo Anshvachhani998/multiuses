@@ -395,7 +395,6 @@ async def google_drive(client, chat_id, gdrive_url):
 
 
 
-
 def gdown_download(url, download_dir, label, queue, client):
     try:
         # Build the gdown command
@@ -419,11 +418,8 @@ def gdown_download(url, download_dir, label, queue, client):
         for line in process.stdout:
             print("GDOWN >>", line.strip())
 
-            # Regex to extract progress percentage, downloaded size, and total size
-            match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]B)/(\d+\.\d+)([KMGT]B)', line)
-            
-            # Update the regex for the output format
-            # New pattern that matches the format like "157M/192M"
+            # Updated regex pattern to capture percentage, downloaded size, and total size
+            # This pattern works with formats like '82%|████████▏ | 157M/192M'
             match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]?)\/(\d+\.\d+)([KMGT]?)', line)
 
             if match:
