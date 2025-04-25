@@ -16,33 +16,6 @@ async def handle_url(client, url, chat_id):
     except Exception as e:
         print(f"❌ Errower: {e}")
 
-@Client.on_message(filters.command("url"))
-async def dwn(client, message):
-    try:
-        if len(message.text.split(' ')) < 2:
-            await message.reply("❌ Please provide a valid URL after the command.")
-            return
-
-        url = message.text.split(' ', 1)[1]
-        chat_id = message.chat.id
-
-        await message.reply("🔄 Processing your link... Please wait.")
-        await handle_url(client, url, chat_id)
-    except Exception as e:
-        await message.reply(f"❌ An error occurred: {str(e)}")
-
-
-
-from pyrogram import Client, filters
-import pickle
-import re
-from googleapiclient.discovery import build
-
-import pickle
-import re
-from googleapiclient.discovery import build
-from pyrogram import Client, filters
-
 # Function to extract file ID from Google Drive link
 def extract_file_id(link):
     patterns = [
@@ -73,26 +46,36 @@ def human_readable_size(size_bytes):
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
 
-# Pyrogram command to handle /gdrive request
-@Client.on_message(filters.command("gdrive") & filters.private)
-async def info_handler(client, message):
-    if len(message.command) < 2:
-        return await message.reply("❗ Usage: `/info <Google Drive Link>`", quote=True)
+@Client.on_message(filters.private & filters.text)
+async def universal_handler(client, message):
+    text = message.text.strip()
 
-    link = message.command[1]
-    file_id = extract_file_id(link)
+    if not text.startswith("http"):
+        return
 
-    if not file_id:
-        return await message.reply("❌ Invalid Google Drive link!", quote=True)
+    chat_id = message.chat.id
 
-    try:
-        # Get file details
-        name, size, mime = get_file_info(file_id)
-        size_str = human_readable_size(size)
-        await message.reply(f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`", quote=True)
+    if "drive.google.com" in text:
+        # Google Drive link detected
+        await message.reply("📥 Google Drive link detected! Fetching file details...")
 
-    except Exception as e:
-        import os  # make sure to import os at the top
-        cwd = os.getcwd()
-        await message.reply(f"❌ Error: {e}\n📁 Current Dir: `{cwd}`", quote=True)
+        # Extract file ID from Google Drive link
+        file_id = extract_file_id(text)
+        
+        if not file_id:
+            return await message.reply("❌ Invalid Google Drive link.", quote=True)
+
+        try:
+            # Fetch file details (name, size, MIME type)
+            name, size, mime = get_file_info(file_id)
+            size_str = human_readable_size(size)
+            info_message = f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+            await message.reply(info_message, quote=True)
+        except Exception as e:
+            await message.reply(f"❌ Error: {e}", quote=True)
+    
+    else:
+        # Handle direct/YouTube links here
+        await message.reply("📥 Downloading via direct/YouTube method...")
+        await aria2c_media(client, chat_id, text)
 
