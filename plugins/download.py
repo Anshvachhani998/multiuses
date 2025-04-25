@@ -435,12 +435,8 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return the most recent downloaded file
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
-        downloaded_file = os.path.join(download_dir, files[0])
-        unique_name = generate_unique_name(new_files[0])
-        final_path = os.path.join(download_dir, unique_name)
-        os.rename(downloaded_file, final_path)
+        final_path = os.path.join(download_dir, files[0])
         logging.info(f"GDOWN name {final_path}")
         return final_path
 
