@@ -472,3 +472,56 @@ def gdown_download(url, download_dir, label, queue, client):
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
+
+
+
+@Client.on_message(filters.command("info"))
+async def info_handler(client, message):
+    if len(message.command) < 2:
+        await message.reply_text("❌ Please provide a Google Drive link.")
+        return
+
+    gdrive_url = message.command[1]
+    result = handle_info_command(gdrive_url)
+    await message.reply_text(result)
+
+
+
+
+import re
+import requests
+import sys
+
+def extract_file_id(url):
+    match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    if match:
+        return match.group(1)
+    match = re.search(r'id=([a-zA-Z0-9_-]+)', url)
+    if match:
+        return match.group(1)
+    return None
+
+def get_gdrive_filename(file_id):
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers, allow_redirects=True)
+
+    content_disposition = response.headers.get("Content-Disposition", "")
+    match = re.search('filename="(.+)"', content_disposition)
+    if match:
+        return match.group(1)
+    return None
+
+def handle_info_command(gdrive_url):
+    file_id = extract_file_id(gdrive_url)
+    if not file_id:
+        return "❌ Invalid Google Drive link."
+    
+    filename = get_gdrive_filename(file_id)
+    if filename:
+        return f"📄 **Filename**: `{filename}`"
+    else:
+        return "❌ File may be private or filename could not be retrieved."
+
+
+
