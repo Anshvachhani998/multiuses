@@ -436,10 +436,11 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return the file that matches the original file name
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
+        print(final_path)
         return final_path
+
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
