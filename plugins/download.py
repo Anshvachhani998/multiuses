@@ -459,8 +459,10 @@ def gdown_download(url, download_dir, label, queue, client):
             new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
             counter += 1
 
+        if new_file_name != final_path:
+            os.rename(final_path, new_file_name)
+            final_path = new_file_name
 
-        final_path = new_file_name
 
         logging.info(f"File saved at: {final_path}")
         return final_path
