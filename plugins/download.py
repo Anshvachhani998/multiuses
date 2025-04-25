@@ -396,6 +396,8 @@ async def google_drive(client, chat_id, gdrive_url):
 
 
 def gdown_download(url, download_dir, label, queue, client):
+    before_files = set(os.listdir(download_dir))
+    logging.info(f"Before download, files in {download_dir}: {before_files}")
     try:
         cmd = [
             "gdown",
