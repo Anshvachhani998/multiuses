@@ -408,12 +408,18 @@ import logging
 
 def gdown_download(url, download_dir, filename, queue, client):
     try:
+        # Ensure the download directory exists
+        os.makedirs(download_dir, exist_ok=True)
+
+        # Build the full path with filename in the download directory
+        final_output_path = os.path.join(download_dir, filename)
+
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", final_output_path
         ]
 
         process = subprocess.Popen(
@@ -438,13 +444,15 @@ def gdown_download(url, download_dir, filename, queue, client):
 
         process.wait()
 
-       files = os.listdir(download_dir)
+        # Ensure the file exists in the download directory
+        files = os.listdir(download_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return the most recent downloaded file
+        # Sort files by the most recent modification time
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
+
         return final_path
 
     except Exception as e:
