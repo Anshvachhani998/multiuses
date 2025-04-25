@@ -45,6 +45,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
                     else:
+                        # Check file extension for different types
                         if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
                             sent_message = await client.send_video(
                                 chat_id=chat_id,
@@ -66,6 +67,27 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 progress=upload_progress,
                                 caption=part_caption,
                                 duration=duration // total_parts if total_parts > 1 else duration,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
+                        elif part_file.endswith('.zip') or part_file.endswith('.rar') or part_file.endswith('.tar'):
+                            sent_message = await client.send_document(
+                                chat_id=chat_id,
+                                document=media_file,
+                                progress=upload_progress,
+                                caption=part_caption,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
+                        else:
+                            # For unsupported file types, handle as document by default
+                            sent_message = await client.send_document(
+                                chat_id=chat_id,
+                                document=media_file,
+                                progress=upload_progress,
+                                caption=part_caption,
                                 disable_notification=True,
                                 thumb=thumbnail_path if thumbnail_path else None,
                                 file_name=os.path.basename(part_file)
@@ -119,6 +141,15 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 audio=file_id,
                                 caption=formatted_caption,
                                 duration=duration // total_parts if total_parts > 1 else duration,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
+                        elif part_file.endswith('.zip') or part_file.endswith('.rar') or part_file.endswith('.tar'):
+                            await client.send_document(
+                                chat_id=DUMP_CHANNEL,
+                                document=file_id,
+                                caption=formatted_caption,
                                 disable_notification=True,
                                 thumb=thumbnail_path if thumbnail_path else None,
                                 file_name=os.path.basename(part_file)
