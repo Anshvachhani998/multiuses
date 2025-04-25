@@ -432,8 +432,9 @@ def gdown_download(url, download_dir, label, queue, client):
         process.wait()
 
         after_files = set(os.listdir(download_dir))
+        
         new_files = list(after_files - before_files)
-        logging.info(f"After download, new files in {download_dir}: {new_files}")
+        logging.info(f"After download, new files in {download_dir}: {new_files}/////// {after_files}")
         
         if not new_files:
             raise Exception("❌ File not found after gdown!")
