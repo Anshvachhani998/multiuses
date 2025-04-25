@@ -50,7 +50,7 @@ def extract_file_id(link):
     return None
 
 def get_file_info(file_id):
-    creds = pickle.load(open("token.pickle", "rb"))
+    creds = pickle.load(open("/root/URL-UPLOADER/plugins/token.pickle", "rb"))
     service = build("drive", "v3", credentials=creds)
     file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
     name = file.get("name")
