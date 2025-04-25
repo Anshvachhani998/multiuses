@@ -415,13 +415,14 @@ def gdown_download(url, download_dir, label, queue, client):
         for line in process.stdout:
             print("GDOWN >>", line.strip())
 
-            # 👇 Try to catch progress % and total size
+            # Regex to extract progress percentage, downloaded size, and total size
             match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]B)/(\d+\.\d+)([KMGT]B)', line)
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(3))
                 total = convert_to_bytes(float(match.group(4)), match.group(5))
-                
-                # 👇 Send progress update to queue
+                logging.info(f'{total} and {downloaded}')
+
+                # Send progress update to queue
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
@@ -442,5 +443,3 @@ def gdown_download(url, download_dir, label, queue, client):
     except Exception as e:
         print("GDOWN ERROR:", str(e))
         raise e
-
-
