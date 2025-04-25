@@ -15,13 +15,6 @@ from pyrogram import Client, filters
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-async def handle_url(client, url, chat_id):
-    try:
-        print(f"🔍 Checking URL: {url}")
-        filename = await google_drive(client, chat_id, url)
-    except Exception as e:
-        print(f"❌ Errower: {e}")
-
 # Function to extract file ID from Google Drive link
 def extract_file_id(link):
     patterns = [
@@ -77,6 +70,10 @@ async def universal_handler(client, message):
             size_str = human_readable_size(size)
             info_message = f"📄 **File Name:** `{name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
+
+            # Pass the actual link (text) to google_drive function
+            await google_drive(client, chat_id, text)  # Correctly passing the URL (text)
+        
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
     
@@ -84,4 +81,3 @@ async def universal_handler(client, message):
         # Handle direct/YouTube links here
         await message.reply("📥 Downloading via direct/YouTube method...")
         await aria2c_media(client, chat_id, text)
-
