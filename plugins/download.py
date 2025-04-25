@@ -488,7 +488,6 @@ async def info_handler(client, message):
 
 
 
-
 import re
 import requests
 import sys
@@ -506,6 +505,10 @@ def get_gdrive_filename(file_id):
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     headers = {'User-Agent': 'Mozilla/5.0'}
     response = requests.get(url, headers=headers, allow_redirects=True)
+
+    # Check for virus warning
+    if "X-Goog-Drive-Download-Warning" in response.headers:
+        return "⚠️ Warning: This file may contain a virus or be potentially harmful."
 
     content_disposition = response.headers.get("Content-Disposition", "")
     match = re.search('filename="(.+)"', content_disposition)
