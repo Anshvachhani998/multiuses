@@ -487,10 +487,8 @@ async def info_handler(client, message):
     await message.reply_text(result)
 
 
-
 import re
-import requests
-import sys
+import gdown
 
 def extract_file_id(url):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
@@ -502,19 +500,21 @@ def extract_file_id(url):
     return None
 
 def get_gdrive_filename(file_id):
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers, allow_redirects=True)
-
-    # Check for virus warning
-    if "X-Goog-Drive-Download-Warning" in response.headers:
-        return "⚠️ Warning: This file may contain a virus or be potentially harmful."
-
-    content_disposition = response.headers.get("Content-Disposition", "")
-    match = re.search('filename="(.+)"', content_disposition)
-    if match:
-        return match.group(1)
-    return None
+    try:
+        # Build the URL to retrieve file metadata
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        # Get the file info without downloading
+        result = gdown.get(url)
+        
+        # If filename is present in the result
+        filename = result.get('filename')
+        if filename:
+            return filename
+        
+        return "❌ Filename could not be retrieved."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 def handle_info_command(gdrive_url):
     file_id = extract_file_id(gdrive_url)
@@ -522,10 +522,5 @@ def handle_info_command(gdrive_url):
         return "❌ Invalid Google Drive link."
     
     filename = get_gdrive_filename(file_id)
-    if filename:
-        return f"📄 **Filename**: `{filename}`"
-    else:
-        return "❌ File may be private or filename could not be retrieved."
-
-
+    return f"📄 **Filename**: `{filename}`"
 
