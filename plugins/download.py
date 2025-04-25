@@ -396,12 +396,17 @@ async def google_drive(client, chat_id, gdrive_url):
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
+        # Extract filename from the URL using gdown to get the original filename
+        filename = gdown.download(url, None, quiet=True).split('/')[-1]
+        file_path = os.path.join(download_dir, filename)
+        
+        # Now use the filename extracted from gdown directly in the download
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", download_dir
+            "--output", file_path
         ]
 
         process = subprocess.Popen(
@@ -412,9 +417,7 @@ def gdown_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
-
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
-
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
@@ -433,7 +436,7 @@ def gdown_download(url, download_dir, label, queue, client):
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return the most recent downloaded file
+        # Return the file that matches the original file name
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         return final_path
