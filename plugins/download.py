@@ -397,6 +397,7 @@ async def google_drive(client, chat_id, gdrive_url):
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
+        # Build the gdown command
         cmd = [
             "gdown",
             url,
@@ -405,6 +406,7 @@ def gdown_download(url, download_dir, label, queue, client):
             "--output", download_dir
         ]
 
+        # Start the process
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -412,13 +414,15 @@ def gdown_download(url, download_dir, label, queue, client):
             text=True
         )
 
+        # Read output line by line
         for line in process.stdout:
             print("GDOWN >>", line.strip())
 
             # Regex to extract progress percentage, downloaded size, and total size
             match = re.search(r'(\d+)%\|.*\| (\d+\.\d+)([KMGT]B)/(\d+\.\d+)([KMGT]B)', line)
-            print(f"Match found: {match.groups()}")
+            
             if match:
+                print(f"Match found: {match.groups()}")
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(3))
                 total = convert_to_bytes(float(match.group(4)), match.group(5))
 
@@ -427,15 +431,18 @@ def gdown_download(url, download_dir, label, queue, client):
                     queue.put((downloaded, total, label)),
                     client.loop
                 )
+            else:
+                print("No match found in line:", line)
 
+        # Wait for process to finish
         process.wait()
 
-        # Check downloaded file
+        # Check downloaded files
         files = os.listdir(download_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        # Return latest downloaded file
+        # Return the most recent file
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         return final_path
