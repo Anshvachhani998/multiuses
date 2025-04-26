@@ -65,7 +65,7 @@ def clean_filename(filename, mime=None):
     name = name.strip('_')
 
     return name + ext
-    
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -121,12 +121,11 @@ async def aria2c_get_info(url):
         raise Exception("No URL provided for fetching file info.")
 
     try:
-        print(f"Fetching file info from URL: {url}")  # Debug: Print the URL being passed
+        logging.info(f"Fetching file info from URL: {url}")
 
-        # Run aria2c with --head to fetch headers (without downloading the file)
         cmd = [
             "aria2c",
-            "--head",  # Just fetch headers
+            "--head",
             url
         ]
 
@@ -137,34 +136,32 @@ async def aria2c_get_info(url):
             text=True
         )
 
-        # Extract file name, size, and MIME type from the headers
+
         stdout, stderr = process.communicate()
 
         if process.returncode != 0:
             raise Exception(f"aria2c error: {stderr}")
 
-        print("aria2c output:\n", stdout)  # Debug: Print aria2c output
+        logging.info("aria2c output:\n", stdout) 
 
         filename = None
         size = None
         mime = None
 
-        # Extract filename from content-disposition header (if available)
         filename_match = re.search(r'filename="([^"]+)"', stdout)
         if filename_match:
             filename = filename_match.group(1)
 
-        # Extract file size from content-length header (if available)
+ 
         size_match = re.search(r'Content-Length:\s*(\d+)', stdout)
         if size_match:
             size = int(size_match.group(1))
 
-        # Extract MIME type (if available)
         mime_match = re.search(r'Content-Type:\s*([^;]+)', stdout)
         if mime_match:
             mime = mime_match.group(1)
 
-        # If filename is not found, default to a generic name
+
         if not filename:
             filename = "downloaded_file"
 
