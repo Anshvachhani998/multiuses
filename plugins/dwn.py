@@ -32,6 +32,9 @@ def extract_file_id(link):
             return match.group(1)
     return None
 
+class DirectDownloadLinkException(Exception):
+    pass
+    
 # Function to get file details from Google Drive using Google API
 def get_file_info(file_id):
     creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
