@@ -115,7 +115,7 @@ async def universal_handler(client, message):
                 info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
                 await message.reply(info_message, quote=True)
 
-                await download_with_ytdlp(client, chat_id, text)
+                await download_video(client, chat_id, text)
 
             else:
                 await message.reply("🔗 Direct link detected! Fetching details...")
@@ -128,7 +128,7 @@ async def universal_handler(client, message):
                 info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
                 await message.reply(info_message, quote=True)
 
-                await download_with_aria2c(client, chat_id, text)
+                await aria2c_media(client, chat_id, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
@@ -189,11 +189,9 @@ async def is_supported_by_ytdlp(url):
             return False
 
     except subprocess.TimeoutExpired:
-        # Timeout aaya, mtlb slow response, to False return karenge
         return False
 
     except Exception:
-        # koi aur error aaye to bhi False
         return False
 
 import yt_dlp
