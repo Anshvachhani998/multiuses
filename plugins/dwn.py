@@ -81,7 +81,7 @@ async def mediafire_download(client, chat_id, link):
         response = requests.get(link, headers=headers)
 
         if response.status_code != 200:
-            return await client.send_message(chat_id, "❌ Error: Failed to access the link.", quote=True)
+            return await client.send_message(chat_id, "❌ Error: Failed to access the link.")
 
         # Parse the HTML content
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -94,10 +94,10 @@ async def mediafire_download(client, chat_id, link):
             file_info_message = f"📥 **File Name:** `{download_link_tag.text.strip()}`\n🔗 **Download Link:** {download_url}"
             await client.send_message(chat_id, file_info_message, quote=True)
         else:
-            await client.send_message(chat_id, "❌ Error: Could not find the download link.", quote=True)
+            await client.send_message(chat_id, "❌ Error: Could not find the download link.")
 
     except Exception as e:
-        await client.send_message(chat_id, f"❌ Error: {e}", quote=True)
+        await client.send_message(chat_id, f"❌ Error: {e}")
 
 
 @Client.on_message(filters.private & filters.text)
@@ -127,7 +127,7 @@ async def universal_handler(client, message):
             await google_drive(client, chat_id, clean_name, text)
 
         except Exception as e:
-            await message.reply(f"❌ Error: {e}", quote=True)
+            await message.reply(f"❌ Error: {e}")
 
     elif "mediafire.com" in text:
         await message.reply("📥 MediaFire link detected! Fetching file details...")
