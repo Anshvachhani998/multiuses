@@ -76,29 +76,37 @@ from bs4 import BeautifulSoup
 
 async def mediafire_download(client, chat_id, link):
     try:
-        # Send the request to the MediaFire link
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-        response = requests.get(link, headers=headers)
-
+        # Request Mediafire page
+        response = requests.get(link, timeout=10)
         if response.status_code != 200:
             return await client.send_message(chat_id, "❌ Error: Failed to access the link.")
 
-        # Parse the HTML content
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Parse HTML
+        soup = BeautifulSoup(response.text, "html.parser")
+        download_link = soup.find("a", {"id": "downloadButton"})
 
-        # Find the direct download link from the page (this might change based on MediaFire's page structure)
-        download_link_tag = soup.find('a', {'id': 'downloadButton'})
+        if not download_link:
+            return await client.send_message(chat_id, "❌ Error: Unable to find download link.")
 
-        if download_link_tag and 'href' in download_link_tag.attrs:
-            download_url = download_link_tag.attrs['href']
-            file_info_message = f"📥 **File Name:** `{download_link_tag.text.strip()}`\n🔗 **Download Link:** {download_url}"
-            await client.send_message(chat_id, file_info_message, quote=True)
-        else:
-            await client.send_message(chat_id, "❌ Error: Could not find the download link.")
+        final_url = download_link.get("href")
+        file_name = download_link.text.strip()
+
+        if not final_url:
+            return await client.send_message(chat_id, "❌ Error: Unable to fetch direct link.")
+
+        # (Optional) Get file size
+        head = requests.head(final_url)
+        file_size = int(head.headers.get('content-length', 0))
+        size_str = human_readable_size(file_size)
+
+        info_message = f"📄 **File Name:** `{file_name}`\n📦 **Size:** `{size_str}`"
+        await client.send_message(chat_id, info_message)
+
+        # Send the direct download link
+        await client.send_message(chat_id, f"🔗 [Download here]({final_url})")
 
     except Exception as e:
         await client.send_message(chat_id, f"❌ Error: {e}")
-
 
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
