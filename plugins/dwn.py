@@ -47,14 +47,26 @@ def human_readable_size(size_bytes):
 
 import re
 
-# Function to clean the filename (remove unwanted characters)
-def clean_filename(filename):
-    # Replace spaces with underscores and remove special characters
-    filename = re.sub(r'[^\w\s-]', '', filename)  # Remove special characters
-    filename = re.sub(r'[-\s]+', '_', filename)   # Replace spaces and hyphens with underscores
-    filename = filename.strip('_')  # Remove leading/trailing underscores
-    return filename
+import mimetypes
 
+def clean_filename(filename, mime=None):
+    name, ext = os.path.splitext(filename)
+
+    # Try guessing extension from MIME type
+    if not ext or ext == '':
+        if mime:
+            guessed_ext = mimetypes.guess_extension(mime)
+            ext = guessed_ext if guessed_ext else '.mkv'
+        else:
+            ext = '.mkv'  # fallback if mime is missing
+
+    # Clean the name
+    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r'[-\s]+', '_', name)
+    name = name.strip('_')
+
+    return name + ext
+    
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -78,7 +90,7 @@ async def universal_handler(client, message):
             # Fetch file details (name, size, MIME type)
             name, size, mime = get_file_info(file_id)
             size_str = human_readable_size(size)
-            clean_name = clean_filename(name)  # Clean the filename
+            clean_name = clean_filename(name, mime)  # Clean the filename
 
             info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`/// clean name {clean_name}"
             await message.reply(info_message, quote=True)
