@@ -118,57 +118,33 @@ async def universal_handler(client, message):
 
 import subprocess
 import re
+import aiohttp
 
-async def aria2c_get_info(url):
-    url = url.strip().replace('\r', '').replace('\n', '')
-    if not url:
-        raise Exception("No URL provided for fetching file info.")
-
+async def get_file_info(url):
     try:
-        logging.info(f"Fetching file info from URL: {url}")
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, allow_redirects=True) as response:
+                if response.status != 200:
+                    raise Exception(f"Failed to fetch file info. Status code: {response.status}")
 
-        cmd = [
-            "aria2c",
-            "--head",
-            "--follow-redirect=true",
-            url
-        ]
+                headers = response.headers
 
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+                filename = None
+                if 'Content-Disposition' in headers:
+                    dispo = headers['Content-Disposition']
+                    filename_match = re.search(r'filename="?([^"]+)"?', dispo)
+                    if filename_match:
+                        filename = filename_match.group(1)
 
-        stdout, stderr = process.communicate()
+                size = int(headers.get('Content-Length', 0))
+                mime = headers.get('Content-Type', None)
 
-        if process.returncode != 0:
-            raise Exception(f"aria2c error: {stderr}")
+                if not filename:
+                    filename = "downloaded_file"
 
-        logging.info(f"aria2c output:\n{stdout}") 
-
-        filename = None
-        size = None
-        mime = None
-
-        filename_match = re.search(r'filename="([^"]+)"', stdout)
-        if filename_match:
-            filename = filename_match.group(1)
-
-        size_match = re.search(r'Content-Length:\s*(\d+)', stdout)
-        if size_match:
-            size = int(size_match.group(1))
-
-        mime_match = re.search(r'Content-Type:\s*([^;]+)', stdout)
-        if mime_match:
-            mime = mime_match.group(1)
-
-        if not filename:
-            filename = "downloaded_file"
-
-        return filename, size, mime
+                return filename, size, mime
 
     except Exception as e:
         raise Exception(f"Error fetching file info: {str(e)}")
+
 
