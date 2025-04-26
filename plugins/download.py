@@ -301,7 +301,7 @@ async def google_drive(client, chat_id, filename, gdrive_url):
 
     queue = asyncio.Queue()
     output_filename = None
-    caption = "Downloaded via gdRIVE"
+    caption = "Downloading"
     duration = 0
     width, height = 640, 360
     thumbnail_path = None
@@ -330,6 +330,7 @@ async def google_drive(client, chat_id, filename, gdrive_url):
                 gdown_download,
                 download_url,
                 "downloads",
+                filename,
                 caption,
                 queue,
                 client
@@ -406,7 +407,7 @@ import re
 import asyncio
 import logging
 
-def gdown_download(url, download_dir, filename, queue, client):
+def gdown_download(url, download_dir, filename, label, queue, client):
     try:
         os.makedirs(download_dir, exist_ok=True)
         path = os.path.join(download_dir, filename)
@@ -434,7 +435,7 @@ def gdown_download(url, download_dir, filename, queue, client):
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
 
                 asyncio.run_coroutine_threadsafe(
-                    queue.put((downloaded, total, filename)),
+                    queue.put((downloaded, total, label)),
                     client.loop
                 )
             else:
