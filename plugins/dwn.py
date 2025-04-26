@@ -74,7 +74,7 @@ def clean_filename(filename, mime=None):
 import requests
 from bs4 import BeautifulSoup
 
-from requests_html import create_scraper
+import cloudscraper
 from urllib.parse import urlparse
 import re
 
@@ -93,47 +93,48 @@ def mediafire(url, session=None):
 
     def _repair_download(url, session):
         try:
-            html = HTML(session.get(url).text)
-            if new_link := html.xpath('//a[@id="continue-btn"]/@href'):
+            html = session.get(url).text
+            # Using lxml or another method for parsing HTML
+            if new_link := re.findall(r'href="(https://mediafire.com/.*)"', html):
                 return mediafire(f"https://mediafire.com/{new_link[0]}")
         except Exception as e:
             raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
 
     if session is None:
-        session = create_scraper()  # Using create_scraper here
+        session = cloudscraper.create_scraper()  # Use cloudscraper here
         parsed_url = urlparse(url)
         url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
 
     try:
-        html = HTML(session.get(url).text)
+        html = session.get(url).text
     except Exception as e:
         session.close()
         raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
 
-    if error := html.xpath('//p[@class="notranslate"]/text()'):
+    if error := re.findall(r'<p class="notranslate">(.+)</p>', html):
         session.close()
         raise DirectDownloadLinkException(f"ERROR: {error[0]}")
 
-    if html.xpath("//div[@class='passwordPrompt']"):
+    if re.search(r'//div[@class="passwordPrompt"]', html):
         if not _password:
             session.close()
             raise DirectDownloadLinkException(f"ERROR: Password is required.")
         try:
-            html = HTML(session.post(url, data={"downloadp": _password}).text)
+            html = session.post(url, data={"downloadp": _password}).text
         except Exception as e:
             session.close()
             raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
-        if html.xpath("//div[@class='passwordPrompt']"):
+        if re.search(r'//div[@class="passwordPrompt"]', html):
             session.close()
             raise DirectDownloadLinkException("ERROR: Wrong password.")
 
-    if not (final_link := html.xpath('//a[@aria-label="Download file"]/@href')):
-        if repair_link := html.xpath("//a[@class='retry']/@href"):
+    if not (final_link := re.findall(r'href="(//.*?downloadfile.*?)"', html)):
+        if repair_link := re.findall(r'<a class="retry" href="(.*?)">', html):
             return _repair_download(repair_link[0], session)
         raise DirectDownloadLinkException("ERROR: No links found in this page. Try again.")
 
     if final_link[0].startswith("//"):
-        final_url = f"https://{final_link[0][2:]}"
+        final_url = f"https:{final_link[0]}"
         if _password:
             final_url += f"::{_password}"
         return mediafire(final_url, session)
