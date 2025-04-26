@@ -77,11 +77,10 @@ def clean_filename(filename, mime=None):
 import requests
 from bs4 import BeautifulSoup
 
-import cloudscraper
 from urllib.parse import urlparse
 import re
 
-import cloudscraper import create_scraper
+from cloudscraper import create_scraper
 from re import findall
 
 class DDLException(Exception):
