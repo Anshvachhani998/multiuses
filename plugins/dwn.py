@@ -125,42 +125,45 @@ import asyncio
 import re
 
 async def get_file_info(url):
+    timeout = aiohttp.ClientTimeout(total=10)  # 10 seconds timeout
+
     try:
-        # Define a timeout for the request
-        timeout = aiohttp.ClientTimeout(total=10)  # Set a timeout of 10 seconds
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            try:
+                async with session.head(url, allow_redirects=True) as response:
+                    if response.status != 200:
+                        raise Exception(f"Failed to fetch file info. Status code: {response.status}")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url, allow_redirects=True, timeout=timeout) as response:
-                if response.status != 200:
-                    raise Exception(f"Failed to fetch file info. Status code: {response.status}")
+                    headers = response.headers
 
-                headers = response.headers
+                    filename = None
+                    size = 0
+                    mime = None
 
-                filename = None
-                size = 0
-                mime = None
+                    if 'Content-Disposition' in headers:
+                        dispo = headers['Content-Disposition']
+                        filename_match = re.search(r'filename="?([^"]+)"?', dispo)
+                        if filename_match:
+                            filename = filename_match.group(1)
 
-                # Check for Content-Disposition to get filename
-                if 'Content-Disposition' in headers:
-                    dispo = headers['Content-Disposition']
-                    filename_match = re.search(r'filename="?([^"]+)"?', dispo)
-                    if filename_match:
-                        filename = filename_match.group(1)
+                    size = int(headers.get('Content-Length', 0))
+                    mime = headers.get('Content-Type', None)
 
-                # Get the content length (size)
-                size = int(headers.get('Content-Length', 0))
-                mime = headers.get('Content-Type', None)
+                    if not filename:
+                        filename = "unknown"
 
-                # If no filename found in Content-Disposition, set it to 'unknown'
-                if not filename:
-                    filename = "unknown"
+                    if size == 0 or not mime:
+                        filename = "unknown"
 
-                # If size is zero or mime type is not valid, treat it as unknown
-                if size == 0 or not mime:
-                    filename = "unknown"
+                    return filename, size, mime
 
-                return filename, size, mime
+            except asyncio.TimeoutError:
+                # Timeout aaya, to assume URL is live but slow, so return unknown info
+                return "unknown", 0, None
 
+    except Exception as e:
+        # Baaki koi bhi error aaye to raise karo
+        raise Exception(str(e))
     except asyncio.TimeoutError:
         raise Exception("❌ Error: Timeout exceeded while fetching file info.")
     except Exception as e:
