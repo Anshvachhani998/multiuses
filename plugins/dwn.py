@@ -71,30 +71,34 @@ def clean_filename(filename, mime=None):
 
     return name + ext
 
-from mediafire import MediaFireApi
-from mediafire.models import File
-from yt_dlp import YoutubeDL
+import requests
+from bs4 import BeautifulSoup
 
 async def mediafire_download(client, chat_id, link):
     try:
-        api = MediaFireApi()
-        file_info = api.get_file_info(link)
-        
-        if not file_info:
-            return await client.send_message(chat_id, "❌ Invalid MediaFire link.", quote=True)
+        # Send the request to the MediaFire link
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
+        response = requests.get(link, headers=headers)
 
-        file_name = file_info['name']
-        file_size = human_readable_size(file_info['size'])
-        file_url = file_info['download_url']
+        if response.status_code != 200:
+            return await client.send_message(chat_id, "❌ Error: Failed to access the link.", quote=True)
 
-        info_message = f"📄 **File Name:** `{file_name}`\n📦 **Size:** `{file_size}`"
-        await client.send_message(chat_id, info_message, quote=True)
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Send the direct download link
-        await client.send_message(chat_id, f"🔗 [Download here]({file_url})", quote=True)
+        # Find the direct download link from the page (this might change based on MediaFire's page structure)
+        download_link_tag = soup.find('a', {'id': 'downloadButton'})
+
+        if download_link_tag and 'href' in download_link_tag.attrs:
+            download_url = download_link_tag.attrs['href']
+            file_info_message = f"📥 **File Name:** `{download_link_tag.text.strip()}`\n🔗 **Download Link:** {download_url}"
+            await client.send_message(chat_id, file_info_message, quote=True)
+        else:
+            await client.send_message(chat_id, "❌ Error: Could not find the download link.", quote=True)
 
     except Exception as e:
         await client.send_message(chat_id, f"❌ Error: {e}", quote=True)
+
 
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
@@ -153,6 +157,7 @@ async def universal_handler(client, message):
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
+
 
 
 import subprocess
