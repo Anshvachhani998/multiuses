@@ -74,12 +74,7 @@ def clean_filename(filename, mime=None):
 import requests
 from bs4 import BeautifulSoup
 
-from cloudscraper import create_scraper
-from lxml import html as HTML
-from urllib.parse import urlparse
-import re
-
-from requests_html import HTMLSession
+from requests_html import create_scraper
 from urllib.parse import urlparse
 import re
 
@@ -105,7 +100,7 @@ def mediafire(url, session=None):
             raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
 
     if session is None:
-        session = HTMLSession()
+        session = create_scraper()  # Using create_scraper here
         parsed_url = urlparse(url)
         url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
 
@@ -219,7 +214,6 @@ async def universal_handler(client, message):
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}")
-
 
 import subprocess
 import re
