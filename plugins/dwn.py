@@ -80,7 +80,7 @@ async def universal_handler(client, message):
             size_str = human_readable_size(size)
             clean_name = clean_filename(name)  # Clean the filename
 
-            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`/// clean name {clean_name}"
             await message.reply(info_message, quote=True)
 
             # Pass the cleaned filename along with the link to the google_drive function
