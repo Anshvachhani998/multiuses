@@ -81,82 +81,50 @@ import cloudscraper
 from urllib.parse import urlparse
 import re
 
-# Function to get the mediafire direct download link
-def mediafire(url, session=None):
-    if "/folder/" in url:
-        return mediafireFolder(url)
-    if "::" in url:
-        _password = url.split("::")[-1]
-        url = url.split("::")[-2]
-    else:
-        _password = ""
-        
-    if final_link := re.findall(r"https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+", url):
+import cloudscraper import create_scraper
+from re import findall
+
+class DDLException(Exception):
+    pass
+
+# Function to get the MediaFire direct download link
+async def mediafire(url: str):
+    # First, check if the URL directly contains a download link
+    if final_link := findall(r"https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+", url):
         return final_link[0]
 
-    def _repair_download(url, session):
-        try:
-            html = session.get(url).text
-            # Using lxml or another method for parsing HTML
-            if new_link := re.findall(r'href="(https://mediafire.com/.*)"', html):
-                return mediafire(f"https://mediafire.com/{new_link[0]}")
-        except Exception as e:
-            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
-
-    if session is None:
-        session = cloudscraper.create_scraper()  # Use cloudscraper here
-        parsed_url = urlparse(url)
-        url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
-
+    # Initialize the scraper
+    cget = create_scraper().request
     try:
-        html = session.get(url).text
+        # Scrape the page
+        url = cget("get", url).url  # Follow redirects to the final URL
+        page = cget("get", url).text  # Get the HTML content of the page
     except Exception as e:
-        session.close()
-        raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
+        raise DDLException(f"Error occurred: {str(e)}")
 
-    if error := re.findall(r'<p class="notranslate">(.+)</p>', html):
-        session.close()
-        raise DirectDownloadLinkException(f"ERROR: {error[0]}")
+    # Try to extract the download link from the page
+    if final_link := findall(r"\'(https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+)\'", page):
+        return final_link[0]
+    
+    # If no direct link, look for a fallback pattern
+    elif temp_link := findall(r'\/\/(www\.mediafire\.com\/file\/\S+\/\S+\/file\?\S+)', page):
+        # Recurse with the new URL
+        return await mediafire("https://" + temp_link[0].strip('"'))
+    
+    else:
+        # If no link found, raise an exception
+        raise DDLException("No download links found on this page")
 
-    if re.search(r'//div[@class="passwordPrompt"]', html):
-        if not _password:
-            session.close()
-            raise DirectDownloadLinkException(f"ERROR: Password is required.")
-        try:
-            html = session.post(url, data={"downloadp": _password}).text
-        except Exception as e:
-            session.close()
-            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
-        if re.search(r'//div[@class="passwordPrompt"]', html):
-            session.close()
-            raise DirectDownloadLinkException("ERROR: Wrong password.")
-
-    if not (final_link := re.findall(r'href="(//.*?downloadfile.*?)"', html)):
-        if repair_link := re.findall(r'<a class="retry" href="(.*?)">', html):
-            return _repair_download(repair_link[0], session)
-        raise DirectDownloadLinkException("ERROR: No links found in this page. Try again.")
-
-    if final_link[0].startswith("//"):
-        final_url = f"https:{final_link[0]}"
-        if _password:
-            final_url += f"::{_password}"
-        return mediafire(final_url, session)
-
-    session.close()
-    return final_link[0]
-
-# Helper function for MediaFire downloading within your bot
 async def mediafire_download(client, chat_id, url):
     try:
-        # Try to get the MediaFire download link using the mediafire function
-        download_link = mediafire(url)
+        # Try to get the direct MediaFire download link
+        download_link = await mediafire(url)
 
-        # Send the file download details
-        file_name = download_link.split('/')[-1]  # Extract the file name
-        info_message = f"📄 **File Name:** `{file_name}`\n🔗 [Download here]({download_link})"
+
+        info_message = f"📄 **File Name:** ``\n🔗 [Download here]({download_link})"
         await client.send_message(chat_id, info_message)
 
-    except DirectDownloadLinkException as e:
+    except DDLException as e:
         await client.send_message(chat_id, f"❌ Error: {str(e)}")
     except Exception as e:
         await client.send_message(chat_id, f"❌ Error: {str(e)}")
