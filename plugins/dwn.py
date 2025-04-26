@@ -101,20 +101,38 @@ async def universal_handler(client, message):
             await message.reply(f"❌ Error: {e}", quote=True)
 
     else:
-        await message.reply("📥 Fetching file info for direct/YouTube link...")
+        await message.reply("📥 Checking link type...")
 
         try:
-            # Fetch info using aria2c
-            name, size, mime = await get_file_info(text)
-            size_str = human_readable_size(size)
-            clean_name = clean_filename(name, mime)
+            if await is_supported_by_ytdlp(text):
+                await message.reply("🔗 Supported by yt-dlp! Fetching details...")
 
-            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
-            await message.reply(info_message, quote=True)
-            await download_video(client, chat_id, text)
+                # fetch info using yt-dlp (simulate)
+                name, size, mime = await get_ytdlp_info(text)
+                size_str = human_readable_size(size)
+                clean_name = clean_filename(name, mime)
+
+                info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+                await message.reply(info_message, quote=True)
+
+                await download_with_ytdlp(client, chat_id, text)
+
+            else:
+                await message.reply("🔗 Direct link detected! Fetching details...")
+
+                # fetch info using aria2c
+                name, size, mime = await get_file_info(text)
+                size_str = human_readable_size(size)
+                clean_name = clean_filename(name, mime)
+
+                info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+                await message.reply(info_message, quote=True)
+
+                await download_with_aria2c(client, chat_id, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
+
 
 
 import subprocess
@@ -156,4 +174,43 @@ async def get_file_info(url):
         raise Exception("❌ Error: Timeout exceeded while fetching file info.")
     except Exception as e:
         raise Exception(f"❌ Error: {str(e)}")
+
+import subprocess
+
+async def is_supported_by_ytdlp(url):
+    try:
+        cmd = ["yt-dlp", "--quiet", "--simulate", url]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+
+        # Agar return code 0 hai, mtlb yt-dlp ne support kar diya link ko
+        if result.returncode == 0:
+            return True
+        else:
+            return False
+
+    except subprocess.TimeoutExpired:
+        # Timeout aaya, mtlb slow response, to False return karenge
+        return False
+
+    except Exception:
+        # koi aur error aaye to bhi False
+        return False
+
+import yt_dlp
+
+async def get_ytdlp_info(url):
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'noplaylist': True,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        title = info.get('title', 'unknown_file')
+        filesize = info.get('filesize') or info.get('filesize_approx') or 0
+        ext = info.get('ext', 'mp4')
+        mime = f"video/{ext}"
+
+    return title, filesize, mime
 
