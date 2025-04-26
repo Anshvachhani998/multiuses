@@ -10,6 +10,11 @@ import pickle
 import re
 from googleapiclient.discovery import build
 from pyrogram import Client, filters
+import logging
+
+# Configure Logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 DOWNLOAD_DIR = "downloads"
