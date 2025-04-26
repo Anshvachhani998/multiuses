@@ -120,7 +120,7 @@ async def universal_handler(client, message):
                 await message.reply("🔗 Direct link detected! Fetching details...")
 
     
-                await aria2c_media(client, chat_id, text)
+                await download_video(client, chat_id, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
