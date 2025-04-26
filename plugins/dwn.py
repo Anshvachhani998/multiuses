@@ -122,6 +122,7 @@ import subprocess
 import re
 
 async def aria2c_get_info(url):
+    url = url.strip().replace('\r', '').replace('\n', '')
     if not url:
         raise Exception("No URL provided for fetching file info.")
 
