@@ -79,43 +79,90 @@ from lxml import html as HTML
 from urllib.parse import urlparse
 import re
 
-# 👇 Helper function for mediafire downloading
-async def mediafire_download(client, chat_id, url):
-    try:
-        session = create_scraper()
+from requests_html import HTMLSession
+from urllib.parse import urlparse
+import re
+
+# Function to get the mediafire direct download link
+def mediafire(url, session=None):
+    if "/folder/" in url:
+        return mediafireFolder(url)
+    if "::" in url:
+        _password = url.split("::")[-1]
+        url = url.split("::")[-2]
+    else:
+        _password = ""
+        
+    if final_link := re.findall(r"https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+", url):
+        return final_link[0]
+
+    def _repair_download(url, session):
+        try:
+            html = HTML(session.get(url).text)
+            if new_link := html.xpath('//a[@id="continue-btn"]/@href'):
+                return mediafire(f"https://mediafire.com/{new_link[0]}")
+        except Exception as e:
+            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
+
+    if session is None:
+        session = HTMLSession()
         parsed_url = urlparse(url)
         url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
 
-        page = session.get(url)
-        tree = HTML.fromstring(page.text)
+    try:
+        html = HTML(session.get(url).text)
+    except Exception as e:
+        session.close()
+        raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
 
-        # Check for error page
-        error = tree.xpath('//p[@class="notranslate"]/text()')
-        if error:
-            return await client.send_message(chat_id, f"❌ Error: {error[0]}")
+    if error := html.xpath('//p[@class="notranslate"]/text()'):
+        session.close()
+        raise DirectDownloadLinkException(f"ERROR: {error[0]}")
 
-        # Find download link
-        link = tree.xpath('//a[@aria-label="Download file"]/@href')
-        if not link:
-            retry_link = tree.xpath("//a[@class='retry']/@href")
-            if retry_link:
-                page = session.get(retry_link[0])
-                tree = HTML.fromstring(page.text)
-                link = tree.xpath('//a[@aria-label="Download file"]/@href')
-            if not link:
-                return await client.send_message(chat_id, "❌ Error: No download link found!")
+    if html.xpath("//div[@class='passwordPrompt']"):
+        if not _password:
+            session.close()
+            raise DirectDownloadLinkException(f"ERROR: Password is required.")
+        try:
+            html = HTML(session.post(url, data={"downloadp": _password}).text)
+        except Exception as e:
+            session.close()
+            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
+        if html.xpath("//div[@class='passwordPrompt']"):
+            session.close()
+            raise DirectDownloadLinkException("ERROR: Wrong password.")
 
-        final_link = link[0]
+    if not (final_link := html.xpath('//a[@aria-label="Download file"]/@href')):
+        if repair_link := html.xpath("//a[@class='retry']/@href"):
+            return _repair_download(repair_link[0], session)
+        raise DirectDownloadLinkException("ERROR: No links found in this page. Try again.")
 
-        # Extract filename and size (optional: rough idea)
-        file_name = final_link.split('/')[-1]
-        info_message = f"📄 **File Name:** `{file_name}`\n🔗 [Download here]({final_link})"
+    if final_link[0].startswith("//"):
+        final_url = f"https://{final_link[0][2:]}"
+        if _password:
+            final_url += f"::{_password}"
+        return mediafire(final_url, session)
+
+    session.close()
+    return final_link[0]
+
+# Helper function for MediaFire downloading within your bot
+async def mediafire_download(client, chat_id, url):
+    try:
+        # Try to get the MediaFire download link using the mediafire function
+        download_link = mediafire(url)
+
+        # Send the file download details
+        file_name = download_link.split('/')[-1]  # Extract the file name
+        info_message = f"📄 **File Name:** `{file_name}`\n🔗 [Download here]({download_link})"
         await client.send_message(chat_id, info_message)
 
+    except DirectDownloadLinkException as e:
+        await client.send_message(chat_id, f"❌ Error: {str(e)}")
     except Exception as e:
-        await client.send_message(chat_id, f"❌ Error: {e}")
+        await client.send_message(chat_id, f"❌ Error: {str(e)}")
 
-# 👇 Your main handler
+# Main message handler for MediaFire links in the universal handler
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
