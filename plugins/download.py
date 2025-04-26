@@ -413,7 +413,7 @@ def gdown_download(url, download_dir, filename, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", f"downloads/{filename}"
+            "--output", os.path.join(download_dir, filename)
         ]
 
         process = subprocess.Popen(
