@@ -76,6 +76,7 @@ async def universal_handler(client, message):
     chat_id = message.chat.id
 
     if "drive.google.com" in text:
+        # Google Drive link detected
         await message.reply("📥 Google Drive link detected! Fetching file details...")
 
         file_id = extract_file_id(text)
@@ -96,11 +97,12 @@ async def universal_handler(client, message):
             await message.reply(f"❌ Error: {e}", quote=True)
 
     else:
+        # Fetching file info for direct/YouTube link
         await message.reply("📥 Fetching file info for direct/YouTube link...")
 
         try:
-            # Example: create this function based on your `aria2c` setup
-            name, size, mime = await aria2c_get_info(text)  # You need to define this
+            # Fetch info using aria2c
+            name, size, mime = await aria2c_get_info(text)
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -112,10 +114,14 @@ async def universal_handler(client, message):
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
 
+
 import subprocess
 import re
 
 async def aria2c_get_info(url):
+    if not url:
+        raise Exception("No URL provided for fetching file info.")
+
     try:
         # Run aria2c with --head to fetch headers (without downloading the file)
         cmd = [
@@ -165,4 +171,3 @@ async def aria2c_get_info(url):
 
     except Exception as e:
         raise Exception(f"Error fetching file info: {str(e)}")
-
