@@ -141,13 +141,12 @@ async def aria2c_get_info(url):
             text=True
         )
 
-
         stdout, stderr = process.communicate()
 
         if process.returncode != 0:
             raise Exception(f"aria2c error: {stderr}")
 
-        logging.info("aria2c output:\n", stdout) 
+        logging.info(f"aria2c output:\n{stdout}")  # ✅ Corrected logging
 
         filename = None
         size = None
@@ -157,7 +156,6 @@ async def aria2c_get_info(url):
         if filename_match:
             filename = filename_match.group(1)
 
- 
         size_match = re.search(r'Content-Length:\s*(\d+)', stdout)
         if size_match:
             size = int(size_match.group(1))
@@ -166,14 +164,8 @@ async def aria2c_get_info(url):
         if mime_match:
             mime = mime_match.group(1)
 
-
         if not filename:
             filename = "downloaded_file"
-
-        return filename, size, mime
-
-    except Exception as e:
-        raise Exception(f"Error fetching file info: {str(e)}")
 
         return filename, size, mime
 
