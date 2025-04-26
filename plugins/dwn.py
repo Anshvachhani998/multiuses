@@ -71,6 +71,31 @@ def clean_filename(filename, mime=None):
 
     return name + ext
 
+from mediafire import MediaFireApi
+from mediafire.models import File
+from yt_dlp import YoutubeDL
+
+async def mediafire_download(client, chat_id, link):
+    try:
+        api = MediaFireApi()
+        file_info = api.get_file_info(link)
+        
+        if not file_info:
+            return await client.send_message(chat_id, "❌ Invalid MediaFire link.", quote=True)
+
+        file_name = file_info['name']
+        file_size = human_readable_size(file_info['size'])
+        file_url = file_info['download_url']
+
+        info_message = f"📄 **File Name:** `{file_name}`\n📦 **Size:** `{file_size}`"
+        await client.send_message(chat_id, info_message, quote=True)
+
+        # Send the direct download link
+        await client.send_message(chat_id, f"🔗 [Download here]({file_url})", quote=True)
+
+    except Exception as e:
+        await client.send_message(chat_id, f"❌ Error: {e}", quote=True)
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -100,6 +125,11 @@ async def universal_handler(client, message):
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
 
+    elif "mediafire.com" in text:
+        await message.reply("📥 MediaFire link detected! Fetching file details...")
+
+        await mediafire_download(client, chat_id, text)
+
     else:
         await message.reply("📥 Checking link type...")
 
@@ -119,7 +149,6 @@ async def universal_handler(client, message):
             else:
                 await message.reply("🔗 Direct link detected! Fetching details...")
 
-    
                 await download_video(client, chat_id, text)
 
         except Exception as e:
