@@ -132,6 +132,7 @@ async def aria2c_get_info(url):
         cmd = [
             "aria2c",
             "--head",
+            "--follow-redirect=true",
             url
         ]
 
@@ -147,7 +148,7 @@ async def aria2c_get_info(url):
         if process.returncode != 0:
             raise Exception(f"aria2c error: {stderr}")
 
-        logging.info(f"aria2c output:\n{stdout}")  # ✅ Corrected logging
+        logging.info(f"aria2c output:\n{stdout}") 
 
         filename = None
         size = None
@@ -172,3 +173,4 @@ async def aria2c_get_info(url):
 
     except Exception as e:
         raise Exception(f"Error fetching file info: {str(e)}")
+
