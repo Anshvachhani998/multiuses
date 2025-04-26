@@ -74,40 +74,48 @@ def clean_filename(filename, mime=None):
 import requests
 from bs4 import BeautifulSoup
 
-async def mediafire_download(client, chat_id, link):
+from cloudscraper import create_scraper
+from lxml import html as HTML
+from urllib.parse import urlparse
+import re
+
+# 👇 Helper function for mediafire downloading
+async def mediafire_download(client, chat_id, url):
     try:
-        # Request Mediafire page
-        response = requests.get(link, timeout=10)
-        if response.status_code != 200:
-            return await client.send_message(chat_id, "❌ Error: Failed to access the link.")
+        session = create_scraper()
+        parsed_url = urlparse(url)
+        url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
 
-        # Parse HTML
-        soup = BeautifulSoup(response.text, "html.parser")
-        download_link = soup.find("a", {"id": "downloadButton"})
+        page = session.get(url)
+        tree = HTML.fromstring(page.text)
 
-        if not download_link:
-            return await client.send_message(chat_id, "❌ Error: Unable to find download link.")
+        # Check for error page
+        error = tree.xpath('//p[@class="notranslate"]/text()')
+        if error:
+            return await client.send_message(chat_id, f"❌ Error: {error[0]}")
 
-        final_url = download_link.get("href")
-        file_name = download_link.text.strip()
+        # Find download link
+        link = tree.xpath('//a[@aria-label="Download file"]/@href')
+        if not link:
+            retry_link = tree.xpath("//a[@class='retry']/@href")
+            if retry_link:
+                page = session.get(retry_link[0])
+                tree = HTML.fromstring(page.text)
+                link = tree.xpath('//a[@aria-label="Download file"]/@href')
+            if not link:
+                return await client.send_message(chat_id, "❌ Error: No download link found!")
 
-        if not final_url:
-            return await client.send_message(chat_id, "❌ Error: Unable to fetch direct link.")
+        final_link = link[0]
 
-        # (Optional) Get file size
-        head = requests.head(final_url)
-        file_size = int(head.headers.get('content-length', 0))
-        size_str = human_readable_size(file_size)
-
-        info_message = f"📄 **File Name:** `{file_name}`\n📦 **Size:** `{size_str}`"
+        # Extract filename and size (optional: rough idea)
+        file_name = final_link.split('/')[-1]
+        info_message = f"📄 **File Name:** `{file_name}`\n🔗 [Download here]({final_link})"
         await client.send_message(chat_id, info_message)
-
-        # Send the direct download link
-        await client.send_message(chat_id, f"🔗 [Download here]({final_url})")
 
     except Exception as e:
         await client.send_message(chat_id, f"❌ Error: {e}")
 
+# 👇 Your main handler
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -122,7 +130,7 @@ async def universal_handler(client, message):
 
         file_id = extract_file_id(text)
         if not file_id:
-            return await message.reply("❌ Invalid Google Drive link.", quote=True)
+            return await message.reply("❌ Invalid Google Drive link.")
 
         try:
             name, size, mime = get_file_info(file_id)
@@ -130,7 +138,7 @@ async def universal_handler(client, message):
             clean_name = clean_filename(name, mime)
 
             info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
-            await message.reply(info_message, quote=True)
+            await message.reply(info_message)
 
             await google_drive(client, chat_id, clean_name, text)
 
@@ -139,7 +147,6 @@ async def universal_handler(client, message):
 
     elif "mediafire.com" in text:
         await message.reply("📥 MediaFire link detected! Fetching file details...")
-
         await mediafire_download(client, chat_id, text)
 
     else:
@@ -154,7 +161,7 @@ async def universal_handler(client, message):
                 clean_name = clean_filename(name, mime)
 
                 info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
-                await message.reply(info_message, quote=True)
+                await message.reply(info_message)
 
                 await download_video(client, chat_id, text)
 
@@ -164,8 +171,7 @@ async def universal_handler(client, message):
                 await download_video(client, chat_id, text)
 
         except Exception as e:
-            await message.reply(f"❌ Error: {e}", quote=True)
-
+            await message.reply(f"❌ Error: {e}")
 
 
 import subprocess
