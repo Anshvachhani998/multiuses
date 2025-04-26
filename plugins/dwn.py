@@ -5,7 +5,7 @@ import re
 from yt_dlp import YoutubeDL
 from pyrogram import Client, filters
 from plugins.download import download_video, aria2c_media, google_drive
-
+import mimetypes
 import pickle
 import re
 from googleapiclient.discovery import build
@@ -45,20 +45,19 @@ def human_readable_size(size_bytes):
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
 
-import re
 
-import mimetypes
+
+
 
 def clean_filename(filename, mime=None):
     name, ext = os.path.splitext(filename)
 
-    # Try guessing extension from MIME type
     if not ext or ext == '':
         if mime:
             guessed_ext = mimetypes.guess_extension(mime)
             ext = guessed_ext if guessed_ext else '.mkv'
         else:
-            ext = '.mkv'  # fallback if mime is missing
+            ext = '.mkv'
 
     # Clean the name
     name = re.sub(r'[^\w\s-]', '', name)
@@ -87,22 +86,21 @@ async def universal_handler(client, message):
             return await message.reply("❌ Invalid Google Drive link.", quote=True)
 
         try:
-            # Fetch file details (name, size, MIME type)
+
             name, size, mime = get_file_info(file_id)
             size_str = human_readable_size(size)
-            clean_name = clean_filename(name, mime)  # Clean the filename
+            clean_name = clean_filename(name, mime)
 
-            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`/// clean name {clean_name}"
+            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
 
-            # Pass the cleaned filename along with the link to the google_drive function
-            await google_drive(client, chat_id, clean_name, text)  # Pass cleaned filename
+
+            await google_drive(client, chat_id, clean_name, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
     
     else:
-        # Handle direct/YouTube links here
         await message.reply("📥 Downloading via direct/YouTube method...")
         await aria2c_media(client, chat_id, text)
 
