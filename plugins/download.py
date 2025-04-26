@@ -408,6 +408,8 @@ import logging
 
 def gdown_download(url, download_dir, filename, queue, client):
     try:
+        logging.info(download_dir)
+        logging.info(filename)
         os.makedirs(download_dir, exist_ok=True)
         path = os.path.join(download_dir, filename)
         cmd = [
@@ -434,7 +436,7 @@ def gdown_download(url, download_dir, filename, queue, client):
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
 
                 asyncio.run_coroutine_threadsafe(
-                    queue.put((downloaded, total, label)),
+                    queue.put((downloaded, total, filename)),
                     client.loop
                 )
             else:
