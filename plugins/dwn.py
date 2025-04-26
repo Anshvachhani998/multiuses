@@ -111,7 +111,7 @@ async def universal_handler(client, message):
 
             info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
-            await download_video(chat_id, text)
+            await download_video(client, chat_id, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
