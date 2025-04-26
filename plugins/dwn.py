@@ -112,8 +112,6 @@ async def universal_handler(client, message):
             info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
 
-            await aria2c_media(client, chat_id, text, filename=clean_name)
-
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
 
