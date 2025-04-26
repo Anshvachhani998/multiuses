@@ -408,8 +408,6 @@ import logging
 
 def gdown_download(url, download_dir, filename, queue, client):
     try:
-        logging.info(download_dir)
-        logging.info(filename)
         os.makedirs(download_dir, exist_ok=True)
         path = os.path.join(download_dir, filename)
         cmd = [
