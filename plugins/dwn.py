@@ -107,7 +107,6 @@ async def universal_handler(client, message):
             if await is_supported_by_ytdlp(text):
                 await message.reply("🔗 Supported by yt-dlp! Fetching details...")
 
-                # fetch info using yt-dlp (simulate)
                 name, size, mime = await get_ytdlp_info(text)
                 size_str = human_readable_size(size)
                 clean_name = clean_filename(name, mime)
@@ -120,19 +119,11 @@ async def universal_handler(client, message):
             else:
                 await message.reply("🔗 Direct link detected! Fetching details...")
 
-                # fetch info using aria2c
-                name, size, mime = await get_file_info(text)
-                size_str = human_readable_size(size)
-                clean_name = clean_filename(name, mime)
-
-                info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
-                await message.reply(info_message, quote=True)
-
+    
                 await aria2c_media(client, chat_id, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
-
 
 
 import subprocess
@@ -147,7 +138,7 @@ import re
 async def get_file_info(url):
     try:
         # Define a timeout
-        timeout = aiohttp.ClientTimeout(total=10)  # 10 seconds timeout
+        timeout = aiohttp.ClientTimeout(total=10)
         async with aiohttp.ClientSession() as session:
             async with session.head(url, allow_redirects=True, timeout=timeout) as response:
                 if response.status != 200:
@@ -182,7 +173,6 @@ async def is_supported_by_ytdlp(url):
         cmd = ["yt-dlp", "--quiet", "--simulate", url]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
 
-        # Agar return code 0 hai, mtlb yt-dlp ne support kar diya link ko
         if result.returncode == 0:
             return True
         else:
