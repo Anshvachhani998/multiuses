@@ -105,7 +105,7 @@ async def universal_handler(client, message):
 
         try:
             # Fetch info using aria2c
-            name, size, mime = await aria2c_get_info(text)
+            name, size, mime = await get_file_info(text)
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
