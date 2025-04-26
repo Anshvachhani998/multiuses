@@ -76,17 +76,13 @@ async def universal_handler(client, message):
     chat_id = message.chat.id
 
     if "drive.google.com" in text:
-        # Google Drive link detected
         await message.reply("📥 Google Drive link detected! Fetching file details...")
 
-        # Extract file ID from Google Drive link
         file_id = extract_file_id(text)
-        
         if not file_id:
             return await message.reply("❌ Invalid Google Drive link.", quote=True)
 
         try:
-
             name, size, mime = get_file_info(file_id)
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
@@ -94,13 +90,79 @@ async def universal_handler(client, message):
             info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
             await message.reply(info_message, quote=True)
 
-
             await google_drive(client, chat_id, clean_name, text)
 
         except Exception as e:
             await message.reply(f"❌ Error: {e}", quote=True)
-    
+
     else:
-        await message.reply("📥 Downloading via direct/YouTube method...")
-        await aria2c_media(client, chat_id, text)
+        await message.reply("📥 Fetching file info for direct/YouTube link...")
+
+        try:
+            # Example: create this function based on your `aria2c` setup
+            name, size, mime = await aria2c_get_info(text)  # You need to define this
+            size_str = human_readable_size(size)
+            clean_name = clean_filename(name, mime)
+
+            info_message = f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`"
+            await message.reply(info_message, quote=True)
+
+            await aria2c_media(client, chat_id, text, filename=clean_name)
+
+        except Exception as e:
+            await message.reply(f"❌ Error: {e}", quote=True)
+
+import subprocess
+import re
+
+async def aria2c_get_info(url):
+    try:
+        # Run aria2c with --head to fetch headers (without downloading the file)
+        cmd = [
+            "aria2c",
+            "--head",
+            url
+        ]
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        # Extract file name, size, and MIME type from the headers
+        stdout, stderr = process.communicate()
+
+        if process.returncode != 0:
+            raise Exception(f"aria2c error: {stderr}")
+
+        # Try to extract content-disposition (filename) and content-length (size) from headers
+        filename = None
+        size = None
+        mime = None
+
+        # Extract filename from content-disposition header (if available)
+        filename_match = re.search(r'filename="([^"]+)"', stdout)
+        if filename_match:
+            filename = filename_match.group(1)
+
+        # Extract file size from content-length header (if available)
+        size_match = re.search(r'Content-Length:\s*(\d+)', stdout)
+        if size_match:
+            size = int(size_match.group(1))
+
+        # Extract MIME type (if available)
+        mime_match = re.search(r'Content-Type:\s*([^;]+)', stdout)
+        if mime_match:
+            mime = mime_match.group(1)
+
+        # If filename is not found, default to a generic name
+        if not filename:
+            filename = "downloaded_file"
+
+        return filename, size, mime
+
+    except Exception as e:
+        raise Exception(f"Error fetching file info: {str(e)}")
 
