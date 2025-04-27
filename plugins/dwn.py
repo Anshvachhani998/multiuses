@@ -233,14 +233,14 @@ async def universal_handler(client, message):
 
             name = terabox_info.get("title", "terabox_file")
             size = int(terabox_info.get("size", 0))
-            mime = "application/octet-stream"  # Assuming generic MIME for TeraBox files
+            mime = "application/octet-stream"
 
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
             memory_store[random_id] = {
                 'link': text,
-                'filename': clean_name,
+                'filename': name,
                 'source': 'terabox'
             }
 
