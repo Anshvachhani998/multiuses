@@ -10,7 +10,7 @@ import aiohttp
 import yt_dlp
 
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 
@@ -169,7 +169,6 @@ async def get_ytdlp_info(url):
 
 
 # ========== Main Handler ==========
-
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -217,12 +216,10 @@ async def universal_handler(client, message):
             }
 
         else:
-            # Direct file fetch
             name, size, mime = await get_direct_file_info(text)
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
-            # Processing message ko edit karo jab file info mile
             await checking_msg.edit("✅ Processing your direct link...")
 
             memory_store[random_id] = {
@@ -231,22 +228,18 @@ async def universal_handler(client, message):
                 'source': 'direct'
             }
 
-        # File info ke saath reply
-        buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
-            [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
+     buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}"), 
+             InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
         ])
-
         await checking_msg.edit(
             f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`",
             reply_markup=buttons
         )
 
     except Exception:
-        await checking_msg.edit("❌ Invalid or unsupported link.")
-
-from pyrogram.types import ForceReply
-
+        await checking_msg.edit("**This link is not accessible or not direct download link**")
+                                
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
     data = callback_query.data
@@ -273,7 +266,7 @@ async def button_handler(client, callback_query):
                 reply_markup=ForceReply(True)
             )
 
-            rename_store[chat_id] = random_id  # Store the random_id with the chat_id
+            rename_store[chat_id] = random_id
 
 async def start_download(client, chat_id, link, filename, source):
     try:
