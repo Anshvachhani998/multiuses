@@ -137,6 +137,7 @@ async def is_supported_by_ytdlp(url):
     except Exception:
         return False
 
+
 async def get_ytdlp_info(url):
     ydl_opts = {
         'quiet': True,
@@ -145,12 +146,27 @@ async def get_ytdlp_info(url):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
+
         title = info.get('title', 'unknown_file')
+
+        # Try to fetch filesize or approx filesize
         filesize = info.get('filesize') or info.get('filesize_approx')
+
+        if not filesize:
+            # Try fetching the size from formats if available
+            for format in info.get('formats', []):
+                if 'filesize' in format:
+                    filesize = format['filesize']
+                    break
+
+        # Default to 0 if no size is found
+        filesize = filesize or 0
+
         ext = info.get('ext', 'mp4')
         mime = f"video/{ext}"
 
     return title, filesize, mime
+
 
 # ========== Main Handler ==========
 
