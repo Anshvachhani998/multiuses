@@ -240,8 +240,6 @@ async def universal_handler(client, message):
         except Exception as e:
             await message.reply(f"❌ Error: {e}")
 
-# ========== Callback Query Handler ==========
-# ========== Callback Query Handler ==========
 
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
@@ -273,7 +271,7 @@ async def start_download(client, chat_id, link, filename, source):
         if source == "gdrive":
             await google_drive(client, chat_id, filename, link)
         elif source == "yt-dlp":
-            await download_video(client, chat_id, link)
+            await download_video(client, chat_id, rename, link)
         elif source == "direct":
             await aria2c_media(client, chat_id, link, filename)
     except Exception as e:
