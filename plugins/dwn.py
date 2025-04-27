@@ -28,13 +28,12 @@ rename_store = {}
 
 # ========== Utility Functions ==========
 
-
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
     logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
     logger.info(f"Message is reply? {message.reply_to_message is not None}")
 
-    if message.reply_to_message and message.reply_to_message.text == "✏️ Send me the new filename (including the extension). Reply to this message with the new filename.":
+    if message.reply_to_message and message.reply_to_message.text == "✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.":
         chat_id = message.chat.id
         logger.info(f"User is replying to the correct prompt: {chat_id}")
 
@@ -42,21 +41,23 @@ async def rename_handscler(client, message):
             random_id = rename_store.pop(chat_id)
             new_filename = message.text.strip()
 
+            if not new_filename.endswith(('.mp4', '.mp3')):
+                new_filename += '.mp4'  # Default to .mp4 if no extension
+
             logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
 
             memory_store[random_id]['filename'] = new_filename
 
-            await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
+            rename = await message.reply(f"✅ Filename changed to `{new_filename}`")
 
             entry = memory_store.pop(random_id)
             await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
+            await rename.delete()
         else:
-            await message.reply("❌ You need to press 'Rename' first to change the filename.")
+            await message.reply("❌ You need to click 'Rename' first to change the filename.")
     else:
         logger.info(f"Message is not a valid reply: {message.text}")
         await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
-
-
 
 def extract_file_id(link):
     patterns = [
@@ -229,7 +230,7 @@ async def universal_handler(client, message):
 
             buttons = InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
-                [InlineKeyboardButton(" Rename", callback_data=f"rename_{random_id}")]
+                [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
             ])
 
             await message.reply(
@@ -256,13 +257,10 @@ async def button_handler(client, callback_query):
 
     elif data.startswith("rename_"):
         random_id = data.split("_", 1)[1]
-        await callback_query.message.edit("✏️ Send me the new filename (including the extension). Reply to this message with the new filename.")
+        await callback_query.message.edit("✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.")
 
         if random_id in memory_store:
             rename_store[chat_id] = random_id  # Store the random_id with the chat_id
-
-# ========== Rename Message Handler ==========
-
 
 # ========== Download Starter ==========
 
