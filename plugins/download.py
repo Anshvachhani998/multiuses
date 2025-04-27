@@ -122,7 +122,7 @@ async def download_video(client, chat_id, rename, youtube_link):
             duration = None
 
         # Upload video
-        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
+        await upload_media(client, chat_id, output_filename, rename, duration, width, height, status_msg, thumbnail_path, youtube_link)
 
     else:
         error_message = f"❌ **Download Failed!**"
