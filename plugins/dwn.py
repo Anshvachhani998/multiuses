@@ -235,11 +235,7 @@ async def universal_handler(client, message):
                 return
 
             name = terabox_info.get("title", "terabox_file")
-            size = int(terabox_info.get("size", 0))
-            if size == 0 or not name:
-                await checking_msg.edit("❌ Could not retrieve file information from TeraBox.")
-                return
-            size_str = human_readable_size(size)
+            size = terabox_info.get("size", 0)
             mime = "Unknown"
 
             memory_store[random_id] = {
