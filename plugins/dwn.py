@@ -164,14 +164,18 @@ async def universal_handler(client, message):
     chat_id = message.chat.id
     random_id = str(chat_id) + "_" + str(message.id)
 
-    if "drive.google.com" in text:
-        await message.reply("📥 Google Drive link detected! Fetching file details...")
+    checking_msg = await message.reply("🔎 Checking your link, please wait...")
 
-        file_id = extract_file_id(text)
-        if not file_id:
-            return await message.reply("❌ Invalid Google Drive link.")
+    try:
+        if "drive.google.com" in text:
+            file_id = extract_file_id(text)
+            if not file_id:
+                await checking_msg.edit("❌ Invalid Google Drive link.")
+                return
 
-        try:
+            # Processing message ko edit karo jab file info mile
+            await checking_msg.edit("✅ Processing your Google Drive link...")
+
             name, size, mime = get_file_info(file_id)
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
@@ -182,62 +186,48 @@ async def universal_handler(client, message):
                 'source': 'gdrive'
             }
 
-            buttons = InlineKeyboardMarkup([ 
-                [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
-                [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
-            ])
+        elif await is_supported_by_ytdlp(text):
+            # Processing message ko edit karo jab file info mile
+            await checking_msg.edit("✅ Processing your video link...")
 
-            await message.reply(
-                f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`",
-                reply_markup=buttons
-            )
+            name, size, mime = await get_ytdlp_info(text)
+            size_str = human_readable_size(size)
+            clean_name = clean_filename(name, mime)
 
-        except Exception as e:
-            await message.reply(f"❌ Error: {e}")
+            memory_store[random_id] = {
+                'link': text,
+                'filename': clean_name,
+                'source': 'yt-dlp'
+            }
 
-    else:
-        await message.reply("📥 Checking link type...")
+        else:
+            # Direct file fetch
+            name, size, mime = await get_direct_file_info(text)
+            size_str = human_readable_size(size)
+            clean_name = clean_filename(name, mime)
 
-        try:
-            if await is_supported_by_ytdlp(text):
-                await message.reply("🔗 Supported by yt-dlp! Fetching details...")
+            # Processing message ko edit karo jab file info mile
+            await checking_msg.edit("✅ Processing your direct link...")
 
-                name, size, mime = await get_ytdlp_info(text)
-                size_str = human_readable_size(size)
-                clean_name = clean_filename(name, mime)
+            memory_store[random_id] = {
+                'link': text,
+                'filename': clean_name,
+                'source': 'direct'
+            }
 
-                memory_store[random_id] = {
-                    'link': text,
-                    'filename': clean_name,
-                    'source': 'yt-dlp'
-                }
+        # File info ke saath reply
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
+            [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
+        ])
 
-            else:
-                await message.reply("🔗 Direct link detected! Fetching details...")
+        await checking_msg.edit(
+            f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`",
+            reply_markup=buttons
+        )
 
-                name, size, mime = await get_direct_file_info(text)
-                size_str = human_readable_size(size)
-                clean_name = clean_filename(name, mime)
-
-                memory_store[random_id] = {
-                    'link': text,
-                    'filename': clean_name,
-                    'source': 'direct'
-                }
-
-            buttons = InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
-                [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
-            ])
-
-            await message.reply(
-                f"📄 **File Name:** `{clean_name}`\n📦 **Size:** `{size_str}`\n🧾 **MIME Type:** `{mime}`",
-                reply_markup=buttons
-            )
-
-        except Exception as e:
-            await message.reply(f"❌ Error: {e}")
-
+    except Exception:
+        await checking_msg.edit("❌ Invalid or unsupported link.")
 
 from pyrogram.types import ForceReply
 
