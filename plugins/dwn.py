@@ -234,10 +234,8 @@ async def universal_handler(client, message):
 
             name = terabox_info.get("title", "terabox_file")
             size = int(terabox_info.get("size", 0))
-            mime = "application/octet-stream"
-
             size_str = human_readable_size(size)
-            clean_name = clean_filename(name, mime)
+            mime = "Unkowm"
 
             memory_store[random_id] = {
                 'link': text,
@@ -321,7 +319,7 @@ async def start_download(client, chat_id, link, filename, source):
         elif source == "direct":
             await aria2c_media(client, chat_id, link, filename)
         elif source == "terabox":
-            await aria2c_media(client, chat_id, link, filename)  # Assuming aria2c for TeraBox too
+            await aria2c_media(client, chat_id, link, filename)
     except Exception as e:
         await client.send_message(chat_id, f"❌ Download Error: {e}")
         logger.error(f"Download failed for {link}: {str(e)}")
