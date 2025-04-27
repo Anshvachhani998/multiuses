@@ -28,6 +28,27 @@ rename_store = {}
 
 # ========== Utility Functions ==========
 
+async def get_terabox_info(link):
+    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    return {"error": f"HTTP {response.status}"}
+                data = await response.json()
+
+        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
+        if not info:
+            return {"error": "No extracted info found."}
+
+        return {
+            "title": info.get("Title"),
+            "size": info.get("Size")  
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
     if message.reply_to_message and message.reply_to_message.text == "✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.":
@@ -169,6 +190,7 @@ async def get_ytdlp_info(url):
 
 
 # ========== Main Handler ==========
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -199,6 +221,27 @@ async def universal_handler(client, message):
                 'link': text,
                 'filename': clean_name,
                 'source': 'gdrive'
+            }
+
+        elif "terabox.com" in text:
+            await checking_msg.edit("✅ Processing your TeraBox link...")
+
+            terabox_info = await get_terabox_info(text)
+            if "error" in terabox_info:
+                await checking_msg.edit(f"❌ {terabox_info['error']}")
+                return
+
+            name = terabox_info.get("title", "terabox_file")
+            size = int(terabox_info.get("size", 0))
+            mime = "application/octet-stream"  # Assuming generic MIME for TeraBox files
+
+            size_str = human_readable_size(size)
+            clean_name = clean_filename(name, mime)
+
+            memory_store[random_id] = {
+                'link': text,
+                'filename': clean_name,
+                'source': 'terabox'
             }
 
         elif await is_supported_by_ytdlp(text):
@@ -239,7 +282,7 @@ async def universal_handler(client, message):
 
     except Exception:
         await checking_msg.edit("**This link is not accessible or not direct download link**")
-                                
+                                 
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
     data = callback_query.data
@@ -276,5 +319,8 @@ async def start_download(client, chat_id, link, filename, source):
             await download_video(client, chat_id, filename, link)
         elif source == "direct":
             await aria2c_media(client, chat_id, link, filename)
+        elif source == "terabox":
+            await aria2c_media(client, chat_id, link, filename)  # Assuming aria2c for TeraBox too
     except Exception as e:
         await client.send_message(chat_id, f"❌ Download Error: {e}")
+        logger.error(f"Download failed for {link}: {str(e)}")
