@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
  
-async def download_video(client, chat_id, youtube_link):
+async def download_video(client, chat_id, rename, youtube_link):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -40,7 +40,7 @@ async def download_video(client, chat_id, youtube_link):
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
-                'outtmpl': f'{DOWNLOAD_DIR}/{timestamp}-{random_str}.%(ext)s',
+                'outtmpl': f'{DOWNLOAD_DIR}/{rename}{timestamp}-{random_str}.%(ext)s',
                 'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
