@@ -40,7 +40,7 @@ async def download_video(client, chat_id, youtube_link):
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
-                'outtmpl': f'{DOWNLOAD_DIR}/%(title)s_{timestamp}-{random_str}.%(ext)s',
+                'outtmpl': f'{DOWNLOAD_DIR}/{timestamp}-{random_str}.%(ext)s',
                 'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
