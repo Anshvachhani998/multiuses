@@ -30,9 +30,6 @@ rename_store = {}
 
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
-    logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
-    logger.info(f"Message is reply? {message.reply_to_message is not None}")
-
     if message.reply_to_message and message.reply_to_message.text == "✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.":
         chat_id = message.chat.id
         logger.info(f"User is replying to the correct prompt: {chat_id}")
@@ -259,17 +256,18 @@ async def button_handler(client, callback_query):
 
     elif data.startswith("rename_"):
         random_id = data.split("_", 1)[1]
-        
         if random_id in memory_store:
-            # Send a new message with ForceReply to ask for the filename
+
+            entry = memory_store[random_id]
+            filename = entry['filename']
+
             await callback_query.message.reply(
-                f"✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.",
-                reply_markup=ForceReply(True)  # Force reply to this message
+                f"✏️ **Send new name for this file:**\n\n"
+                f"📁 Current Filename: `{filename}`,
+                reply_markup=ForceReply(True)
             )
 
-            # Store the random_id with the chat_id
-            rename_store[chat_id] = random_id
-
+            rename_store[chat_id] = random_id  # Store the random_id with the chat_id
 
 async def start_download(client, chat_id, link, filename, source):
     try:
