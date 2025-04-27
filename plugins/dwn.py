@@ -245,7 +245,7 @@ async def button_handler(client, callback_query):
 # ========== Rename Message Handler ==========
 
 @Client.on_message(filters.private & filters.reply)
-async def rename_handler(client, message):
+async def renamegjgujgjfy_handler(client, message):
     logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
     logger.info(f"Message is reply? {message.reply_to_message is not None}")
 
