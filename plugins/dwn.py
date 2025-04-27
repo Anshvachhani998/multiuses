@@ -237,6 +237,9 @@ async def button_handler(client, callback_query):
 
 @Client.on_message(filters.private & filters.reply)
 async def rename_handler(client, message):
+    logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
+    logger.info(f"Message is reply? {message.reply_to_message is not None}")
+
     if message.reply_to_message and message.reply_to_message.text == "✏️ Send me the new filename (including the extension). Reply to this message with the new filename.":
         chat_id = message.chat.id
         logger.info(f"User is replying to the correct prompt: {chat_id}")
@@ -245,10 +248,8 @@ async def rename_handler(client, message):
             random_id = rename_store.pop(chat_id)
             new_filename = message.text.strip()
 
-            # Log the process
             logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
 
-            # Update the filename in memory
             memory_store[random_id]['filename'] = new_filename
 
             await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
@@ -258,7 +259,7 @@ async def rename_handler(client, message):
         else:
             await message.reply("❌ You need to press 'Rename' first to change the filename.")
     else:
-        logger.info(f"Received a message that is not a valid reply to the filename prompt.")
+        logger.info(f"Message is not a valid reply: {message.text}")
         await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
 
 
