@@ -146,7 +146,7 @@ async def get_ytdlp_info(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         title = info.get('title', 'unknown_file')
-        filesize = info.get('filesize') or info.get('filesize_approx') or 0
+        filesize = info.get('filesize') or info.get('filesize_approx')
         ext = info.get('ext', 'mp4')
         mime = f"video/{ext}"
 
