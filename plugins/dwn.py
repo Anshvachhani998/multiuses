@@ -28,6 +28,12 @@ rename_store = {}
 
 # ========== Utility Functions ==========
 
+
+@Client.on_message()
+async def log_all_messages(client, message):
+    logger.info(f"Received message: {message.text} from chat {message.chat.id}")
+
+
 def extract_file_id(link):
     patterns = [
         r'/file/d/([a-zA-Z0-9_-]+)',
