@@ -199,7 +199,7 @@ async def universal_handler(client, message):
 
             buttons = InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
-                [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
+                [InlineKeyboardButton(" Rename", callback_data=f"rename_{random_id}")]
             ])
 
             await message.reply(
