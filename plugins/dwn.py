@@ -242,7 +242,7 @@ async def universal_handler(client, message):
             clean_name = clean_filename(name, mime)
 
             memory_store[random_id] = {
-                'link': text,
+                'link': dwn,
                 'filename': name,
                 'source': 'terabox'
             }
