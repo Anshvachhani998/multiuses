@@ -154,7 +154,7 @@ async def universal_handler(client, message):
                 'source': 'gdrive'
             }
 
-            buttons = InlineKeyboardMarkup([
+            buttons = InlineKeyboardMarkup([ 
                 [InlineKeyboardButton("✅ Default Name", callback_data=f"default_{random_id}")],
                 [InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{random_id}")]
             ])
@@ -234,7 +234,7 @@ async def button_handler(client, callback_query):
 
 # ========== Rename Message Handler ==========
 
-@Client.on_message(filters.private)
+@Client.on_message(filters.private & filters.reply)
 async def rename_handler(client, message):
     chat_id = message.chat.id
 
