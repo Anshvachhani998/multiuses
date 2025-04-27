@@ -10,7 +10,7 @@ import aiohttp
 import yt_dlp
 
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 
@@ -242,6 +242,8 @@ async def universal_handler(client, message):
             await message.reply(f"❌ Error: {e}")
 
 
+from pyrogram import ForceReply
+
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
     data = callback_query.data
@@ -257,14 +259,16 @@ async def button_handler(client, callback_query):
 
     elif data.startswith("rename_"):
         random_id = data.split("_", 1)[1]
-        await callback_query.message.edit(
-            f"✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.",
-            reply_markup=ForceReply(True)
-        )
-
+        
         if random_id in memory_store:
-            rename_store[chat_id] = random_id  # Store the random_id with the chat_id
+            # Send a new message with ForceReply to ask for the filename
+            await callback_query.message.reply(
+                f"✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.",
+                reply_markup=ForceReply(True)  # Force reply to this message
+            )
 
+            # Store the random_id with the chat_id
+            rename_store[chat_id] = random_id
 # ========== Download Starter ==========
 
 async def start_download(client, chat_id, link, filename, source):
