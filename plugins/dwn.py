@@ -43,7 +43,8 @@ async def get_terabox_info(link):
 
         return {
             "title": info.get("Title"),
-            "size": info.get("Size")  
+            "size": info.get("Size"),
+            "download_url": info.get("Direct Download Link")
         }
 
     except Exception as e:
@@ -112,8 +113,6 @@ def clean_filename(filename, mime=None):
             ext = guessed_ext if guessed_ext else '.mkv'
         else:
             ext = '.mkv'
-
-    # Clean name
     name = re.sub(r'[^\w\s-]', '', name)
     name = re.sub(r'[-\s]+', '_', name)
     name = name.strip('_')
