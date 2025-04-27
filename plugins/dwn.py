@@ -263,7 +263,7 @@ async def button_handler(client, callback_query):
 
             await callback_query.message.reply(
                 f"✏️ **Send new name for this file:**\n\n"
-                f"📁 Current Filename: `{filename}`,
+                f"📁 Current Filename: `{filename}`",
                 reply_markup=ForceReply(True)
             )
 
