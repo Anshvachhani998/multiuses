@@ -211,6 +211,7 @@ async def universal_handler(client, message):
             await message.reply(f"❌ Error: {e}")
 
 # ========== Callback Query Handler ==========
+# ========== Callback Query Handler ==========
 
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
@@ -230,41 +231,31 @@ async def button_handler(client, callback_query):
         await callback_query.message.edit("✏️ Send me the new filename (including the extension). Reply to this message with the new filename.")
 
         if random_id in memory_store:
-            rename_store[chat_id] = random_id
+            rename_store[chat_id] = random_id  # Store the random_id with the chat_id
 
-# ========== Rename Message Handler ==========
 # ========== Rename Message Handler ==========
 
 @Client.on_message(filters.private)
 async def rename_handler(client, message):
     chat_id = message.chat.id
+    logger.info(f"User is replying to the correct prompt: {chat_id}")
 
-    # Check if the chat ID exists in rename_store
-    if chat_id in rename_store:
-        random_id = rename_store.pop(chat_id)  # Get the random_id for this chat
+    if chat_id in rename_store:  # Check if the chat_id is in rename_store
+        random_id = rename_store.pop(chat_id)  # Retrieve the random_id from rename_store
         new_filename = message.text.strip()  # Get the new filename from the user's message
-        
+
         # Log the process
         logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
-        
+
         # Update the filename in memory
         memory_store[random_id]['filename'] = new_filename
 
-        # Send confirmation message
         await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
 
-        # Proceed with the download
-        entry = memory_store.pop(random_id)
-        
-        # Log before starting the download
-        logger.info(f"Starting download for {entry['filename']} from source {entry['source']}")
-
-        # Start the download based on the source
-        await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
+        entry = memory_store.pop(random_id)  # Retrieve the entry for download
+        await start_download(client, chat_id, entry['link'], new_filename, entry['source'])  # Start the download
     else:
-        # Log if chat_id is not found in rename_store
-        logger.warning(f"Chat ID {chat_id} not found in rename_store.")
-
+        await message.reply("❌ You need to press 'Rename' first to change the filename.")
 
 # ========== Download Starter ==========
 
