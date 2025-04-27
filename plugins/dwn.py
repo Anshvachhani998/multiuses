@@ -232,10 +232,14 @@ async def universal_handler(client, message):
             if "error" in terabox_info:
                 await checking_msg.edit(f"❌ {terabox_info['error']}")
                 return
-
-            name = terabox_info.get("title", "terabox_file")
-            size = terabox_info.get("size", 0)
-            mime = "Unknown"
+                
+            dwn = terabox_info.get("download_url")
+            name, size, mime = await get_direct_file_info(dwn)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
+                return
+            size_str = human_readable_size(size)
+            clean_name = clean_filename(name, mime)
 
             memory_store[random_id] = {
                 'link': text,
