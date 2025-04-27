@@ -31,10 +31,31 @@ rename_store = {}
 
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
-    if message.reply_to_message:
-        logger.info(f"Reply message: {message.reply_to_message.text}")
+    logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
+    logger.info(f"Message is reply? {message.reply_to_message is not None}")
+
+    if message.reply_to_message and message.reply_to_message.text == "✏️ Send me the new filename (including the extension). Reply to this message with the new filename.":
+        chat_id = message.chat.id
+        logger.info(f"User is replying to the correct prompt: {chat_id}")
+
+        if chat_id in rename_store:
+            random_id = rename_store.pop(chat_id)
+            new_filename = message.text.strip()
+
+            logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
+
+            memory_store[random_id]['filename'] = new_filename
+
+            await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
+
+            entry = memory_store.pop(random_id)
+            await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
+        else:
+            await message.reply("❌ You need to press 'Rename' first to change the filename.")
     else:
-        logger.info("Message is not a reply.")
+        logger.info(f"Message is not a valid reply: {message.text}")
+        await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
+
 
 
 def extract_file_id(link):
@@ -243,33 +264,6 @@ async def button_handler(client, callback_query):
             rename_store[chat_id] = random_id  # Store the random_id with the chat_id
 
 # ========== Rename Message Handler ==========
-
-@Client.on_message(filters.private & filters.reply)
-async def renamegjgujgjfy_handler(client, message):
-    logger.info(f"Received message from chat {message.chat.id}, text: {message.text}")
-    logger.info(f"Message is reply? {message.reply_to_message is not None}")
-
-    if message.reply_to_message and message.reply_to_message.text == "✏️ Send me the new filename (including the extension). Reply to this message with the new filename.":
-        chat_id = message.chat.id
-        logger.info(f"User is replying to the correct prompt: {chat_id}")
-
-        if chat_id in rename_store:
-            random_id = rename_store.pop(chat_id)
-            new_filename = message.text.strip()
-
-            logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
-
-            memory_store[random_id]['filename'] = new_filename
-
-            await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
-
-            entry = memory_store.pop(random_id)
-            await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
-        else:
-            await message.reply("❌ You need to press 'Rename' first to change the filename.")
-    else:
-        logger.info(f"Message is not a valid reply: {message.text}")
-        await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
 
 
 # ========== Download Starter ==========
