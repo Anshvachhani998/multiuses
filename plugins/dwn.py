@@ -190,7 +190,6 @@ async def get_ytdlp_info(url):
 
 
 # ========== Main Handler ==========
-
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -214,6 +213,9 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your Google Drive link...")
 
             name, size, mime = get_file_info(file_id)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from Google Drive.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -234,8 +236,11 @@ async def universal_handler(client, message):
 
             name = terabox_info.get("title", "terabox_file")
             size = int(terabox_info.get("size", 0))
+            if size == 0 or not name:
+                await checking_msg.edit("❌ Could not retrieve file information from TeraBox.")
+                return
             size_str = human_readable_size(size)
-            mime = "Unkowm"
+            mime = "Unknown"
 
             memory_store[random_id] = {
                 'link': text,
@@ -248,6 +253,9 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your video link...")
 
             name, size, mime = await get_ytdlp_info(text)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from video link.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -259,6 +267,9 @@ async def universal_handler(client, message):
 
         else:
             name, size, mime = await get_direct_file_info(text)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -279,8 +290,10 @@ async def universal_handler(client, message):
             reply_markup=buttons
         )
 
-    except Exception:
-        await checking_msg.edit("**This link is not accessible or not direct download link**")
+    except Exception as e:
+        logging.error(f"Error processing link: {str(e)}")  # Log the exception for debugging
+        await checking_msg.edit("**This link is not accessible or not a direct download link.**")
+
                                  
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
