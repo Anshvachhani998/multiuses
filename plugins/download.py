@@ -40,7 +40,7 @@ async def download_video(client, chat_id, rename, youtube_link):
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
-                'outtmpl': f'{DOWNLOAD_DIR}/{rename}{timestamp}-{random_str}.%(ext)s',  # Use rename here
+                'outtmpl': f'{DOWNLOAD_DIR}/{rename}',  # Use rename here
                 'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
@@ -135,7 +135,7 @@ def generate_unique_name(original_name):
     base, ext = os.path.splitext(original_name)
     return f"{base}_{timestamp}-{random_str}{ext}"
 
-def aria2c_download(url, download_dir, label, queue, client):
+def aria2c_download(url, download_dir, filename, label, queue, client):
     before_files = set(os.listdir(download_dir))
 
     cmd = [
@@ -196,7 +196,7 @@ def aria2c_download(url, download_dir, label, queue, client):
 
 
         
-async def aria2c_media(client, chat_id, download_url):
+async def aria2c_media(client, chat_id, download_url, filename):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -217,6 +217,7 @@ async def aria2c_media(client, chat_id, download_url):
                 aria2c_download,
                 download_url,
                 "downloads",
+                filename,
                 caption,
                 queue,
                 client
@@ -282,7 +283,7 @@ async def aria2c_media(client, chat_id, download_url):
             client,
             chat_id,
             output_filename,
-            caption,
+            filename,
             duration,
             width,
             height,
