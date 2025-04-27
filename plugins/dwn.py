@@ -227,30 +227,28 @@ async def button_handler(client, callback_query):
 
     elif data.startswith("rename_"):
         random_id = data.split("_", 1)[1]
-        await callback_query.message.edit("✏️ Send me new filename with extension (e.g., `newfile.mp4`)")
+        await callback_query.message.edit("✏️ Send me the new filename (including the extension). Reply to this message with the new filename.")
 
         if random_id in memory_store:
-            rename_store[chat_id] = (memory_store[random_id]['link'], memory_store[random_id]['source'], random_id)
+            rename_store[chat_id] = random_id
 
 # ========== Rename Message Handler ==========
 
-def is_rename_mode(_, __, message):
-    return message.chat.id in rename_store
-
-rename_filter = filters.create(is_rename_mode)
-
-@Client.on_message(filters.private & rename_filter)
+@Client.on_message(filters.private)
 async def rename_handler(client, message):
     chat_id = message.chat.id
 
     if chat_id in rename_store:
-        link, source, random_id = rename_store.pop(chat_id)
+        random_id = rename_store.pop(chat_id)
         new_filename = message.text.strip()
 
+        # Update the filename in memory
         memory_store[random_id]['filename'] = new_filename
+
         await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
 
-        await start_download(client, chat_id, link, new_filename, source)
+        entry = memory_store.pop(random_id)
+        await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
 
 # ========== Download Starter ==========
 
