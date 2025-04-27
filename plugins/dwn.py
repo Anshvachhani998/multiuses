@@ -227,6 +227,7 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your TeraBox link...")
 
             terabox_info = await get_terabox_info(text)
+            logging.info(terabox_info)
             if "error" in terabox_info:
                 await checking_msg.edit(f"❌ {terabox_info['error']}")
                 return
