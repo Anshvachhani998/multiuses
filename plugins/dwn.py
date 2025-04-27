@@ -235,8 +235,9 @@ async def button_handler(client, callback_query):
 
 # ========== Rename Message Handler ==========
 
-@Client.on_message(filters.private)
+@Client.on_message(filters.private & filters.reply)
 async def rename_handler(client, message):
+    logger.info(f"User is replying to the correct prompt")
     chat_id = message.chat.id
     logger.info(f"User is replying to the correct prompt: {chat_id}")
 
