@@ -237,26 +237,30 @@ async def button_handler(client, callback_query):
 
 @Client.on_message(filters.private & filters.reply)
 async def rename_handler(client, message):
-    logger.info(f"User is replying to the correct prompt")
-    chat_id = message.chat.id
-    logger.info(f"User is replying to the correct prompt: {chat_id}")
+    if message.reply_to_message and message.reply_to_message.text == "✏️ Send me the new filename (including the extension). Reply to this message with the new filename.":
+        chat_id = message.chat.id
+        logger.info(f"User is replying to the correct prompt: {chat_id}")
 
-    if chat_id in rename_store:  # Check if the chat_id is in rename_store
-        random_id = rename_store.pop(chat_id)  # Retrieve the random_id from rename_store
-        new_filename = message.text.strip()  # Get the new filename from the user's message
+        if chat_id in rename_store:
+            random_id = rename_store.pop(chat_id)
+            new_filename = message.text.strip()
 
-        # Log the process
-        logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
+            # Log the process
+            logger.info(f"Received new filename: {new_filename} for random_id: {random_id}")
 
-        # Update the filename in memory
-        memory_store[random_id]['filename'] = new_filename
+            # Update the filename in memory
+            memory_store[random_id]['filename'] = new_filename
 
-        await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
+            await message.reply(f"✅ Filename changed to `{new_filename}`\n\nStarting download...")
 
-        entry = memory_store.pop(random_id)  # Retrieve the entry for download
-        await start_download(client, chat_id, entry['link'], new_filename, entry['source'])  # Start the download
+            entry = memory_store.pop(random_id)
+            await start_download(client, chat_id, entry['link'], new_filename, entry['source'])
+        else:
+            await message.reply("❌ You need to press 'Rename' first to change the filename.")
     else:
-        await message.reply("❌ You need to press 'Rename' first to change the filename.")
+        logger.info(f"Received a message that is not a valid reply to the filename prompt.")
+        await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
+
 
 # ========== Download Starter ==========
 
