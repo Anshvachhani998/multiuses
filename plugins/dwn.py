@@ -242,7 +242,7 @@ async def universal_handler(client, message):
             await message.reply(f"❌ Error: {e}")
 
 
-from pyrogram import ForceReply
+from pyrogram.types import ForceReply
 
 @Client.on_callback_query()
 async def button_handler(client, callback_query):
@@ -269,7 +269,7 @@ async def button_handler(client, callback_query):
 
             # Store the random_id with the chat_id
             rename_store[chat_id] = random_id
-# ========== Download Starter ==========
+
 
 async def start_download(client, chat_id, link, filename, source):
     try:
