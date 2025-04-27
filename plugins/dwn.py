@@ -29,9 +29,12 @@ rename_store = {}
 # ========== Utility Functions ==========
 
 
-@Client.on_message()
-async def log_all_messages(client, message):
-    logger.info(f"Received message: {message.text} from chat {message.chat.id}")
+@Client.on_message(filters.private & filters.reply)
+async def rename_handscler(client, message):
+    if message.reply_to_message:
+        logger.info(f"Reply message: {message.reply_to_message.text}")
+    else:
+        logger.info("Message is not a reply.")
 
 
 def extract_file_id(link):
