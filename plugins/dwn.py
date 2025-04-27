@@ -164,7 +164,7 @@ async def universal_handler(client, message):
     chat_id = message.chat.id
     random_id = str(chat_id) + "_" + str(message.id)
 
-    checking_msg = await message.reply("🔎 Checking your link, please wait...")
+    checking_msg = await message.reply_to_message.reply("🔎 Checking your link, please wait...")
 
     try:
         if "drive.google.com" in text:
