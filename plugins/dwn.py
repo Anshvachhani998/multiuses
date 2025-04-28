@@ -212,9 +212,7 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your Google Drive link...")
 
             name, size, mime = get_file_info(file_id)
-            if not name or size == 0:
-                await checking_msg.edit("❌ Could not retrieve file information from Google Drive.")
-                return
+ 
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -235,9 +233,6 @@ async def universal_handler(client, message):
                 
             dwn = terabox_info.get("download_url")
             name, size, mime = await get_direct_file_info(dwn)
-            if not name or size == 0:
-                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
-                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -252,9 +247,6 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your video link...")
 
             name, size, mime = await get_ytdlp_info(text)
-            if not name or size == 0:
-                await checking_msg.edit("❌ Could not retrieve file information from video link.")
-                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -266,9 +258,6 @@ async def universal_handler(client, message):
 
         else:
             name, size, mime = await get_direct_file_info(text)
-            if not name or size == 0:
-                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
-                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -290,7 +279,7 @@ async def universal_handler(client, message):
         )
 
     except Exception as e:
-        logging.error(f"Error processing link: {str(e)}")  # Log the exception for debugging
+        logging.error(f"Error processing link: {str(e)}")
         await checking_msg.edit("**This link is not accessible or not a direct download link.**")
 
                                  
