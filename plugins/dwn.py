@@ -3,14 +3,12 @@ import os
 import asyncio
 import re
 import mimetypes
-import libtorrent as lt
 import pickle
 import subprocess
-import time
 import logging
 import aiohttp
 import yt_dlp
-import urllib.parse
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from googleapiclient.discovery import build
@@ -29,6 +27,28 @@ memory_store = {}
 rename_store = {}
 
 # ========== Utility Functions ==========
+
+async def get_terabox_info(link):
+    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    return {"error": f"HTTP {response.status}"}
+                data = await response.json()
+
+        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
+        if not info:
+            return {"error": "No extracted info found."}
+
+        return {
+            "title": info.get("Title"),
+            "size": info.get("Size"),
+            "download_url": info.get("Direct Download Link")
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
 
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
@@ -57,27 +77,6 @@ async def rename_handscler(client, message):
     else:
         logger.info(f"Message is not a valid reply: {message.text}")
         await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
-async def get_terabox_info(link):
-    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url) as response:
-                if response.status != 200:
-                    return {"error": f"HTTP {response.status}"}
-                data = await response.json()
-
-        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
-        if not info:
-            return {"error": "No extracted info found."}
-
-        return {
-            "title": info.get("Title"),
-            "size": info.get("Size"),
-            "download_url": info.get("Direct Download Link")
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
 
 def extract_file_id(link):
     patterns = [
@@ -189,50 +188,12 @@ async def get_ytdlp_info(url):
     return title, filesize, mime
 
 
-import re
-import urllib.parse
-import mimetypes
-
-async def extract_file_name_and_mime_magnet(magnet_link):
-    # Create a temporary directory for saving (can be any valid directory)
-    save_path = "/tmp"  # You can change this to a valid path on your system
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-
-    # Start a session
-    ses = lt.session()
-
-    # Add magnet link to session with an empty dictionary as the third argument
-    magnet = lt.add_magnet_uri(ses, magnet_link, {})
-
-    # Set a valid save_path
-    magnet.set_save_path(save_path)
-
-    # Wait for the metadata to be fetched
-    print("Fetching metadata...")
-    while not magnet.has_metadata():
-        time.sleep(1)
-
-    # Once metadata is available, retrieve torrent information
-    torrent_info = magnet.get_torrent_info()
-
-    # Extract file name and size
-    file_name = torrent_info.name()
-    file_size = torrent_info.total_size()
-
-    # Get MIME type based on file extension
-    mime_type, _ = mimetypes.guess_type(file_name)
-    if not mime_type:
-        mime_type = "application/octet-stream"
-
-    return file_name, mime_type, file_size
-    
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
 
-    if not (text.startswith("http") or text.startswith("magnet:") or text.endswith(".torrent")):
+    if not text.startswith("http"):
         return
 
     chat_id = message.chat.id
@@ -251,7 +212,9 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your Google Drive link...")
 
             name, size, mime = get_file_info(file_id)
- 
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from Google Drive.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -272,6 +235,9 @@ async def universal_handler(client, message):
                 
             dwn = terabox_info.get("download_url")
             name, size, mime = await get_direct_file_info(dwn)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -286,6 +252,9 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing your video link...")
 
             name, size, mime = await get_ytdlp_info(text)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from video link.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -295,20 +264,11 @@ async def universal_handler(client, message):
                 'source': 'yt-dlp'
             }
 
-        elif "magnet:" in text:
-            await checking_msg.edit("✅ Processing your video link...")
-
-            clean_name = "File name is Unknown I suggest you Rename.mp4"
-            size_str = "Unknown"
-            mime = "Unknown"
-      
-            memory_store[random_id] = {
-                'link': text,
-                'filename': clean_name,
-                'source': 'magnet'
-            }
         else:
             name, size, mime = await get_direct_file_info(text)
+            if not name or size == 0:
+                await checking_msg.edit("❌ Could not retrieve file information from direct link.")
+                return
             size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
@@ -330,7 +290,7 @@ async def universal_handler(client, message):
         )
 
     except Exception as e:
-        logging.error(f"Error processing link: {str(e)}")
+        logging.error(f"Error processing link: {str(e)}")  # Log the exception for debugging
         await checking_msg.edit("**This link is not accessible or not a direct download link.**")
 
                                  
@@ -372,9 +332,6 @@ async def start_download(client, chat_id, link, filename, source):
             await aria2c_media(client, chat_id, link, filename)
         elif source == "terabox":
             await aria2c_media(client, chat_id, link, filename)
-        elif source == "magnet":
-            await aria2c_media(client, chat_id, link, filename)
-    
     except Exception as e:
         await client.send_message(chat_id, f"❌ Download Error: {e}")
         logger.error(f"Download failed for {link}: {str(e)}")
