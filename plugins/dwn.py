@@ -195,11 +195,19 @@ import urllib.parse
 import mimetypes
 
 async def extract_file_name_and_mime_magnet(magnet_link):
+    # Create a temporary directory for saving (can be any valid directory)
+    save_path = "/tmp"  # You can change this to a valid path on your system
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
     # Start a session
     ses = lt.session()
 
     # Add magnet link to session with an empty dictionary as the third argument
     magnet = lt.add_magnet_uri(ses, magnet_link, {})
+
+    # Set a valid save_path
+    magnet.set_save_path(save_path)
 
     # Wait for the metadata to be fetched
     print("Fetching metadata...")
