@@ -215,7 +215,7 @@ def extract_file_name_and_mime_magent(magnet_link):
 async def universal_handler(client, message):
     text = message.text.strip()
 
-     if not (text.startswith("http") or text.startswith("magnet:") or text.endswith(".torrent")):
+    if not (text.startswith("http") or text.startswith("magnet:") or text.endswith(".torrent")):
         return
 
     chat_id = message.chat.id
