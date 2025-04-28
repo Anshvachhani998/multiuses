@@ -188,6 +188,10 @@ async def get_ytdlp_info(url):
     return title, filesize, mime
 
 
+import re
+import urllib.parse
+import mimetypes
+
 async def extract_file_name_and_mime_magnet(magnet_link):
     # Regex pattern to find the 'dn' parameter in the magnet link
     pattern = r"dn=([a-zA-Z0-9._%+-]+(?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?)(?=&|$)"
@@ -197,20 +201,20 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         # Extract the file name from the 'dn' parameter
         file_name = match.group(1)
         
-        # Decode URL encoded characters
+        # Decode URL encoded characters (if any)
         file_name = urllib.parse.unquote(file_name)
         
         # Replace spaces with underscores
         file_name = file_name.replace(' ', '_')
-        
-        # Remove any additional information after the file extension
+
+        # Remove any additional information after the file extension (like "[EZTVx.to]" etc.)
         file_name = re.sub(r"\[.*\]$", "", file_name)
-        
+
         # Extract the file extension (e.g., .mkv, .mp4)
         file_extension = file_name.split('.')[-1]
-        
+
         # Ensure file extension is present
-        if file_extension not in ['mkv', 'mp4', 'avi', 'flv', 'webm']:  # Add more extensions as needed
+        if file_extension not in ['mkv', 'mp4', 'avi', 'flv', 'webm']:  # You can add more as needed
             file_extension = "unknown"
 
         # Get MIME type based on file extension
@@ -219,11 +223,12 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         # If MIME type couldn't be guessed, set it to a default
         if not mime_type:
             mime_type = "application/octet-stream"
-        
-        
+
         return file_name, mime_type
     else:
         return None, None, "Unknown"
+
+
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
