@@ -231,7 +231,7 @@ async def git_pull(client, message):
         await message.reply_text("🔄 Git Pull successful!\n♻ Restarting bot...")
 
         # Restart like restart command
-        subprocess.Popen("bash /root/URL-UPLOADER/start.sh", shell=True)
+        subprocess.Popen("bash /home/ubuntu/URL-UPLOADER/start.sh", shell=True)
         os._exit(0)
 
     # Fallback (safe output)
