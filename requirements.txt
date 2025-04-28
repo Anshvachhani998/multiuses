@@ -20,4 +20,4 @@ google-auth-oauthlib
 google-auth
 cloudscraper
 lxml
-python-libtorrent
+libtorrent==2.0.11
