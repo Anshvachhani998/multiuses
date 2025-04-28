@@ -187,6 +187,7 @@ async def get_ytdlp_info(url):
 
     return title, filesize, mime
 
+
 async def extract_file_name_and_mime_magnet(magnet_link):
     # Regex pattern to find the 'dn' parameter in the magnet link
     pattern = r"dn=([a-zA-Z0-9._%+-]+(?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?)(?=&|$)"
@@ -208,6 +209,10 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         # Extract the file extension (e.g., .mkv, .mp4)
         file_extension = file_name.split('.')[-1]
         
+        # Ensure file extension is present
+        if file_extension not in ['mkv', 'mp4', 'avi', 'flv', 'webm']:  # Add more extensions as needed
+            file_extension = "unknown"
+
         # Get MIME type based on file extension
         mime_type, _ = mimetypes.guess_type(file_name)
         
@@ -215,10 +220,12 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         if not mime_type:
             mime_type = "application/octet-stream"
         
-        return file_name, mime_type
-    else:
-        return None, None
+        # If size is not available, set it as "Unknown"
+        size = "Unknown"
         
+        return file_name, mime_type, size
+    else:
+        return None, None, "Unknown"
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
