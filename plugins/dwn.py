@@ -3,6 +3,7 @@ import os
 import asyncio
 import re
 import mimetypes
+import libtorrent as lt
 import pickle
 import subprocess
 import logging
@@ -193,41 +194,30 @@ import urllib.parse
 import mimetypes
 
 async def extract_file_name_and_mime_magnet(magnet_link):
-    # Regex pattern to find the 'dn' parameter in the magnet link
-    pattern = r"dn=([a-zA-Z0-9._%+-]+(?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?)(?=&|$)"
-    match = re.search(pattern, magnet_link)
-    
-    if match:
-        # Extract the file name from the 'dn' parameter
-        file_name = match.group(1)
-        
-        # Decode URL encoded characters (if any)
-        file_name = urllib.parse.unquote(file_name)
-        
-        # Replace spaces with underscores
-        file_name = file_name.replace(' ', '_')
+    # Start a session
+    ses = lt.session()
 
-        # Remove any additional information after the file extension (like "[EZTVx.to]" etc.)
-        file_name = re.sub(r"\[.*\]$", "", file_name)
+    # Add magnet link to session
+    magnet = lt.add_magnet_uri(ses, magnet_link)
 
-        # Extract the file extension (e.g., .mkv, .mp4)
-        file_extension = file_name.split('.')[-1]
+    # Wait for the metadata to be fetched
+    print("Fetching metadata...")
+    while not magnet.has_metadata():
+        time.sleep(1)
 
-        # Ensure file extension is present
-        if file_extension not in ['mkv', 'mp4', 'avi', 'flv', 'webm']:  # You can add more as needed
-            file_extension = "unknown"
+    # Once metadata is available, retrieve torrent information
+    torrent_info = magnet.get_torrent_info()
 
-        # Get MIME type based on file extension
-        mime_type, _ = mimetypes.guess_type(file_name)
-        
-        # If MIME type couldn't be guessed, set it to a default
-        if not mime_type:
-            mime_type = "application/octet-stream"
+    # Extract file name and size
+    file_name = torrent_info.name()
+    file_size = torrent_info.total_size()
 
-        return file_name, mime_type
-    else:
-        return None, None, "Unknown"
+    # Get MIME type based on file extension
+    mime_type, _ = mimetypes.guess_type(file_name)
+    if not mime_type:
+        mime_type = "application/octet-stream"
 
+    return file_name, mime_type, file_size
 
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
@@ -300,8 +290,8 @@ async def universal_handler(client, message):
         elif "magnet:" in text:
             await checking_msg.edit("✅ Processing your video link...")
 
-            name, mime = await extract_file_name_and_mime_magnet(text)
-            size_str = "Unkown"
+            name, mime, size = await extract_file_name_and_mime_magnet(text)
+            size_str = human_readable_size(size)
             clean_name = clean_filename(name, mime)
 
             memory_store[random_id] = {
