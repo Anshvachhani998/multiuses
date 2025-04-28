@@ -305,7 +305,7 @@ async def universal_handler(client, message):
     
             memory_store[random_id] = {
                 'link': text,
-                'filename': clean_name,
+                'filename': name,
                 'source': 'magnet'
             }
         else:
