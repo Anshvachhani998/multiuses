@@ -211,13 +211,13 @@ async def git_pull(client, message):
     stdout, stderr = process.communicate()
     output = stdout.decode().strip()
     error = stderr.decode().strip()
-
+    cwd = os.getcwd()
     logging.info("Raw Output (stdout): %s", output)
     logging.info("Raw Error (stderr): %s", error)
 
     if error and "Already up to date." not in output and "FETCH_HEAD" not in error:
         await message.reply_text(f"❌ Error occurred: {os.getcwd()}\n{error}")
-        logging.info(f"{os.getcwd()}")
+        logging.info(f"get dic {cwd}")
         return
 
     if "Already up to date." in output:
