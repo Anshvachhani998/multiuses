@@ -6,6 +6,7 @@ import mimetypes
 import libtorrent as lt
 import pickle
 import subprocess
+import time
 import logging
 import aiohttp
 import yt_dlp
@@ -197,8 +198,8 @@ async def extract_file_name_and_mime_magnet(magnet_link):
     # Start a session
     ses = lt.session()
 
-    # Add magnet link to session
-    magnet = lt.add_magnet_uri(ses, magnet_link)
+    # Add magnet link to session with an empty dictionary as the third argument
+    magnet = lt.add_magnet_uri(ses, magnet_link, {})
 
     # Wait for the metadata to be fetched
     print("Fetching metadata...")
@@ -218,7 +219,7 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         mime_type = "application/octet-stream"
 
     return file_name, mime_type, file_size
-
+    
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
