@@ -205,7 +205,7 @@ async def git_pull(client, message):
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=working_directory
+
     )
 
     stdout, stderr = process.communicate()
