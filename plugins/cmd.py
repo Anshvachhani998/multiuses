@@ -198,11 +198,15 @@ async def git_pull(client, message):
     if message.from_user.id not in ADMINS:
         return await message.reply_text("🚫 **You are not authorized to use this command!**")
       
+    # Define correct working directory
+    working_directory = "/home/ubuntu/URL-UPLOADER"
+
     process = subprocess.Popen(
         "git pull https://github.com/Anshvachhani998/URL-UPLOADER",
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        cwd=working_directory  # Set the correct working directory here
     )
 
     stdout, stderr = process.communicate()
