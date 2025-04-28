@@ -198,7 +198,6 @@ async def git_pull(client, message):
     if message.from_user.id not in ADMINS:
         return await message.reply_text("🚫 **You are not authorized to use this command!**")
       
-    # Define correct working directory
     working_directory = "/home/ubuntu/URL-UPLOADER"
 
     process = subprocess.Popen(
@@ -206,7 +205,7 @@ async def git_pull(client, message):
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=working_directory  # Set the correct working directory here
+        cwd=working_directory
     )
 
     stdout, stderr = process.communicate()
@@ -216,17 +215,14 @@ async def git_pull(client, message):
     logging.info("Raw Output (stdout): %s", output)
     logging.info("Raw Error (stderr): %s", error)
 
-    # Error check
     if error and "Already up to date." not in output and "FETCH_HEAD" not in error:
         await message.reply_text(f"❌ Error occurred: \n{error}")
         return
 
-    # No updates
     if "Already up to date." in output:
         await message.reply_text("🚀 Repository is already up to date!")
         return
-
-    # Update found
+      
     if any(word in output.lower() for word in [
         "updating", "changed", "insert", "delete", "merge", "fast-forward",
         "files", "create mode", "rename", "pulling"
@@ -234,30 +230,7 @@ async def git_pull(client, message):
         await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
         await message.reply_text("🔄 Git Pull successful!\n♻ Restarting bot...")
 
-        # Restart like restart command
         subprocess.Popen("bash /home/ubuntu/URL-UPLOADER/start.sh", shell=True)
         os._exit(0)
 
-    # Fallback (safe output)
     await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
-
-
-@Client.on_message(filters.command("hack"))
-async def hack_command(client, message):
-    try:
-        # Extract the number from the command
-        number = message.text.split()[1]
-        
-        # Create a fun hack message
-        hack_message = f"""`[HACKING] - Target: {number}`
-        Please wait while the system is infiltrating...
-        30%...
-        60%...
-        90%...
-        Hacked Successfully! Access to {number} obtained.
-        """
-        
-        # Send the hack message in mono font
-        await message.reply(hack_message, parse_mode="markdown")
-    except IndexError:
-        await message.reply("Please provide a number to hack. Example: /hack 12345")
