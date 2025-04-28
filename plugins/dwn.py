@@ -30,28 +30,6 @@ rename_store = {}
 
 # ========== Utility Functions ==========
 
-async def get_terabox_info(link):
-    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url) as response:
-                if response.status != 200:
-                    return {"error": f"HTTP {response.status}"}
-                data = await response.json()
-
-        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
-        if not info:
-            return {"error": "No extracted info found."}
-
-        return {
-            "title": info.get("Title"),
-            "size": info.get("Size"),
-            "download_url": info.get("Direct Download Link")
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
-
 @Client.on_message(filters.private & filters.reply)
 async def rename_handscler(client, message):
     if message.reply_to_message and message.reply_to_message.text == "✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.":
@@ -79,6 +57,27 @@ async def rename_handscler(client, message):
     else:
         logger.info(f"Message is not a valid reply: {message.text}")
         await message.reply("❌ You need to reply to the 'Rename' prompt with the new filename.")
+async def get_terabox_info(link):
+    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    return {"error": f"HTTP {response.status}"}
+                data = await response.json()
+
+        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
+        if not info:
+            return {"error": "No extracted info found."}
+
+        return {
+            "title": info.get("Title"),
+            "size": info.get("Size"),
+            "download_url": info.get("Direct Download Link")
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
 
 def extract_file_id(link):
     patterns = [
