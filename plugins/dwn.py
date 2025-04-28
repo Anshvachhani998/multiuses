@@ -187,7 +187,7 @@ async def get_ytdlp_info(url):
 
     return title, filesize, mime
 
-def extract_file_name_and_mime_magent(magnet_link):
+async def extract_file_name_and_mime_magnet(magnet_link):
     # Regex pattern to find the 'dn' parameter in the magnet link
     pattern = r"dn=([a-zA-Z0-9._%+-]+(?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?)(?=&|$)"
     match = re.search(pattern, magnet_link)
@@ -209,6 +209,7 @@ def extract_file_name_and_mime_magent(magnet_link):
         return file_name, mime_type
     else:
         return None, None
+        
         
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
