@@ -51,8 +51,8 @@ async def get_terabox_info(link):
         return {"error": str(e)}
 
 @Client.on_message(filters.private & filters.reply)
-async def rename_handscler(client, message):
-    if message.reply_to_message and message.reply_to_message.text == "✏️ Please provide the new filename (including the extension). Reply to this message with the new filename.":
+async def rename_handler(client, message):
+    if message.reply_to_message and "Please provide the new filename" in message.reply_to_message.text:
         chat_id = message.chat.id
         logger.info(f"User is replying to the correct prompt: {chat_id}")
 
