@@ -187,7 +187,29 @@ async def get_ytdlp_info(url):
 
     return title, filesize, mime
 
-
+def extract_file_name_and_mime_magent(magnet_link):
+    # Regex pattern to find the 'dn' parameter in the magnet link
+    pattern = r"dn=([a-zA-Z0-9._%+-]+(?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?)(?=&|$)"
+    match = re.search(pattern, magnet_link)
+    
+    if match:
+        # Extract the file name
+        file_name = match.group(1)
+        
+        # Extract the file extension (e.g., .mkv, .mp4)
+        file_extension = file_name.split('.')[-1]
+        
+        # Get MIME type based on file extension
+        mime_type, _ = mimetypes.guess_type(file_name)
+        
+        # If MIME type couldn't be guessed, set it to a default
+        if not mime_type:
+            mime_type = "application/octet-stream"
+        
+        return file_name, mime_type
+    else:
+        return None, None
+        
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
@@ -256,6 +278,18 @@ async def universal_handler(client, message):
                 'source': 'yt-dlp'
             }
 
+        elif "magnet:" in text:
+            await checking_msg.edit("✅ Processing your video link...")
+
+            name, mime = await extract_file_name_and_mime_magent(text)
+            size_str = "Unkown"
+            clean_name = clean_filename(name, mime)
+
+            memory_store[random_id] = {
+                'link': text,
+                'filename': clean_name,
+                'source': 'magnet'
+            }
         else:
             name, size, mime = await get_direct_file_info(text)
             size_str = human_readable_size(size)
@@ -321,6 +355,9 @@ async def start_download(client, chat_id, link, filename, source):
             await aria2c_media(client, chat_id, link, filename)
         elif source == "terabox":
             await aria2c_media(client, chat_id, link, filename)
+        elif source == "magnet":
+            await aria2c_media(client, chat_id, link, filename)
+    
     except Exception as e:
         await client.send_message(chat_id, f"❌ Download Error: {e}")
         logger.error(f"Download failed for {link}: {str(e)}")
