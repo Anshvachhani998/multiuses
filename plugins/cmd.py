@@ -204,7 +204,7 @@ async def git_pull(client, message):
         "git pull https://github.com/Anshvachhani998/URL-UPLOADER",
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.PIPE
 
     )
 
