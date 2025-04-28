@@ -8,7 +8,7 @@ import subprocess
 import logging
 import aiohttp
 import yt_dlp
-
+import urllib.parse
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from googleapiclient.discovery import build
@@ -193,8 +193,17 @@ async def extract_file_name_and_mime_magnet(magnet_link):
     match = re.search(pattern, magnet_link)
     
     if match:
-        # Extract the file name
+        # Extract the file name from the 'dn' parameter
         file_name = match.group(1)
+        
+        # Decode URL encoded characters
+        file_name = urllib.parse.unquote(file_name)
+        
+        # Replace spaces with underscores
+        file_name = file_name.replace(' ', '_')
+        
+        # Remove any additional information after the file extension
+        file_name = re.sub(r"\[.*\]$", "", file_name)
         
         # Extract the file extension (e.g., .mkv, .mp4)
         file_extension = file_name.split('.')[-1]
@@ -209,7 +218,6 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         return file_name, mime_type
     else:
         return None, None
-        
         
 # ========== Main Handler ==========
 @Client.on_message(filters.private & filters.text)
