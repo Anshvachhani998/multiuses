@@ -299,13 +299,13 @@ async def universal_handler(client, message):
         elif "magnet:" in text:
             await checking_msg.edit("✅ Processing your video link...")
 
-            name = "File name is Unknown I suggest you Rename"
+            clean_name = "File name is Unknown I suggest you Rename"
             size_str = "Unknown"
             mime = "Unknown"
-    
+      
             memory_store[random_id] = {
                 'link': text,
-                'filename': name,
+                'filename': clean_name,
                 'source': 'magnet'
             }
         else:
