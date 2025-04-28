@@ -220,10 +220,8 @@ async def extract_file_name_and_mime_magnet(magnet_link):
         if not mime_type:
             mime_type = "application/octet-stream"
         
-        # If size is not available, set it as "Unknown"
-        size = "Unknown"
         
-        return file_name, mime_type, size
+        return file_name, mime_type
     else:
         return None, None, "Unknown"
 # ========== Main Handler ==========
