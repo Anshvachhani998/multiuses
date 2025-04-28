@@ -20,3 +20,4 @@ google-auth-oauthlib
 google-auth
 cloudscraper
 lxml
+python-libtorrent
