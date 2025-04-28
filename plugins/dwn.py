@@ -282,7 +282,7 @@ async def universal_handler(client, message):
         elif "magnet:" in text:
             await checking_msg.edit("✅ Processing your video link...")
 
-            name, mime = await extract_file_name_and_mime_magent(text)
+            name, mime = await extract_file_name_and_mime_magnet(text)
             size_str = "Unkown"
             clean_name = clean_filename(name, mime)
 
