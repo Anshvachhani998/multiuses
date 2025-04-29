@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
  
-async def download_video(client, chat_id, rename, youtube_link):
+async def download_video(client, chat_id, youtube_link):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -40,7 +40,7 @@ async def download_video(client, chat_id, rename, youtube_link):
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
         try:
             yt_dlp_options = {
-                'outtmpl': f'{DOWNLOAD_DIR}/{rename}',  # Use rename here
+                'outtmpl': f'{DOWNLOAD_DIR}/%(title)s_{timestamp}-{random_str}.%(ext)s',
                 'format': 'best',
                 'noplaylist': True,
                 'quiet': True,
@@ -122,7 +122,7 @@ async def download_video(client, chat_id, rename, youtube_link):
             duration = None
 
         # Upload video
-        await upload_media(client, chat_id, output_filename, rename, duration, width, height, status_msg, thumbnail_path, youtube_link)
+        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
 
     else:
         error_message = f"❌ **Download Failed!**"
@@ -135,7 +135,7 @@ def generate_unique_name(original_name):
     base, ext = os.path.splitext(original_name)
     return f"{base}_{timestamp}-{random_str}{ext}"
 
-def aria2c_download(url, download_dir, filename, label, queue, client):
+def aria2c_download(url, download_dir, label, queue, client):
     before_files = set(os.listdir(download_dir))
 
     cmd = [
@@ -196,7 +196,7 @@ def aria2c_download(url, download_dir, filename, label, queue, client):
 
 
         
-async def aria2c_media(client, chat_id, download_url, filename):
+async def aria2c_media(client, chat_id, download_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -217,7 +217,6 @@ async def aria2c_media(client, chat_id, download_url, filename):
                 aria2c_download,
                 download_url,
                 "downloads",
-                filename,
                 caption,
                 queue,
                 client
@@ -283,7 +282,7 @@ async def aria2c_media(client, chat_id, download_url, filename):
             client,
             chat_id,
             output_filename,
-            filename,
+            caption,
             duration,
             width,
             height,
@@ -297,7 +296,7 @@ async def aria2c_media(client, chat_id, download_url, filename):
 
 
 
-async def google_drive(client, chat_id, filename, gdrive_url):
+async def google_drive(client, chat_id, gdrive_url):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -331,7 +330,6 @@ async def google_drive(client, chat_id, filename, gdrive_url):
                 gdown_download,
                 download_url,
                 "downloads",
-                filename,
                 caption,
                 queue,
                 client
