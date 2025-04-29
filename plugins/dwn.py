@@ -46,6 +46,16 @@ async def get_terabox_info(link):
         return {"error": str(e)}
 
 
+async def is_supported_by_ytdlp(url):
+     try:
+         cmd = ["yt-dlp", "--quiet", "--simulate", url]
+         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+ 
+         return result.returncode == 0
+     except Exception:
+         return False
+ 
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
