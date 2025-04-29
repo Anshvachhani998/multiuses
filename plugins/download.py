@@ -55,7 +55,8 @@ async def download_video(client, chat_id, youtube_link):
                 filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
                 final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
-                output_filename = final_filename
+                output_filename = filename
+             
 
                 youtube_thumbnail_url = info.get('thumbnail')
                 duration = info.get('duration', 0)
