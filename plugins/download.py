@@ -313,7 +313,8 @@ async def aria2c_media(client, chat_id, download_url):
 
 
 
-async def google_drive(client, chat_id, gdrive_url, filename):
+async def google_drive(client, chat_id, gdrive_url, filename, check):
+    await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
