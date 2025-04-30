@@ -45,6 +45,16 @@ async def get_terabox_info(link):
     except Exception as e:
         return {"error": str(e)}
 
+def extract_file_id(link):
+    patterns = [
+        r'/file/d/([a-zA-Z0-9_-]+)',
+        r'id=([a-zA-Z0-9_-]+)'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, link)
+        if match:
+            return match.group(1)
+    return None
 
 async def is_supported_by_ytdlp(url):
      try:
@@ -77,7 +87,14 @@ async def universal_handler(client, message):
 
         elif "terabox.com" in text:
             await checking_msg.edit("✅ Processing TeraBox link...")
-            await aria2c_media(client, chat_id, text)
+            terabox_info = await get_terabox_info(text)
+            logging.info(terabox_info)
+            if "error" in terabox_info:
+                await checking_msg.edit(f"thsi not link")
+                return
+                
+            dwn = terabox_info.get("download_url")
+            await aria2c_media(client, chat_id, dwn)
 
         elif await is_supported_by_ytdlp(text):
             await checking_msg.edit("✅ Processing video link...")
