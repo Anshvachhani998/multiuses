@@ -118,18 +118,15 @@ async def download_video(client, chat_id, youtube_link):
             except Exception as e:
                 logging.error(f"Error downloading/resizing YouTube thumbnail: {e}")
 
-        # Extract fixed thumbnail from the video if still no thumbnail
         if not thumbnail_path:
             try:
                 thumbnail_path = await extract_fixed_thumbnail(output_filename)
             except Exception as e:
                 logging.error(f"Error extracting fixed thumbnail: {e}")
 
-        # Get video metadata
         try:
-            duration = await get_video_duration(output_filename)
+             duration = await get_video_duration(output_filename)
         except Exception as e:
-            logging.error(f"Error fetching video metadata: {e}")
             duration = None
 
         # Upload video
@@ -393,11 +390,8 @@ async def google_drive(client, chat_id, gdrive_url):
                 logging.info(thumbnail_path)
             except Exception as e:
                 logging.error(f"Error extracting fixed thumbnail: {e}")
-
-        # Get video duration
         try:
             duration = await get_video_duration(output_filename)
-            logging.info(duration)
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
