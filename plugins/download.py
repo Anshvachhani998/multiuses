@@ -15,7 +15,7 @@ from plugins.upload import upload_media
 from info import LOG_CHANNEL
 from pyrogram import Client, filters, enums
 
-# Configure Logging
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
