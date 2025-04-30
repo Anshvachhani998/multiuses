@@ -415,6 +415,7 @@ def gdown_download(url, download_dir, filename, label, queue, client):
             "--no-cookies",
             "--output", path
         ]
+
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -423,10 +424,13 @@ def gdown_download(url, download_dir, filename, label, queue, client):
         )
 
         for line in process.stdout:
+
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
+
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
+
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
@@ -436,11 +440,30 @@ def gdown_download(url, download_dir, filename, label, queue, client):
 
         process.wait()
 
-        if not os.path.exists(final_output_path):
+        files = os.listdir(download_dir)
+        logging.info(f"GDOWN name1  {files} ?? {download_dir}")
+        if not files:
             raise Exception("❌ File not found after gdown!")
 
-        logging.info(f"File saved at: {final_output_path}")
-        return final_output_path
+        # Sort files by modified time and select the most recent one
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
+        final_path = os.path.join(download_dir, files[0])
+        logging.info(f"GDOWN name {final_path}")
+
+        # Check for file conflicts and rename the file if needed
+        base_name, ext = os.path.splitext(files[0])
+        new_file_name = final_path
+        counter = 1
+
+        while os.path.exists(new_file_name):
+            new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
+            counter += 1
+
+        if new_file_name != final_path:
+            os.rename(final_path, new_file_name)
+            final_path = new_file_name
+         
+        return final_path
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
