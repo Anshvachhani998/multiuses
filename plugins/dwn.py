@@ -101,7 +101,7 @@ def clean_filename(filename, mime=None):
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
-    if not text.startswith("http"):
+    if not (text.startswith("http") or text.startswith("magnet:") or text.endswith(".torrent")):
         return
 
     chat_id = message.chat.id
@@ -129,6 +129,14 @@ async def universal_handler(client, message):
                 
             dwn = terabox_info.get("download_url")
             await aria2c_media(client, chat_id, dwn)
+
+        elif "magnet:" in text:
+            await checking_msg.edit("✅ Processing magnet link...")
+            await aria2c_media(client, chat_id, dwn)
+
+        elif ".torrent" in text:
+            await checking_msg.edit("✅ Processing torrent link...")
+            await aria2c_media(client, chat_id, text)
 
         elif await is_direct_download_link(text):
             await checking_msg.edit("✅ Direct download link detected. Starting download...")
