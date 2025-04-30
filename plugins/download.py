@@ -96,7 +96,7 @@ async def download_video(client, chat_id, youtube_link):
     if output_filename and os.path.exists(output_filename):
         file_ext = os.path.splitext(output_filename)[1].lower()
         file_size = os.path.getsize(output_filename)
-        if file_ext in ['.zip', '.rar', '.tar'] and file_size > 2 * 1024 * 1024 * 1024:
+        if not file_ext in ['.mp4', '.mkv'] and file_size > 2 * 1024 * 1024 * 1024:
             await status_msg.edit_text("**Cannot upload ZIP/RAR/TAR files larger than 2GB.**")
             os.remove(output_filename)
             return
