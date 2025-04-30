@@ -1,4 +1,7 @@
 import os
+import uuid
+import shutil
+import uuid
 import gdown
 import re
 import time
@@ -400,17 +403,6 @@ async def google_drive(client, chat_id, gdrive_url):
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
-
-import uuid
-import shutil
-import uuid
-import shutil
-import os
-import subprocess
-import re
-import asyncio
-import logging
-
 def gdown_download(url, download_dir, label, queue, client):
     try:
         os.makedirs(download_dir, exist_ok=True)
@@ -419,7 +411,7 @@ def gdown_download(url, download_dir, label, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", download_dir
+            "--output", "downloads/"
         ]
 
         process = subprocess.Popen(
