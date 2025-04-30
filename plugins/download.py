@@ -405,7 +405,6 @@ async def google_drive(client, chat_id, gdrive_url):
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
-        os.makedirs(download_dir, exist_ok=True)
         cmd = [
             "gdown",
             url,
@@ -457,10 +456,10 @@ def gdown_download(url, download_dir, label, queue, client):
             new_file_name = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
             counter += 1
 
-        if new_file_name != final_path:
-            os.rename(final_path, new_file_name)
-            final_path = new_file_name
-         
+
+        final_path = new_file_name
+
+        logging.info(f"File saved at: {final_path}")
         return final_path
 
     except Exception as e:
