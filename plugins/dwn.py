@@ -108,7 +108,6 @@ async def universal_handler(client, message):
     checking_msg = await message.reply_text("🔎 Checking your link, please wait...")
 
     try:
-        # Google Drive
         if "drive.google.com" in text:
             file_id = extract_file_id(text)
             if not file_id:
@@ -120,7 +119,6 @@ async def universal_handler(client, message):
             await checking_msg.edit(f"✅ Processing Google Drive link...")
             await google_drive(client, chat_id, text, name)
 
-        # TeraBox
         elif "terabox.com" in text:
             await checking_msg.edit("✅ Processing TeraBox link...")
             terabox_info = await get_terabox_info(text)
@@ -132,17 +130,14 @@ async def universal_handler(client, message):
             dwn = terabox_info.get("download_url")
             await aria2c_media(client, chat_id, dwn)
 
-        # Direct download link (check HEAD)
         elif await is_direct_download_link(text):
             await checking_msg.edit("✅ Direct download link detected. Starting download...")
             await aria2c_media(client, chat_id, text)
 
-        # yt-dlp supported
         elif await is_supported_by_ytdlp(text):
             await checking_msg.edit("✅ Processing video link...")
             await download_video(client, chat_id, text)
 
-        # Unsupported
         else:
             await checking_msg.edit("❌ Unsupported or invalid link format.")
 
