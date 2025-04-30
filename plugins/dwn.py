@@ -148,5 +148,4 @@ async def universal_handler(client, message):
 
     except Exception as e:
         logger.error(f"Error: {e}")
-        await checking_msg.edit("❌ Failed to process link.")
-        await client.send_message(chat_id, f"❌ Download Error: {e}")
+        await checking_msg.edit("❌ THis to process link.")
