@@ -264,6 +264,12 @@ async def aria2c_media(client, chat_id, download_url):
 
     # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
+        file_ext = os.path.splitext(output_filename)[1].lower()
+        file_size = os.path.getsize(output_filename)
+        if not file_ext in ['.mp4', '.mkv'] and file_size > 2 * 1024 * 1024 * 1024:
+            await status_msg.edit_text("**Cannot upload ZIP/RAR/TAR files larger than 2GB.**")
+            os.remove(output_filename)
+            return
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
         # Get user thumbnail
@@ -375,8 +381,13 @@ async def google_drive(client, chat_id, gdrive_url, filename):
         await status_msg.edit_text(error_message)
         return
  
-    # Prepare for upload if no error occurred
     if output_filename and os.path.exists(output_filename):
+        file_ext = os.path.splitext(output_filename)[1].lower()
+        file_size = os.path.getsize(output_filename)
+        if not file_ext in ['.mp4', '.mkv'] and file_size > 2 * 1024 * 1024 * 1024:
+            await status_msg.edit_text("**Cannot upload ZIP/RAR/TAR files larger than 2GB.**")
+            os.remove(output_filename)
+            return
         await status_msg.edit_text("📤 **Preparing for upload...**")
         await client.send_message(chat_id, f"{output_filename}")
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
@@ -387,7 +398,6 @@ async def google_drive(client, chat_id, gdrive_url, filename):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
-        # Extract from video if no thumbnail
         if not thumbnail_path:
             try:
                 thumbnail_path = await extract_fixed_thumbnail(output_filename)
