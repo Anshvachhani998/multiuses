@@ -4,8 +4,17 @@ import pickle
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
 
-# Use `run_local_server()` to authenticate
-creds = flow.run_local_server(port=0)
+# Get the authorization URL
+auth_url, _ = flow.authorization_url()
+
+print("Please go to this URL and authorize the application:")
+print(auth_url)
+
+# After the user authorizes, they will receive a code to enter
+code = input("Enter the authorization code: ")
+
+# Use the code to fetch the credentials
+creds = flow.fetch_token(authorization_response=code)
 
 # Save the credentials
 with open('token.pickle', 'wb') as token:
