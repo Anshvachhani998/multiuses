@@ -81,7 +81,21 @@ async def is_supported_by_ytdlp(url):
          return result.returncode == 0
      except Exception:
          return False
- 
+
+def clean_filename(filename, mime=None):
+    name, ext = os.path.splitext(filename)
+    if not ext or ext == '':
+        if mime:
+            guessed_ext = mimetypes.guess_extension(mime)
+            ext = guessed_ext if guessed_ext else '.mkv'
+        else:
+            ext = '.mkv'
+    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r'[-\s]+', '_', name)
+    name = name.strip('_')
+
+    return name + ext
+
 
 
 @Client.on_message(filters.private & filters.text)
@@ -102,7 +116,8 @@ async def universal_handler(client, message):
                 return
 
             await checking_msg.edit("✅ Processing Google Drive link...")
-            filename, size, mime = get_file_info(file_id)
+            name, size, mime = get_file_info(file_id)
+            filename = clean_filename(name, mime)
             await google_drive(client, chat_id, text, filename)
 
         # TeraBox
