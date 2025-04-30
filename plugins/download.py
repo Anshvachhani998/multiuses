@@ -127,7 +127,7 @@ async def download_video(client, chat_id, youtube_link):
             duration = None
 
         # Upload video
-        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link)
+        asyncio.create_task(upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link))
 
     else:
         error_message = f"❌ **Download Failed!**"
@@ -283,7 +283,7 @@ async def aria2c_media(client, chat_id, download_url):
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
 
-        await upload_media(
+        asyncio.create_task(upload_media(
             client,
             chat_id,
             output_filename,
@@ -294,7 +294,7 @@ async def aria2c_media(client, chat_id, download_url):
             status_msg,
             thumbnail_path,
             download_url
-        )
+        ))
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
@@ -395,7 +395,7 @@ async def google_drive(client, chat_id, gdrive_url):
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
-        await upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url)
+        asyncio.create_task((upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url))
 
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
