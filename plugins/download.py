@@ -405,22 +405,12 @@ async def google_drive(client, chat_id, gdrive_url):
 
 def gdown_download(url, download_dir, label, queue, client):
     try:
-        os.makedirs(download_dir, exist_ok=True)
-
-        # Get filename from URL using `gdown` dry-run
-        info_cmd = ["gdown", url, "--fuzzy", "--no-cookies", "--dry-run"]
-        result = subprocess.run(info_cmd, stdout=subprocess.PIPE, text=True)
-        match = re.search(r'Saving to: \'(.+?)\'', result.stdout)
-        filename = match.group(1) if match else "file_from_gdown"
-
-        final_output_path = os.path.join(download_dir, filename)
-
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", final_output_path
+            "--output", "downloads/"
         ]
 
         process = subprocess.Popen(
