@@ -420,13 +420,12 @@ import logging
 def gdown_download(url, download_dir, label, queue, client):
     try:
         os.makedirs(download_dir, exist_ok=True)
-        path = os.path.join(download_dir, filename)
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", path
+            "--output", download_dir
         ]
 
         process = subprocess.Popen(
