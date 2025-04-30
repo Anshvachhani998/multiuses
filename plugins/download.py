@@ -50,6 +50,8 @@ async def download_video(client, chat_id, youtube_link):
 
             with YoutubeDL(yt_dlp_options) as ydl:
                 info = ydl.extract_info(youtube_link, download=True)
+                if info.get('_type') == 'playlist' and 'entries' in info:
+                    info = info['entries'][0]
                 caption = info.get('title', 'Untitled')
                 filename = ydl.prepare_filename(info)
                 filename_only = f"{caption}_{timestamp}-{random_str}.mp4"
