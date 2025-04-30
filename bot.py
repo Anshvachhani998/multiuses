@@ -29,8 +29,9 @@ class Bot(Client):
             bot_token=BOT_TOKEN,
             workers=200,
             plugins={"root": "plugins"},
-            sleep_threshold=10,
-        )
+            sleep_threshold=10, 
+            max_concurrent_transmissions=6
+         )
 
     async def start(self):
         await super().start()
