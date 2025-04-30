@@ -404,7 +404,7 @@ async def google_drive(client, chat_id, gdrive_url, filename):
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
-def gdown_download(url, download_dir, name, label, queue, client):
+def gdown_download(url, download_dir, filename, label, queue, client):
     try:
         os.makedirs(download_dir, exist_ok=True)
         path = os.path.join(download_dir, filename)
