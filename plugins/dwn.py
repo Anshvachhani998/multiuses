@@ -132,7 +132,7 @@ async def universal_handler(client, message):
 
         elif "magnet:" in text:
             await checking_msg.edit("✅ Processing magnet link...")
-            await aria2c_media(client, chat_id, dwn)
+            await aria2c_media(client, chat_id, text)
 
         elif ".torrent" in text:
             await checking_msg.edit("✅ Processing torrent link...")
