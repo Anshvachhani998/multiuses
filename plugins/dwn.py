@@ -64,6 +64,15 @@ def extract_file_id(link):
             return match.group(1)
     return None
 
+def get_file_info(file_id):
+    creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
+    service = build("drive", "v3", credentials=creds)
+    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
+    name = file.get("name")
+    size = int(file.get("size", 0))
+    mime = file.get("mimeType")
+    return name, size, mime
+    
 async def is_supported_by_ytdlp(url):
      try:
          cmd = ["yt-dlp", "--quiet", "--simulate", url]
@@ -93,7 +102,8 @@ async def universal_handler(client, message):
                 return
 
             await checking_msg.edit("✅ Processing Google Drive link...")
-            await google_drive(client, chat_id, text)
+            filename, size, mime = get_file_info(file_id)
+            await google_drive(client, chat_id, text, filename)
 
         # TeraBox
         elif "terabox.com" in text:
