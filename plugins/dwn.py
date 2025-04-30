@@ -64,14 +64,46 @@ def extract_file_id(link):
             return match.group(1)
     return None
 
+
+def load_credentials():
+    try:
+        # Define the path to token.pickle in the plugins directory
+        token_path = os.path.join("plugins", "token.pickle")
+        
+        if os.path.exists(token_path):
+            with open(token_path, "rb") as token:
+                creds = pickle.load(token)
+            logger.info("Token loaded successfully.")
+            return creds
+        else:
+            logger.error("token.pickle not found in the plugins directory.")
+            return None
+    except Exception as e:
+        logger.error(f"Error loading token.pickle: {e}")
+        return None
+
 def get_file_info(file_id):
-    creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
+    # Load credentials from the token.pickle file
+    creds = load_credentials()
+    if not creds:
+        logger.error("Credentials could not be loaded. Exiting.")
+        return None
+
+    # Build the Google Drive service using the credentials
     service = build("drive", "v3", credentials=creds)
-    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
-    name = file.get("name")
-    size = int(file.get("size", 0))
-    mime = file.get("mimeType")
-    return name, size, mime
+
+    try:
+        # Get file info from Google Drive
+        file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
+        name = file.get("name")
+        size = int(file.get("size", 0))
+        mime = file.get("mimeType")
+
+        logger.info(f"File info: Name: {name}, Size: {size}, MimeType: {mime}")
+        return name, size, mime
+    except Exception as e:
+        logger.error(f"Error retrieving file info: {e}")
+        return None
     
 async def is_supported_by_ytdlp(url):
      try:
