@@ -439,11 +439,15 @@ def gdown_download(url, download_dir, filename, label, queue, client):
                 print("No match found in line:", line.strip())
 
         process.wait()
- 
-
+     
         final_path = os.path.join(download_dir, filename)
-       
-        return final_path
+
+        if os.path.exists(final_path):
+            return final_path
+        else:
+            print("Download failed or file not found.")
+            return None
 
     except Exception as e:
-        print("GDOWN ERROR:", str(e))
+        print(f"Error during download: {e}")
+        return None
