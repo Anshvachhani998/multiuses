@@ -307,7 +307,7 @@ async def aria2c_media(client, chat_id, download_url):
 
 
 
-async def google_drive(client, chat_id, gdrive_url):
+async def google_drive(client, chat_id, gdrive_url, filename):
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -341,6 +341,7 @@ async def google_drive(client, chat_id, gdrive_url):
                 gdown_download,
                 download_url,
                 "downloads",
+                filename,
                 caption,
                 queue,
                 client
@@ -403,14 +404,16 @@ async def google_drive(client, chat_id, gdrive_url):
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
 
-def gdown_download(url, download_dir, label, queue, client):
+def gdown_download(url, download_dir, filename, label, queue, client):
     try:
+        os.makedirs(download_dir, exist_ok=True)
+        path = os.path.join(download_dir, filename)
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", path
         ]
 
         process = subprocess.Popen(
