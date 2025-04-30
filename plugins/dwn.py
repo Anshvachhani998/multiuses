@@ -22,7 +22,15 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-
+async def is_direct_download_link(url: str) -> bool:
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, timeout=5) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                return any(x in content_type for x in ["video/", "audio/", "application/"])
+    except:
+        return False
+        
 async def get_terabox_info(link):
     api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
     try:
@@ -66,6 +74,7 @@ async def is_supported_by_ytdlp(url):
          return False
  
 
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -76,6 +85,7 @@ async def universal_handler(client, message):
     checking_msg = await message.reply_text("🔎 Checking your link, please wait...")
 
     try:
+        # Google Drive
         if "drive.google.com" in text:
             file_id = extract_file_id(text)
             if not file_id:
@@ -85,27 +95,33 @@ async def universal_handler(client, message):
             await checking_msg.edit("✅ Processing Google Drive link...")
             await google_drive(client, chat_id, text)
 
+        # TeraBox
         elif "terabox.com" in text:
             await checking_msg.edit("✅ Processing TeraBox link...")
             terabox_info = await get_terabox_info(text)
             logging.info(terabox_info)
             if "error" in terabox_info:
-                await checking_msg.edit(f"thsi not link")
+                await checking_msg.edit("❌ Invalid TeraBox link.")
                 return
                 
             dwn = terabox_info.get("download_url")
             await aria2c_media(client, chat_id, dwn)
 
+        # Direct download link (check HEAD)
+        elif await is_direct_download_link(text):
+            await checking_msg.edit("✅ Direct download link detected. Starting download...")
+            await aria2c_media(client, chat_id, text)
+
+        # yt-dlp supported
         elif await is_supported_by_ytdlp(text):
             await checking_msg.edit("✅ Processing video link...")
             await download_video(client, chat_id, text)
 
+        # Unsupported
         else:
-            await aria2c_media(client, chat_id, text)
+            await checking_msg.edit("❌ Unsupported or invalid link format.")
 
     except Exception as e:
         logger.error(f"Error: {e}")
         await checking_msg.edit("❌ Failed to process link.")
-
         await client.send_message(chat_id, f"❌ Download Error: {e}")
-        logger.error(f"Download failed for {link}: {str(e)}")
