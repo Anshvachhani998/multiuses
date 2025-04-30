@@ -389,7 +389,6 @@ async def google_drive(client, chat_id, gdrive_url, filename):
             os.remove(output_filename)
             return
         await status_msg.edit_text("📤 **Preparing for upload...**")
-        await client.send_message(chat_id, f"{output_filename}")
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
