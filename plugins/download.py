@@ -395,7 +395,7 @@ async def google_drive(client, chat_id, gdrive_url):
         except Exception as e:
             logging.error(f"Error fetching video metadata: {e}")
             duration = None
-        asyncio.create_task((upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url))
+        asyncio.create_task((upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url)))
 
     else:
         await status_msg.edit_text("❌ **Download Failed!**")
