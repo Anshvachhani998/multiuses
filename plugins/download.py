@@ -56,6 +56,8 @@ async def download_video(client, chat_id, youtube_link):
                 final_filename = os.path.join(DOWNLOAD_DIR, filename_only)
 
                 output_filename = filename
+                logging.info(f"Video info: {info}///{output_filename}")
+
              
 
                 youtube_thumbnail_url = info.get('thumbnail')
