@@ -10,7 +10,7 @@ import string
 import asyncio
 import logging
 import subprocess
-from utils import convert_to_bytes, download_and_resize_thumbnail, get_video_duration, extract_fixed_thumbnail, get_confirm_token_download_url
+from utils import convert_to_bytes, download_and_resize_thumbnail, get_video_duration, extract_fixed_thumbnail, get_confirm_token_download_url, active_tasks
 from yt_dlp import YoutubeDL
 from database.db import db
 from plugins.progress_bar import yt_progress_hook, update_progress
@@ -18,13 +18,13 @@ from plugins.upload import upload_media
 from info import LOG_CHANNEL
 from pyrogram import Client, filters, enums
 
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
  
 async def download_video(client, chat_id, youtube_link check):
+    active_tasks[chat_id] = True
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
@@ -89,6 +89,7 @@ async def download_video(client, chat_id, youtube_link check):
                 ),
                 client.loop
             )
+            active_tasks.pop(chat_id, None)
             asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "message": str(e)}), client.loop)
 
     download_task = asyncio.create_task(asyncio.to_thread(run_pytubefix))
@@ -138,6 +139,7 @@ async def download_video(client, chat_id, youtube_link check):
     else:
         error_message = f"❌ **Download Failed!**"
         logging.error(error_message)
+        active_tasks.pop(chat_id, None)
         await status_msg.edit_text(error_message)
 
 def generate_unique_name(original_name):
@@ -208,6 +210,7 @@ def aria2c_download(url, download_dir, label, queue, client):
 
         
 async def aria2c_media(client, chat_id, download_url check):
+    active_tasks[chat_id] = True
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
@@ -217,7 +220,7 @@ async def aria2c_media(client, chat_id, download_url check):
     duration = 0
     width, height = 640, 360
     thumbnail_path = None
-    error_occurred = False  # Flag to check if an error occurred
+    error_occurred = False
 
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
@@ -238,13 +241,17 @@ async def aria2c_media(client, chat_id, download_url check):
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
-            error_occurred = True  # Set the flag to True if an error occurs
-            await client.send_message(
-                LOG_CHANNEL,
-                f"❌ Exception in download:\n`{str(e)}`\n\nLink: {download_url}",
-                disable_web_page_preview=True
+            error_occurred = True
+            asyncio.run_coroutine_threadsafe(
+                client.send_message(
+                    LOG_CHANNEL,
+                    f"Exception in download with ARIA2c:\n`{str(e)}`\n\nLink: {download_url}",
+                    disable_web_page_preview=True
+                ),
+                client.loop
             )
             await queue.put({"status": "error", "message": str(e)})
+            active_tasks.pop(chat_id, None)
             return
 
     # Start async tasks
@@ -309,12 +316,14 @@ async def aria2c_media(client, chat_id, download_url check):
             download_url
         ))
     else:
+        active_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
 
 
 
 async def google_drive(client, chat_id, gdrive_url, filename, check):
+    active_tasks[chat_id] = True
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
@@ -366,6 +375,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 disable_web_page_preview=True
             )
             await queue.put({"status": "error", "message": str(e)})
+            active_tasks.pop(chat_id, None)
             return
 
     download_task = asyncio.create_task(run_gdrive())
@@ -413,6 +423,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
         asyncio.create_task((upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, gdrive_url)))
 
     else:
+        active_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
 def gdown_download(url, download_dir, filename, label, queue, client):
@@ -426,14 +437,12 @@ def gdown_download(url, download_dir, filename, label, queue, client):
             "--no-cookies",
             "--output", path
         ]
-
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True
         )
-
         for line in process.stdout:
 
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
