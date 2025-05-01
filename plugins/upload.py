@@ -9,7 +9,6 @@ from database.db import db
 from utils import split_video, active_tasks
 from plugins.progress_bar import progress_for_pyrogram
 
-
 async def upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, link):
     logging.info(output_filename)
     if output_filename and os.path.exists(output_filename):
@@ -35,29 +34,34 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 
                 with open(part_file, "rb") as media_file:
                     if upload_as_doc:
-                        # Handling for documents
+                        # If the file is a video, try to send it as a document
                         if part_file.endswith(('.mp4', '.mkv', '.avi', '.mov')):
-                            # Convert video to document
-                            sent_message = await client.send_document(
-                                chat_id=chat_id,
-                                document=media_file,
-                                caption=part_caption,
-                                progress=upload_progress,
-                                disable_notification=True,
-                                thumb=thumbnail_path if thumbnail_path else None,
-                                file_name=os.path.basename(part_file)
-                            )
-                        elif part_file.endswith(('.mp3', '.wav')):
-                            # Handle audio as document
-                            sent_message = await client.send_document(
-                                chat_id=chat_id,
-                                document=media_file,
-                                caption=part_caption,
-                                progress=upload_progress,
-                                disable_notification=True,
-                                thumb=thumbnail_path if thumbnail_path else None,
-                                file_name=os.path.basename(part_file)
-                            )
+                            try:
+                                sent_message = await client.send_document(
+                                    chat_id=chat_id,
+                                    document=media_file,
+                                    caption=part_caption,
+                                    progress=upload_progress,
+                                    disable_notification=True,
+                                    thumb=thumbnail_path if thumbnail_path else None,
+                                    file_name=os.path.basename(part_file)
+                                )
+                            except Exception as e:
+                                # Log the error and try sending it as video
+                                logging.error(f"Error while sending video as document: {str(e)}")
+                                sent_message = await client.send_video(
+                                    chat_id=chat_id,
+                                    video=media_file,
+                                    progress=upload_progress,
+                                    caption=part_caption,
+                                    duration=duration // total_parts if total_parts > 1 else duration,
+                                    supports_streaming=True,
+                                    height=height,
+                                    width=width,
+                                    disable_notification=True,
+                                    thumb=thumbnail_path if thumbnail_path else None,
+                                    file_name=os.path.basename(part_file)
+                                )
                         else:
                             sent_message = await client.send_document(
                                 chat_id=chat_id,
@@ -69,7 +73,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 file_name=os.path.basename(part_file)
                             )
                     else:
-                        # Handling for video or audio upload
+                        # If upload_as_doc is False, send the file normally (as video or audio)
                         if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
                             sent_message = await client.send_video(
                                 chat_id=chat_id,
@@ -91,16 +95,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 progress=upload_progress,
                                 caption=part_caption,
                                 duration=duration // total_parts if total_parts > 1 else duration,
-                                disable_notification=True,
-                                thumb=thumbnail_path if thumbnail_path else None,
-                                file_name=os.path.basename(part_file)
-                            )
-                        elif part_file.endswith('.zip') or part_file.endswith('.rar') or part_file.endswith('.tar'):
-                            sent_message = await client.send_document(
-                                chat_id=chat_id,
-                                document=media_file,
-                                progress=upload_progress,
-                                caption=part_caption,
                                 disable_notification=True,
                                 thumb=thumbnail_path if thumbnail_path else None,
                                 file_name=os.path.basename(part_file)
