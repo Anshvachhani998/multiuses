@@ -133,13 +133,32 @@ async def universal_handler(client, message):
 
     try:
         if "drive.google.com" in text:
+            if "drive/folders" in text:
+                # Google Drive Folder Error
+                await checking_msg.edit("❌ **Google Drive folder download is not supported yet.**\n\n📦 **Feature coming soon...**")
+                
+                err_msg = (
+                    f"📁 <b>Google Drive Folder Attempt</b>\n"
+                    f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+                    f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
+                )
+                await client.send_message(LOG_CHANNEL, err_msg, parse_mode="html")
+                return
+
             file_id = extract_file_id(text)
             if not file_id:
-                await checking_msg.edit("❌ Invalid Google Drive link.")
-                return
+                # Invalid Google Drive link error
+                await checking_msg.edit("** Invalid Google Drive link.**")
                 
+                err_msg = (
+                    f"🚨 <b>Invalid Google Drive Link</b>\n"
+                    f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+                    f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
+                )
+                await client.send_message(LOG_CHANNEL, err_msg)
+                return
+
             name, size, mime = get_file_info(file_id)
- 
             checking = await checking_msg.edit(f"✅ Processing Google Drive link...")
             await google_drive(client, chat_id, text, name, checking)
 
@@ -148,7 +167,15 @@ async def universal_handler(client, message):
             terabox_info = await get_terabox_info(text)
             logging.info(terabox_info)
             if "error" in terabox_info:
-                await checking_msg.edit("❌ Invalid TeraBox link.")
+                # Invalid TeraBox link error
+                await checking_msg.edit("**Invalid TeraBox link.**")
+                
+                err_msg = (
+                    f"🚨 <b>Invalid TeraBox Link</b>\n"
+                    f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+                    f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
+                )
+                await client.send_message(LOG_CHANNEL, err_msg)
                 return
                 
             dwn = terabox_info.get("download_url")
@@ -156,7 +183,7 @@ async def universal_handler(client, message):
 
         elif "magnet:" in text:
             checking = await checking_msg.edit("✅ Processing magnet link...")
-            await aria2c_media(client, chat_id, text,checking)
+            await aria2c_media(client, chat_id, text, checking)
 
         elif ".torrent" in text:
             checking = await checking_msg.edit("✅ Processing torrent link...")
@@ -171,14 +198,14 @@ async def universal_handler(client, message):
             await download_video(client, chat_id, text, checking)
 
         else:
+            # If none of the supported link formats match
             await checking_msg.edit("**This link is not accessible or not direct download link**")
             err_msg = (
-            f"🚨 <b>Link Not Found</b>\n"
-            f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
-            f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
+                f"🚨 <b>Link Not Found</b>\n"
+                f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+                f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
             )
             await client.send_message(LOG_CHANNEL, err_msg)
-            
 
     except Exception as e:
         logger.error(f"Error: {e}")
