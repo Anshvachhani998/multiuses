@@ -10,7 +10,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import LOG_CHANNEL, ADMINS, DAILY_LIMITS, BOT_TOKEN
 from database.db import db
 from pyrogram.enums import ParseMode 
-
+from utils import active_tasks
   
 
 logger = logging.getLogger(__name__)   
@@ -235,3 +235,23 @@ async def git_pull(client, message):
         os._exit(0)
 
     await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
+
+@Client.on_message(filters.command("checkdc") & filters.private)
+async def check_dc(client, message):
+    try:
+        me = await client.get_me()
+        dc_id = me.dc_id
+        await message.reply_text(f"🌍 **Your Data Center ID:** `{dc_id}`")
+    except Exception as e:
+        await message.reply_text(f"❌ Error while checking DC ID:\n`{e}`")
+
+
+@Client.on_message(filters.command("taskinfo"))
+async def show_active_tasks(client, message):
+    if message.from_user.id not in ADMINS:
+        await message.reply("❌ You are not authorized to use this command.")
+        return
+
+    total_tasks = len(active_tasks)
+    await message.reply(f"**🧾 Active Tasks (Total: {total_tasks})**")
+
