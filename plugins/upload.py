@@ -45,7 +45,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
                     else:
-                        # Check file extension for different types
                         if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
                             sent_message = await client.send_video(
                                 chat_id=chat_id,
@@ -82,7 +81,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 file_name=os.path.basename(part_file)
                             )
                         else:
-                            # For unsupported file types, handle as document by default
                             sent_message = await client.send_document(
                                 chat_id=chat_id,
                                 document=media_file,
@@ -93,7 +91,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                 file_name=os.path.basename(part_file)
                             )
 
-                # Extract file_id
                 if hasattr(sent_message, 'video') and sent_message.video:
                     file_id = sent_message.video.file_id
                 elif hasattr(sent_message, 'audio') and sent_message.audio:
@@ -104,7 +101,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                     logging.error("No valid file_id found in sent_message.")
                     file_id = None
 
-                # Upload to dump channel
                 if file_id:
                     formatted_caption = (
                         f"{part_caption}\n\n"
@@ -179,6 +175,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 os.remove(output_filename)
             if thumbnail_path and os.path.exists(thumbnail_path):
                 os.remove(thumbnail_path)
+            active_tasks.pop(chat_id, None)
 
     else:
         try:
@@ -194,3 +191,4 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             await client.send_message(LOG_CHANNEL, f"❌ Error while logging failed upload:\n`{str(e)}`")
 
         await status_msg.edit_text("❌ **Oops! Upload failed. Please try again later.**")
+        active_tasks.pop(chat_id, None)
