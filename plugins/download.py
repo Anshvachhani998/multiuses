@@ -107,7 +107,6 @@ async def download_video(client, chat_id, youtube_link check):
             return
         await status_msg.edit_text("📤 **Preparing for upload...**")
 
-        # Thumbnail fetching
         thumbnail_file_id = await db.get_user_thumbnail(chat_id)
         if thumbnail_file_id:
             try:
@@ -116,7 +115,6 @@ async def download_video(client, chat_id, youtube_link check):
             except Exception as e:
                 logging.error(f"Thumbnail download error: {e}")
 
-        # Fallback to YouTube's thumbnail if no custom thumbnail
         if not thumbnail_path and youtube_thumbnail_url:
             try:
                 thumbnail_path = await download_and_resize_thumbnail(youtube_thumbnail_url)
@@ -175,13 +173,11 @@ def aria2c_download(url, download_dir, label, queue, client):
         for line in process.stdout:
             print("ARIA2C >>", line.strip())
 
-            # 👇 Progress line parsing
             match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
             if match:
                 downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
                 total = convert_to_bytes(float(match.group(3)), match.group(4))
-
-                # 👇 Send progress update to queue
+             
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
@@ -254,7 +250,6 @@ async def aria2c_media(client, chat_id, download_url check):
             active_tasks.pop(chat_id, None)
             return
 
-    # Start async tasks
     download_task = asyncio.create_task(run_aria())
     progress_task = asyncio.create_task(update_progress(status_msg, queue))
 
