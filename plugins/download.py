@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
  
-async def download_video(client, chat_id, youtube_link):
+async def download_video(client, chat_id, youtube_link check):
+    await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
@@ -132,7 +133,6 @@ async def download_video(client, chat_id, youtube_link):
         except Exception as e:
             duration = None
 
-        # Upload video
         asyncio.create_task(upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link))
 
     else:
@@ -207,7 +207,8 @@ def aria2c_download(url, download_dir, label, queue, client):
 
 
         
-async def aria2c_media(client, chat_id, download_url):
+async def aria2c_media(client, chat_id, download_url check):
+    await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
     queue = asyncio.Queue()
