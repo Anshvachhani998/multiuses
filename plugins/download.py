@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 DOWNLOAD_DIR = "downloads"
  
-async def download_video(client, chat_id, youtube_link check):
+async def download_video(client, chat_id, youtube_link, check):
     active_tasks[chat_id] = True
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
