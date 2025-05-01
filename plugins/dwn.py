@@ -13,7 +13,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
-
+from database.db import db 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
