@@ -173,7 +173,7 @@ async def universal_handler(client, message):
             err_msg = (
             f"🚨 <b>Link Not Found</b>\n"
             f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
-            f"🔗 <b>Link:</b> <code>{text}</code>\n"
+            f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
             )
             await client.send_message(LOG_CHANNEL, err_msg)
             
@@ -185,7 +185,7 @@ async def universal_handler(client, message):
         err_msg = (
             f"🚨 <b>Link Handling Error</b>\n"
             f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
-            f"🔗 <b>Link:</b> <code>{text}</code>\n"
+            f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
             f"⚠️ <b>Error:</b> <code>{str(e)}</code>"
         )
 
