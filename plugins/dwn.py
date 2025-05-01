@@ -153,7 +153,7 @@ async def universal_handler(client, message):
             await aria2c_media(client, chat_id, text, checking)
 
         elif await is_supported_by_ytdlp(text):
-            checking =  = await checking_msg.edit("✅ Processing video link...")
+            checking = await checking_msg.edit("✅ Processing video link...")
             await download_video(client, chat_id, text, checking)
 
         else:
