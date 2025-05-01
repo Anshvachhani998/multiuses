@@ -14,11 +14,9 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceRepl
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 
-# Configure Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Directories
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
@@ -120,7 +118,7 @@ async def universal_handler(client, message):
             await google_drive(client, chat_id, text, name, checking)
 
         elif "terabox.com" in text:
-            await checking_msg.edit("✅ Processing TeraBox link...")
+            checking = await checking_msg.edit("✅ Processing TeraBox link...")
             terabox_info = await get_terabox_info(text)
             logging.info(terabox_info)
             if "error" in terabox_info:
@@ -128,23 +126,23 @@ async def universal_handler(client, message):
                 return
                 
             dwn = terabox_info.get("download_url")
-            await aria2c_media(client, chat_id, dwn)
+            await aria2c_media(client, chat_id, dwn, checking)
 
         elif "magnet:" in text:
-            await checking_msg.edit("✅ Processing magnet link...")
-            await aria2c_media(client, chat_id, text)
+            checking = await checking_msg.edit("✅ Processing magnet link...")
+            await aria2c_media(client, chat_id, text,checking)
 
         elif ".torrent" in text:
-            await checking_msg.edit("✅ Processing torrent link...")
-            await aria2c_media(client, chat_id, text)
+            checking = await checking_msg.edit("✅ Processing torrent link...")
+            await aria2c_media(client, chat_id, text, checking)
 
         elif await is_direct_download_link(text):
-            await checking_msg.edit("✅ Direct download link detected. Starting download...")
-            await aria2c_media(client, chat_id, text)
+            checking = await checking_msg.edit("✅ Direct download link detected. Starting download...")
+            await aria2c_media(client, chat_id, text, checking)
 
         elif await is_supported_by_ytdlp(text):
-            await checking_msg.edit("✅ Processing video link...")
-            await download_video(client, chat_id, text)
+            checking =  = await checking_msg.edit("✅ Processing video link...")
+            await download_video(client, chat_id, text, checking)
 
         else:
             await checking_msg.edit("❌ Unsupported or invalid link format.")
