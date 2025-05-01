@@ -35,16 +35,41 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 
                 with open(part_file, "rb") as media_file:
                     if upload_as_doc:
-                        sent_message = await client.send_document(
-                            chat_id=chat_id,
-                            document=media_file,
-                            caption=part_caption,
-                            progress=upload_progress,
-                            disable_notification=True,
-                            thumb=thumbnail_path if thumbnail_path else None,
-                            file_name=os.path.basename(part_file)
-                        )
+                        # Handling for documents
+                        if part_file.endswith(('.mp4', '.mkv', '.avi', '.mov')):
+                            # Convert video to document
+                            sent_message = await client.send_document(
+                                chat_id=chat_id,
+                                document=media_file,
+                                caption=part_caption,
+                                progress=upload_progress,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
+                        elif part_file.endswith(('.mp3', '.wav')):
+                            # Handle audio as document
+                            sent_message = await client.send_document(
+                                chat_id=chat_id,
+                                document=media_file,
+                                caption=part_caption,
+                                progress=upload_progress,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
+                        else:
+                            sent_message = await client.send_document(
+                                chat_id=chat_id,
+                                document=media_file,
+                                caption=part_caption,
+                                progress=upload_progress,
+                                disable_notification=True,
+                                thumb=thumbnail_path if thumbnail_path else None,
+                                file_name=os.path.basename(part_file)
+                            )
                     else:
+                        # Handling for video or audio upload
                         if part_file.endswith('.mp4') or part_file.endswith('.mkv'):
                             sent_message = await client.send_video(
                                 chat_id=chat_id,
