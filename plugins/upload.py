@@ -6,7 +6,7 @@ import logging
 import ffmpeg
 from info import DUMP_CHANNEL, LOG_CHANNEL
 from database.db import db
-from utils import split_video
+from utils import split_video, active_tasks
 from plugins.progress_bar import progress_for_pyrogram
 
 
