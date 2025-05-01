@@ -104,6 +104,18 @@ async def universal_handler(client, message):
 
     chat_id = message.chat.id
     checking_msg = await message.reply_text("🔎 Checking your link, please wait...")
+    if not await db.check_task_limit(chat_id):
+        await message.reply_text(
+            "❌ **You have reached your daily task limit! Try again tomorrow.**\n\n"
+            "**Use /mytasks to check your remaining quota.**"
+        )
+        await checking_msg.delete()
+        return
+
+    if active_tasks.get(chat_id):
+        await message.reply_text("⏳ **Your previous task is still running. Please wait!**")
+        await checking_msg.delete()
+        return
 
     try:
         if "drive.google.com" in text:
