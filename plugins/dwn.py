@@ -103,7 +103,16 @@ async def universal_handler(client, message):
         return
 
     chat_id = message.chat.id
-    checking_msg = await message.reply_text("🔎 Checking your link, please wait...")
+    checking_msg = await message.reply_text("**🔎 Checking your link, please wait...**")
+    
+    if "youtube.com" in text or "youtu.be" in text:
+        await checking_msg.edit("**⚠️ YouTube links are not supported here.**\n\n**👉 Please use @FastYouTubeDLBot for downloading YouTube videos.**")
+        return
+
+    if "instagram.com" in text:
+        await checking_msg.edit("**⚠️ Instagram links are not supported here.**\n\n**👉 Please use @NewInstaReelsDownloadBot for downloading Instagram media.**")
+        return
+        
     if not await db.check_task_limit(chat_id):
         await message.reply_text(
             "❌ **You have reached your daily task limit! Try again tomorrow.**\n\n"
