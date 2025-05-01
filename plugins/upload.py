@@ -31,7 +31,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             mention_user = f"[{user.first_name}](tg://user?id={user.id})"
 
             for idx, part_file in enumerate(split_files, start=1):
-                part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
+                part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**\n\n**ᴘʀᴏᴠɪᴅᴇᴅ ʙʏ @Ans_Bots**"
                 
                 with open(part_file, "rb") as media_file:
                     if upload_as_doc:
