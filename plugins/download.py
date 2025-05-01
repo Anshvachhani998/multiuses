@@ -205,7 +205,7 @@ def aria2c_download(url, download_dir, label, queue, client):
 
 
         
-async def aria2c_media(client, chat_id, download_url. check):
+async def aria2c_media(client, chat_id, download_url, check):
     active_tasks[chat_id] = True
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
