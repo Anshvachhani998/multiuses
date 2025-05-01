@@ -15,6 +15,8 @@ from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 from database.db import db
 from utils import active_tasks
+from info import LOG_CHANNEL
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -167,8 +169,27 @@ async def universal_handler(client, message):
             await download_video(client, chat_id, text, checking)
 
         else:
-            await checking_msg.edit("❌ Unsupported or invalid link format.")
+            await checking_msg.edit("**This link is not accessible or not direct download link**")
+            err_msg = (
+            f"🚨 <b>Link Not Found</b>\n"
+            f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+            f"🔗 <b>Link:</b> <code>{text}</code>\n"
+            )
+            await client.send_message(LOG_CHANNEL, err_msg)
+            
 
     except Exception as e:
         logger.error(f"Error: {e}")
-        await checking_msg.edit("❌ THis to process link.")
+        await checking_msg.edit("**This link is not accessible or not direct download link**")
+
+        err_msg = (
+            f"🚨 <b>Link Handling Error</b>\n"
+            f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+            f"🔗 <b>Link:</b> <code>{text}</code>\n"
+            f"⚠️ <b>Error:</b> <code>{str(e)}</code>"
+        )
+
+        try:
+            await client.send_message(LOG_CHANNEL, err_msg)
+        except Exception as log_err:
+            logger.error(f"Failed to log to channel: {log_err}")
