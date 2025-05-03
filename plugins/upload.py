@@ -11,7 +11,7 @@ from plugins.progress_bar import progress_for_pyrogram
 
 async def upload_media(client, chat_id, output_filename, caption, duration, width, height, status_msg, thumbnail_path, youtube_link):
     if output_filename and os.path.exists(output_filename):
-        await status_msg.edit_text("📤 **Uploading video...**")
+        await status_msg.edit_text("📤 **Uploading...**")
         start_time = time.time()
 
         async def upload_progress(sent, total):
@@ -23,20 +23,23 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             user = await client.get_users(chat_id)
             mention_user = f"[{user.first_name}](tg://user?id={user.id})"
 
-            # Check user setting
+            # Get user settings
             user_settings = await db.get_user_settings(chat_id)
             upload_as_doc = user_settings.get("upload_as_doc", False)
-            logging.info("User settings:", user_settings)
-            logging.info("upload_as_doc:", upload_as_doc)
+
+            # Log user settings and upload type
+            logging.info(f"User settings: {user_settings}")
+            logging.info(f"upload_as_doc: {upload_as_doc}")
 
             for idx, part_file in enumerate(split_files, start=1):
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
 
-                with open(part_file, "rb") as video_file:
+                with open(part_file, "rb") as file:
                     if upload_as_doc:
+                        # Send as document if upload_as_doc is True
                         sent_message = await client.send_document(
                             chat_id=chat_id,
-                            document=video_file,
+                            document=file,
                             caption=part_caption,
                             progress=upload_progress,
                             disable_notification=True,
@@ -44,9 +47,10 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
                     else:
+                        # Send as video if upload_as_doc is False
                         sent_message = await client.send_video(
                             chat_id=chat_id,
-                            video=video_file,
+                            video=file,
                             caption=part_caption,
                             duration=duration // total_parts if total_parts > 1 else duration,
                             supports_streaming=True,
@@ -58,18 +62,18 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
 
-                # Dump channel me bhi same format me bhejo
+                # Send to dump channel
                 formatted_caption = (
                     f"{part_caption}\n\n"
-                    f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
-                    f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({youtube_link})**"
+                    f"✅ **Downloaded By: {mention_user}**\n"
+                    f"📌 **Source URL: [Click Here]({youtube_link})**"
                 )
 
-                with open(part_file, "rb") as video_file:
+                with open(part_file, "rb") as file:
                     if upload_as_doc:
                         await client.send_document(
                             chat_id=DUMP_CHANNEL,
-                            document=video_file,
+                            document=file,
                             caption=formatted_caption,
                             disable_notification=True,
                             thumb=thumbnail_path if thumbnail_path else None,
@@ -78,7 +82,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                     else:
                         await client.send_video(
                             chat_id=DUMP_CHANNEL,
-                            video=video_file,
+                            video=file,
                             caption=formatted_caption,
                             duration=duration // total_parts if total_parts > 1 else duration,
                             supports_streaming=True,
