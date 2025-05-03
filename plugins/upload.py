@@ -23,39 +23,67 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             user = await client.get_users(chat_id)
             mention_user = f"[{user.first_name}](tg://user?id={user.id})"
 
+            # Check user setting
+            user_settings = await db.get_user_settings(chat_id)
+            upload_as_doc = user_settings.get("upload_as_doc", False)
+
             for idx, part_file in enumerate(split_files, start=1):
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
-                
-                with open(part_file, "rb") as video_file:
-                    sent_message = await client.send_video(
-                        chat_id=chat_id,
-                        video=video_file,
-                        progress=upload_progress,
-                        caption=part_caption,
-                        duration=duration // total_parts if total_parts > 1 else duration,
-                        supports_streaming=True,
-                        height=height,
-                        width=width,
-                        disable_notification=True,
-                        thumb=thumbnail_path if thumbnail_path else None,
-                        file_name=os.path.basename(part_file),                        
-                    )
 
+                with open(part_file, "rb") as video_file:
+                    if upload_as_doc:
+                        sent_message = await client.send_document(
+                            chat_id=chat_id,
+                            document=video_file,
+                            caption=part_caption,
+                            progress=upload_progress,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
+                    else:
+                        sent_message = await client.send_video(
+                            chat_id=chat_id,
+                            video=video_file,
+                            caption=part_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            supports_streaming=True,
+                            progress=upload_progress,
+                            height=height,
+                            width=width,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
+
+                # Dump channel me bhi same format me bhejo
                 formatted_caption = (
                     f"{part_caption}\n\n"
                     f"✅ **Dᴏᴡɴʟᴏᴀᴅᴇᴅ Bʏ: {mention_user}**\n"
                     f"📌 **Sᴏᴜʀᴄᴇ URL: [Click Here]({youtube_link})**"
                 )
-                await client.send_video(
-                    chat_id=DUMP_CHANNEL,
-                    video=sent_message.video.file_id,
-                    caption=formatted_caption,
-                    duration=duration // total_parts if total_parts > 1 else duration,
-                    supports_streaming=True,
-                    disable_notification=True,
-                    thumb=thumbnail_path if thumbnail_path else None,
-                    file_name=os.path.basename(part_file)
-                )
+
+                with open(part_file, "rb") as video_file:
+                    if upload_as_doc:
+                        await client.send_document(
+                            chat_id=DUMP_CHANNEL,
+                            document=video_file,
+                            caption=formatted_caption,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
+                    else:
+                        await client.send_video(
+                            chat_id=DUMP_CHANNEL,
+                            video=video_file,
+                            caption=formatted_caption,
+                            duration=duration // total_parts if total_parts > 1 else duration,
+                            supports_streaming=True,
+                            disable_notification=True,
+                            thumb=thumbnail_path if thumbnail_path else None,
+                            file_name=os.path.basename(part_file)
+                        )
 
                 os.remove(part_file)
 
@@ -95,6 +123,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             await client.send_message(LOG_CHANNEL, error_report)
         except Exception as e:
             await client.send_message(LOG_CHANNEL, f"❌ Error while logging failed upload:\n`{str(e)}`")
-            
+
         await status_msg.edit_text("❌ **Oops! Upload failed. Please try again later.**")
         active_tasks.pop(chat_id, None)
