@@ -26,6 +26,8 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             # Check user setting
             user_settings = await db.get_user_settings(chat_id)
             upload_as_doc = user_settings.get("upload_as_doc", False)
+            logging.info("User settings:", user_settings)
+            logging.info("upload_as_doc:", upload_as_doc)
 
             for idx, part_file in enumerate(split_files, start=1):
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
