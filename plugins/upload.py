@@ -38,6 +38,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                     logging.info(f"Upload Type: {'Document' if upload_as_doc else 'Video'}")
 
                     if upload_as_doc:
+                        new_filename = part_file.replace(".mp4", ".mkv")
                         logging.info(f"Sending file as Document: {part_file}")
                         sent_message = await client.send_document(
                             chat_id=chat_id,
@@ -46,7 +47,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             progress=upload_progress,
                             disable_notification=True,
                             thumb=thumbnail_path if thumbnail_path else None,
-                            file_name=os.path.basename(part_file)
+                            file_name=os.path.basename(new_filename)
                         )
                     else:
                         logging.info(f"Sending file as Video: {part_file}")
