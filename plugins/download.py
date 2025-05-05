@@ -454,12 +454,11 @@ def gdown_download(url, download_dir, label, queue, client):
 
         process.wait()
 
-        # Get latest downloaded file
         files = os.listdir(download_dir)
         if not files:
             raise Exception("❌ File not found after gdown!")
 
-        files = [f for f in files if not f.startswith('.')]  # Ignore hidden files
+        files = [f for f in files if not f.startswith('.')]
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         return final_path
