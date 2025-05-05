@@ -351,7 +351,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
             logging.info(download_url)
             final_filenames = await asyncio.to_thread(
                 gdown_download,
-                download_url,
+                gdrive_url,
                 "gdowns",
                 filename,
                 caption,
