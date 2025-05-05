@@ -5,6 +5,7 @@ import psutil
 from utils import humanbytes, TimeFormatter
 import logging
 import asyncio
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
         except:
             pass
 
+
 async def progress_bar(current, total, status_message, start_time, last_update_time, label):
     try:
         elapsed_time = time.time() - start_time
@@ -60,12 +62,16 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             return
         last_update_time[0] = time.time()
 
+        cancel_button = InlineKeyboardMarkup([
+            [InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_{status_message.chat.id}")]
+        ])
+
         if not total or "~" in str(total) or total < current:
             animation = ["□■□□□□□□□□□□□□□□□", "□□■□□□□□□□□□□□□□□", "□□□■□□□□□□□□□□□□□",
                          "□□□□■□□□□□□□□□□□□", "□□□□□■□□□□□□□□□□□", "□□□□□□■□□□□□□□□□□"]
             index = int(time.time()) % len(animation)
             text = (
-                f"**╭─────{label}─────〄**\n"
+                f"**╭─────Dᴏᴡɴʟᴏᴀᴅɪɴɢ─────〄**\n"
                 "**│**\n"
                 f"**├📁 Sɪᴢᴇ : {humanbytes(current)} ✗ Unknown**\n"
                 "**│**\n"
@@ -76,12 +82,11 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
                 f"**╰─[{animation[index]}]**"
             )
         else:
-            # Make sure values are sane
             safe_total = max(total, current + 1)
             percentage = min((current / safe_total) * 100, 100.0)
             remaining_size = (safe_total - current) / 1024 / 1024
             eta = (remaining_size / speed) if speed > 0 else 0
-            eta = min(max(eta, 0), 60 * 60 * 24)  # clamp 0–24 hrs
+            eta = min(max(eta, 0), 60 * 60 * 24)
             eta_min = int(eta // 60)
             eta_sec = int(eta % 60)
 
@@ -91,7 +96,7 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
             total_str = humanbytes(safe_total)
 
             text = (
-                f"**╭─────{label}─────〄**\n"
+                f"**╭─────Dᴏᴡɴʟᴏᴀᴅɪɴɢ─────〄**\n"
                 "**│**\n"
                 f"**├📁 Sɪᴢᴇ : {humanbytes(current)} ✗ {total_str}**\n"
                 "**│**\n"
@@ -108,11 +113,16 @@ async def progress_bar(current, total, status_message, start_time, last_update_t
 
         # Only edit if content is different
         if status_message.text != text:
-            await status_message.edit(text)
+            await status_message.edit(
+                text,
+                reply_markup=cancel_button
+            )
 
         # Completion message
         if total and percentage >= 100:
-            await status_message.edit("✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**")
+            await status_message.edit(
+                "✅ **Fɪʟᴇ Dᴏᴡɴʟᴏᴀᴅ Cᴏᴍᴘʟᴇᴛᴇ!**\n**🎵 Aᴜᴅɪᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ...**"
+            )
 
     except Exception as e:
         print(f"Error updating progress: {e}")
