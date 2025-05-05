@@ -40,6 +40,8 @@ async def download_video(client, chat_id, youtube_link, check):
     timestamp = time.strftime("%y%m%d")
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
+    cancel_event = asyncio.Event()  # Create a cancellation event for this download
+    cancel_tasks[chat_id] = cancel_event  # Store the event for this user
 
     def run_pytubefix():
         nonlocal output_filename, caption, duration, width, height, youtube_thumbnail_url, thumbnail_path
@@ -65,14 +67,18 @@ async def download_video(client, chat_id, youtube_link, check):
                 output_filename = filename
                 logging.info(f"Video info: {info}///{output_filename}")
 
-             
-
                 youtube_thumbnail_url = info.get('thumbnail')
                 duration = info.get('duration', 0)
                 width = info.get('width', 640)
                 height = info.get('height', 360)
 
                 logging.info(f"Downloaded file: {output_filename}")
+
+                # Check if cancel event is set during download
+                if cancel_event.is_set():
+                    logging.info("Download cancelled by user.")
+                    raise Exception("Download cancelled")
+
                 asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
         except Exception as e:
@@ -98,7 +104,6 @@ async def download_video(client, chat_id, youtube_link, check):
 
     await download_task
     await progress_task
-
     if output_filename and os.path.exists(output_filename):
         file_ext = os.path.splitext(output_filename)[1].lower()
         file_size = os.path.getsize(output_filename)
