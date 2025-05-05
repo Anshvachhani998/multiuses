@@ -160,7 +160,9 @@ async def universal_handler(client, message):
 
             name, size, mime = get_file_info(file_id)
             checking = await checking_msg.edit(f"✅ Processing Google Drive link...")
+            logging.info(name)
             clean = clean_filename(name, mime)
+            logging.info(clean)
             await google_drive(client, chat_id, text, clean, checking)
 
         elif "terabox.com" in text:
