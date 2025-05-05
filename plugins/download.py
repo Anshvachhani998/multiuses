@@ -353,7 +353,6 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 gdown_download,
                 download_url,
                 "downloads",
-                filename,
                 caption,
                 queue,
                 client
@@ -421,14 +420,16 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
         active_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
-def gdown_download(url, download_dir, filename, label, queue, client):
+def gdown_download(url, download_dir, label, queue, client):
     try:
+        os.makedirs(download_dir, exist_ok=True)
+
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "downloads/"
+            "--output", download_dir
         ]
 
         process = subprocess.Popen(
@@ -453,13 +454,16 @@ def gdown_download(url, download_dir, filename, label, queue, client):
 
         process.wait()
 
-       files = os.listdir(download_dir)
-       if not files:
-           raise Exception("❌ File not found after gdown!")
+        # Get latest downloaded file
+        files = os.listdir(download_dir)
+        if not files:
+            raise Exception("❌ File not found after gdown!")
 
+        files = [f for f in files if not f.startswith('.')]  # Ignore hidden files
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
         final_path = os.path.join(download_dir, files[0])
         return final_path
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
+        return None
