@@ -151,8 +151,11 @@ async def update_progress(message, queue):
             await progress_bar(current, total, message, start_time, last_update_time, current_label)
 
 
-def yt_progress_hook(d, queue, client):
-    """Reports progress of yt-dlp to async queue in a thread-safe way."""
+def yt_progress_hook(d, queue, client, cancel_event):
+    """Reports progress of yt-dlp to async queue in a thread-safe way and supports cancellation."""
+    if cancel_event.is_set():
+        raise Exception("Download cancelled by user")
+
     if d['status'] == 'downloading':
         current = d['downloaded_bytes']
         total = d.get('total_bytes', 1)
