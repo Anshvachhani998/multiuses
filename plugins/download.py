@@ -323,14 +323,8 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
     cancel_event = asyncio.Event()
     cancel_tasks[chat_id] = cancel_event
 
-    status_msg = await client.send_message(
-        chat_id,
-        "⏳ **Starting Download...**",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_{chat_id}")]
-        ])
-    )
-
+    status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
+ 
     queue = asyncio.Queue()
     output_filename = None
     caption = "Downloading"
