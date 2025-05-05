@@ -35,8 +35,10 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 part_caption = f"**{caption}**\n**Part {idx}/{total_parts}**" if total_parts > 1 else f"**{caption}**"
 
                 with open(part_file, "rb") as file:
+                    logging.info(f"Upload Type: {'Document' if upload_as_doc else 'Video'}")
+
                     if upload_as_doc:
-                        # Send as document if upload_as_doc is True
+                        logging.info(f"Sending file as Document: {part_file}")
                         sent_message = await client.send_document(
                             chat_id=chat_id,
                             document=file,
@@ -47,7 +49,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
                     else:
-                        # Send as video if upload_as_doc is False
+                        logging.info(f"Sending file as Video: {part_file}")
                         sent_message = await client.send_video(
                             chat_id=chat_id,
                             video=file,
@@ -71,6 +73,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
 
                 with open(part_file, "rb") as file:
                     if upload_as_doc:
+                        logging.info(f"Sending document to dump channel: {part_file}")
                         await client.send_document(
                             chat_id=DUMP_CHANNEL,
                             document=file,
@@ -80,6 +83,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                             file_name=os.path.basename(part_file)
                         )
                     else:
+                        logging.info(f"Sending video to dump channel: {part_file}")
                         await client.send_video(
                             chat_id=DUMP_CHANNEL,
                             video=file,
@@ -116,7 +120,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             if thumbnail_path and os.path.exists(thumbnail_path):
                 os.remove(thumbnail_path)
             active_tasks.pop(chat_id, None)
-
     else:
         try:
             user = await client.get_users(chat_id)
