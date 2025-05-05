@@ -421,7 +421,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
         active_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
-def gdown_download(url, download_dir, filename, queue, client):
+def gdown_download(url, download_dir, filename, label, queue, client):
     try:
         cmd = [
             "gdown",
