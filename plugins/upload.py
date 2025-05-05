@@ -23,12 +23,6 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
             user_settings = await db.get_user_settings(chat_id)
             upload_as_doc = user_settings.get("upload_as_doc", False)
 
-            # Correcting the logic for file extension replacement
-            if upload_as_doc:
-                output_filename = output_filename.replace(".mp4", ".mkv")  # Replacing .mp4 with .mkv
-            else:
-                return  # If not document, stop the process
-
             split_files = await split_video(output_filename)
             total_parts = len(split_files)
             user = await client.get_users(chat_id)
@@ -40,8 +34,9 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                 with open(part_file, "rb") as media_file:
                     if upload_as_doc:
                         # If the file is a video, try to send it as a document
-                        if part_file.endswith(('.mkv', '.avi', '.mov')):
+                        if part_file.endswith(('.mp4', '.mkv', '.avi', '.mov')):
                             try:
+                                new_filename = part_file.replace(".mp4", ".mkv")
                                 sent_message = await client.send_document(
                                     chat_id=chat_id,
                                     document=media_file,
@@ -49,7 +44,7 @@ async def upload_media(client, chat_id, output_filename, caption, duration, widt
                                     progress=upload_progress,
                                     disable_notification=True,
                                     thumb=thumbnail_path if thumbnail_path else None,
-                                    file_name=os.path.basename(part_file)
+                                    file_name=os.path.basename(new_filename)
                                 )
                             except Exception as e:
                                 # Log the error and try sending it as video
