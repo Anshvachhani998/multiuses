@@ -263,7 +263,7 @@ CONTAINER_NAME = "UploaderDL"
 async def logs_tail(client, message):
     try:
         result = subprocess.run(
-            ["sudo", "docker", "logs", "--tail", "50", CONTAINER_NAME],
+            ["docker", "logs", "--tail", "50", CONTAINER_NAME],
             capture_output=True,
             text=True
         )
@@ -277,7 +277,7 @@ async def logs_tail(client, message):
 async def logs_recent(client, message):
     try:
         result = subprocess.run(
-            ["sudo", "docker", "logs", "--since", "1m", CONTAINER_NAME],
+            ["docker", "logs", "--since", "1m", CONTAINER_NAME],
             capture_output=True,
             text=True
         )
