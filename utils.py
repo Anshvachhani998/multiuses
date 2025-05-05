@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 MAX_TG_FILE_SIZE = 2097152000
+
 active_tasks = {}
+cancel_tasks = {}
+
 async def run_ffmpeg_async(cmd):
     process = await asyncio.create_subprocess_exec(
         *cmd,
