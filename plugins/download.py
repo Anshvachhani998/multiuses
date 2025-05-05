@@ -349,7 +349,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
             download_url = f"https://drive.google.com/uc?id={file_id}"
 
             logging.info(download_url)
-            final_filenames = await asyncio.to_thread(
+            final_filenames, was_cancelled = await asyncio.to_thread(
                 gdown_download,
                 gdrive_url,
                 "gdowns",
@@ -359,6 +359,11 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 client,
                 cancel_event
             )
+            if was_cancelled:
+                await status_msg.edit("❌ **Download Cancelled by User.**")
+                active_tasks.pop(chat_id, None)
+                cancel_tasks.pop(chat_id, None)
+                return
             output_filename = final_filenames
             caption = os.path.splitext(os.path.basename(output_filename))[0]
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
@@ -456,7 +461,7 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
         for line in process.stdout:
             if cancel_event.is_set():
                 process.terminate()
-                raise Exception("Download cancelled by user.")
+                return None, True  # Cancelled by user
 
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
             if match:
@@ -474,7 +479,7 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
 
         files = os.listdir(download_dir)
         if not files:
-            raise Exception("❌ File not found after gdown!")
+            return None, False  # No file found
 
         ffiles = [f for f in files if not f.startswith('.')]
         files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
@@ -483,11 +488,11 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
         new_path = os.path.join(download_dir, filename)
         os.rename(original_path, new_path)
 
-        return new_path
+        return new_path, False  # Success, not cancelled
 
     except Exception as e:
         print("GDOWN ERROR:", str(e))
-        return None
+        return None, False  # Failed due to error
 
 
 @Client.on_callback_query(filters.regex(r'^cancel_(\d+)$'))
