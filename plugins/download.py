@@ -429,7 +429,7 @@ def gdown_download(url, download_dir, label, queue, client):
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", "gdown/"
+            "--output", download_dir
         ]
 
         process = subprocess.Popen(
