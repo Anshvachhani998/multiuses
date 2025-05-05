@@ -254,36 +254,3 @@ async def show_active_tasks(client, message):
 
     total_tasks = len(active_tasks)
     await message.reply(f"**🧾 Active Tasks (Total: {total_tasks})**")
-
-
-CONTAINER_NAME = "UploaderDL"
-
-# 🔹 /logs_tail → Last 50 lines
-@Client.on_message(filters.command("logs_tail") & filters.private)
-async def logs_tail(client, message):
-    try:
-        result = subprocess.run(
-            ["/usr/bin/docker", "logs", "--tail", "50", CONTAINER_NAME],
-            capture_output=True,
-            text=True
-        )
-        output = result.stdout.strip() or result.stderr.strip() or "⚠️ No logs found."
-        await message.reply_text(f"📄 Last 50 lines:\n\n{output[-4000:]}")
-    except Exception as e:
-        await message.reply_text(f"❌ Error: {e}")
-
-# 🔹 /logs_recent → Logs from last 1 minute
-@Client.on_message(filters.command("logs_recent") & filters.private)
-async def logs_recent(client, message):
-    try:
-        result = subprocess.run(
-            ["/usr/bin/docker", "logs", "--since", "1m", CONTAINER_NAME],
-            capture_output=True,
-            text=True
-        )
-        output = result.stdout.strip() or result.stderr.strip() or "⚠️ No logs found in the last 1 minute."
-        await message.reply_text(f"🕒 Logs from last 1 minute:\n\n{output[-4000:]}")
-    except Exception as e:
-        await message.reply_text(f"❌ Error: {e}")
-
-
