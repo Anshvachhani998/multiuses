@@ -82,8 +82,8 @@ async def download_video(client, chat_id, youtube_link, check):
 
         except Exception as e:
             if cancel_event.is_set():
-            logging.info("Download cancelled")
-            return
+                logging.info("Download cancelled")
+                return
          
             if 'Download cancelled' not in str(e):
                 error_message = (
