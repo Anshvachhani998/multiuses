@@ -495,7 +495,7 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
         return None
 
 
-@app.on_callback_query(filters.regex(r'^cancel_(\d+)$'))
+@Client.on_callback_query(filters.regex(r'^cancel_(\d+)$'))
 async def cancel_download(client, callback_query):
     chat_id = int(callback_query.data.split("_")[1])
     if chat_id in cancel_tasks:
