@@ -147,7 +147,7 @@ def generate_unique_name(original_name):
     base, ext = os.path.splitext(original_name)
     return f"{base}_{timestamp}-{random_str}{ext}"
 
-def aria2c_download(url, download_dir, label, queue, client):
+def aria2c_download(url, download_dir, label, queue, client, cancel_event):
     before_files = set(os.listdir(download_dir))
 
     cmd = [
@@ -172,13 +172,17 @@ def aria2c_download(url, download_dir, label, queue, client):
         )
 
         for line in process.stdout:
+            if cancel_event.is_set():
+                process.terminate()
+                return None, True  # Download cancelled by user
+
             print("ARIA2C >>", line.strip())
 
             match = re.search(r'(\d+(?:\.\d+)?)([KMG]?i?B)/(\d+(?:\.\d+)?)([KMG]?i?B)', line)
             if match:
                 downloaded = convert_to_bytes(float(match.group(1)), match.group(2))
                 total = convert_to_bytes(float(match.group(3)), match.group(4))
-             
+
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
@@ -190,7 +194,7 @@ def aria2c_download(url, download_dir, label, queue, client):
         new_files = list(after_files - before_files)
 
         if not new_files:
-            raise Exception("❌ File not found after download!")
+            return None, False  # No file found
 
         downloaded_file = os.path.join(download_dir, new_files[0])
 
@@ -198,11 +202,11 @@ def aria2c_download(url, download_dir, label, queue, client):
         final_path = os.path.join(download_dir, unique_name)
         os.rename(downloaded_file, final_path)
 
-        return final_path
+        return final_path, False  # Success, not cancelled
 
     except Exception as e:
         print("ARIA2C ERROR:", str(e))
-        raise e
+        return None, False  # Error occurred
 
 
         
@@ -211,6 +215,8 @@ async def aria2c_media(client, chat_id, download_url, check):
     await check.delete()
     status_msg = await client.send_message(chat_id, "⏳ **Starting Download...**")
 
+    cancel_event = asyncio.Event()
+    cancel_tasks[chat_id] = cancel_event
     queue = asyncio.Queue()
     output_filename = None
     caption = "Downloaded via aria2c"
@@ -225,14 +231,21 @@ async def aria2c_media(client, chat_id, download_url, check):
     async def run_aria():
         nonlocal output_filename, caption, width, height, thumbnail_path, error_occurred
         try:
-            final_filenames = await asyncio.to_thread(
+            final_filenames, was_cancelled  = await asyncio.to_thread(
                 aria2c_download,
                 download_url,
                 "downloads",
                 caption,
                 queue,
-                client
+                client,
+                cancel_event
             )
+            if was_cancelled:
+                await status_msg.edit("**Download Cancelled**")
+                active_tasks.pop(chat_id, None)
+                cancel_tasks.pop(chat_id, None)
+                return
+            
             output_filename = final_filenames
             caption = os.path.splitext(os.path.basename(output_filename))[0]
             asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
@@ -249,6 +262,7 @@ async def aria2c_media(client, chat_id, download_url, check):
             )
             await queue.put({"status": "error", "message": str(e)})
             active_tasks.pop(chat_id, None)
+            cancel_tasks.pop(chat_id, None)
             return
 
     download_task = asyncio.create_task(run_aria())
@@ -313,6 +327,7 @@ async def aria2c_media(client, chat_id, download_url, check):
         ))
     else:
         active_tasks.pop(chat_id, None)
+        cancel_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
 
@@ -360,7 +375,7 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 cancel_event
             )
             if was_cancelled:
-                await status_msg.edit("❌ **Download Cancelled by User.**")
+                await status_msg.edit("**Download Cancelled**")
                 active_tasks.pop(chat_id, None)
                 cancel_tasks.pop(chat_id, None)
                 return
