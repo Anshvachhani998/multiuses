@@ -84,19 +84,27 @@ async def is_supported_by_ytdlp(url):
          return False
 
 def clean_filename(filename, mime=None):
+    # Get the name and extension from the filename
     name, ext = os.path.splitext(filename)
-    if not ext or ext == '':
+    
+    # Normalize the extension to lowercase
+    ext = ext.lower() if ext else ''
+
+    if not ext:
         if mime:
+            # If mime type is provided, guess the extension
             guessed_ext = mimetypes.guess_extension(mime)
             ext = guessed_ext if guessed_ext else '.mkv'
         else:
             ext = '.mkv'
-    name = re.sub(r'[^\w\s-]', '', name)
-    name = re.sub(r'[-\s]+', '_', name)
-    name = name.strip('_')
 
+    # Clean the file name
+    name = re.sub(r'[^\w\s-]', '', name)  # Remove unwanted characters
+    name = re.sub(r'[-\s]+', '_', name)  # Replace spaces and hyphens with underscores
+    name = name.strip('_')  # Remove leading/trailing underscores
+
+    # Return cleaned filename with correct extension
     return name + ext
-
 
 
 @Client.on_message(filters.private & filters.text)
