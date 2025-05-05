@@ -52,7 +52,7 @@ async def download_video(client, chat_id, youtube_link, check):
                 'noplaylist': True,
                 'quiet': True,
                 'no_warnings': True,
-                'progress_hooks': [lambda d: yt_progress_hook(d, queue, client)]
+                'progress_hooks': [lambda d: yt_progress_hook(d, queue, client, cancel_event)]
             }
 
             with YoutubeDL(yt_dlp_options) as ydl:
