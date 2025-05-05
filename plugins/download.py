@@ -76,7 +76,7 @@ async def download_video(client, chat_id, youtube_link, check):
 
                 if cancel_event.is_set():
                     asyncio.run_coroutine_threadsafe(status_msg.edit_text("❌ **Download Cancelled!**"), client.loop)
-                   return
+                    return
 
                 asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
 
