@@ -421,41 +421,29 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
         active_tasks.pop(chat_id, None)
         await status_msg.edit_text("❌ **Download Failed!**")
 
-
-def gdown_download(url, download_dir, filename, label, queue, client):
+def gdown_download(url, download_dir, filename, queue, client):
     try:
-        # Make sure the download directory exists
-        os.makedirs(download_dir, exist_ok=True)
-        path = os.path.join(download_dir, filename)
-        
-        # Define the gdown command
         cmd = [
             "gdown",
             url,
             "--fuzzy",
             "--no-cookies",
-            "--output", path,
-            "--confirm"  # Bypass confirmation if needed
+            "--output", "downloads/"
         ]
-        
-        # Start the download process using subprocess
+
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,  # Capture stderr for better error handling
+            stderr=subprocess.STDOUT,
             text=True
         )
 
-        # Read the stdout of the process
         for line in process.stdout:
-            # Look for the download progress in the line
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
-            
             if match:
                 downloaded = convert_to_bytes(float(match.group(2)), match.group(4))
                 total = convert_to_bytes(float(match.group(5)), match.group(7))
 
-                # Update progress in the queue
                 asyncio.run_coroutine_threadsafe(
                     queue.put((downloaded, total, label)),
                     client.loop
@@ -463,23 +451,15 @@ def gdown_download(url, download_dir, filename, label, queue, client):
             else:
                 print("No match found in line:", line.strip())
 
-        # Wait for the process to finish
         process.wait()
 
-        # Capture any error output
-        stderr_output = process.stderr.read()
-        if stderr_output:
-            print("Error during download:", stderr_output)
+       files = os.listdir(download_dir)
+        if not files:
+            raise Exception("❌ File not found after gdown!")
 
-        # Verify if the file is actually downloaded
-        final_path = os.path.join(download_dir, filename)
-        if os.path.exists(final_path):
-            print(f"Download successful: {final_path}")
-            return final_path
-        else:
-            print("Download failed or file not found.")
-            return None
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(download_dir, x)), reverse=True)
+        final_path = os.path.join(download_dir, files[0])
+        return final_path
 
     except Exception as e:
-        print(f"Error during download: {e}")
-        return None
+        print("GDOWN ERROR:", str(e))
