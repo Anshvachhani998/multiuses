@@ -17,6 +17,7 @@ from plugins.progress_bar import yt_progress_hook, update_progress
 from plugins.upload import upload_media
 from info import LOG_CHANNEL
 from pyrogram import Client, filters, enums
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
