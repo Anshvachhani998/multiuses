@@ -1,69 +1,71 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-import requests
+from requests_html import HTMLSession
 import re
 
-# Initialize the bot
+def mediafire(url, session=None):
+    if "::" in url:
+        _password = url.split("::")[-1]
+        url = url.split("::")[-2]
+    else:
+        _password = ""
+    if final_link := re.findall(
+        r"https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+", url
+    ):
+        return final_link[0]
+
+    def _repair_download(url, session):
+        try:
+            html = HTMLSession().get(url).text
+            if new_link := re.findall(r'//a[@id="continue-btn"]/@href', html):
+                return mediafire(f"https://mediafire.com/{new_link[0]}")
+        except Exception as e:
+            raise Exception(f"ERROR: {e.__class__.__name__}") from e
+
+    if session is None:
+        session = HTMLSession()
+    try:
+        html = session.get(url).text
+    except Exception as e:
+        session.close()
+        raise Exception(f"ERROR: {e.__class__.__name__}") from e
+    if error := re.findall(r'//p[@class="notranslate"]/text()', html):
+        session.close()
+        raise Exception(f"ERROR: {error[0]}")
+    if re.findall("//div[@class='passwordPrompt']", html):
+        if not _password:
+            session.close()
+            raise Exception(f"ERROR: Password required.")
+        try:
+            html = session.post(url, data={"downloadp": _password}).text
+        except Exception as e:
+            session.close()
+            raise Exception(f"ERROR: {e.__class__.__name__}") from e
+        if re.findall("//div[@class='passwordPrompt']", html):
+            session.close()
+            raise Exception("ERROR: Wrong password.")
+    if not (final_link := re.findall('//a[@aria-label="Download file"]/@href', html)):
+        if repair_link := re.findall("//a[@class='retry']/@href", html):
+            return _repair_download(repair_link[0], session)
+        raise Exception("ERROR: No links found. Try Again")
+    if final_link[0].startswith("//"):
+        final_url = f"https://{final_link[0][2:]}"
+        if _password:
+            final_url += f"::{_password}"
+        return mediafire(final_url, session)
+    session.close()
+    return final_link[0]
+
 app = Client
-
-
-# Extract Google Drive file ID from the URL
-def extract_file_id(gdrive_url: str) -> str | None:
-    match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
-    if match:
-        return match.group(1)
-    match = re.search(r"id=([a-zA-Z0-9_-]+)", gdrive_url)
-    return match.group(1) if match else None
-
-# Get confirmed download URL with confirmation token
-def get_confirmed_download_url(file_id: str) -> str:
-    session = requests.Session()
-    base_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = session.get(base_url, allow_redirects=True)
-
-    # Check if confirmation page is encountered and extract the token
-    if "confirm=" in response.url:
-        confirm_token = re.search(r"confirm=([a-zA-Z0-9_-]+)", response.url)
-        if confirm_token:
-            confirm = confirm_token.group(1)
-            # Return the confirmed URL with the token
-            return f"https://drive.google.com/uc?export=download&confirm={confirm}&id={file_id}"
-
-    # If no confirmation page, return the base URL (for public files)
-    return base_url
-
-# Command handler for /extractlink
-@app.on_message(filters.command("extractlink") & filters.private)
-async def extract_link_cmd(client: Client, message: Message):
-    if len(message.command) < 2:
-        await message.reply_text(
-            "Please send a Google Drive link with the command.\n\nExample:\n"
-            "`/extractlink https://drive.google.com/file/d/FILE_ID/view?usp=sharing`"
-        )
+@app.on_message(filters.command("mediafire"))
+async def mediafire_command(client, message):
+    url = message.text.split(" ", 1)[-1]
+    if not url:
+        await message.reply("Please provide a Mediafire link.")
         return
-
-    url = message.command[1]
-    file_id = extract_file_id(url)
-
-    if not file_id:
-        await message.reply_text("❌ Invalid Google Drive link.")
-        return
-
-    await message.reply_text("🔍 Extracting direct download link...")
 
     try:
-        # Get the confirmed download URL (bypass the virus warning page)
-        download_url = get_confirmed_download_url(file_id)
-
-        # Test if the link is actually downloadable (status code 200 means it's valid)
-        test_response = requests.head(download_url, allow_redirects=True)
-        if test_response.status_code == 200:
-            await message.reply_text(
-                f"✅ Direct download link:\n`{download_url}`",
-                disable_web_page_preview=True
-            )
-        else:
-            await message.reply_text("⚠️ The link may be private or not downloadable.")
+        download_link = mediafire(url)
+        await message.reply(f"Here's your download link: {download_link}")
     except Exception as e:
-        await message.reply_text(f"❌ Error occurred: `{e}`")
-
+        await message.reply(f"Error: {str(e)}")
