@@ -14,4 +14,5 @@ RUN apt-get update && \
 RUN apt-get update && apt-get install -y libtorrent-rasterbar-dev
 RUN pip install yt-dlp
 RUN pip install gdown
+RUN pip install lxml_html_clean
 CMD ["python", "bot.py"]
