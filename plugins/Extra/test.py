@@ -7,7 +7,7 @@ import re
 from requests_html import HTMLSession
 import logging
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger()
 
 import logging
@@ -25,15 +25,15 @@ def mediafire(url, session=None):
     if final_link := re.findall(
         r"https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+", url
     ):
-        logger.debug(f"Immediate download link found: {final_link[0]}")  # Log the found link
+        logger.INFO(f"Immediate download link found: {final_link[0]}")  # Log the found link
         return final_link[0]
 
     def _repair_download(url, session):
         try:
             html = session.get(url).text
-            logger.debug(f"Repair HTML content: {html}")  # Log the HTML content for debugging
+            logger.INFO(f"Repair HTML content: {html}")  # Log the HTML content for debugging
             if new_link := re.findall(r'//a[@id="continue-btn"]/@href', html):
-                logger.debug(f"Found repair link: {new_link[0]}")  # Log the repair link
+                logger.INFO(f"Found repair link: {new_link[0]}")  # Log the repair link
                 return mediafire(f"https://mediafire.com/{new_link[0]}", session)
         except Exception as e:
             logger.error(f"ERROR in _repair_download: {e.__class__.__name__}")  # Log the error
@@ -44,7 +44,7 @@ def mediafire(url, session=None):
 
     try:
         html = session.get(url).text
-        logger.debug(f"Fetched HTML content: {html}")  # Log the HTML content after fetching
+        logger.INFO(f"Fetched HTML content: {html}")  # Log the HTML content after fetching
     except Exception as e:
         session.close()
         logger.error(f"Error fetching URL: {e.__class__.__name__}")  # Log the error
@@ -64,7 +64,7 @@ def mediafire(url, session=None):
             raise Exception("ERROR: Password required.")
         try:
             html = session.post(url, data={"downloadp": _password}).text
-            logger.debug(f"HTML after password post: {html}")  # Log the HTML after posting the password
+            logger.INFO(f"HTML after password post: {html}")  # Log the HTML after posting the password
         except Exception as e:
             session.close()
             logger.error(f"Error posting password: {e.__class__.__name__}")  # Log the error
@@ -77,7 +77,7 @@ def mediafire(url, session=None):
     # If no download link is found, check for retry options
     if not (final_link := re.findall('//a[@aria-label="Download file"]/@href', html)):
         if repair_link := re.findall("//a[@class='retry']/@href", html):
-            logger.debug(f"Found repair link: {repair_link[0]}")  # Log the repair link
+            logger.INFO(f"Found repair link: {repair_link[0]}")  # Log the repair link
             return _repair_download(repair_link[0], session)
         session.close()
         logger.error("No download link found.")  # Log when no download link is found
@@ -88,11 +88,11 @@ def mediafire(url, session=None):
         final_url = f"https://{final_link[0][2:]}"
         if _password:
             final_url += f"::{_password}"
-        logger.debug(f"Final download URL: {final_url}")  # Log the final URL
+        logger.INFO(f"Final download URL: {final_url}")  # Log the final URL
         return mediafire(final_url, session)
 
     session.close()
-    logger.debug(f"Final download URL: {final_link[0]}")  # Log the final link before returning
+    logger.INFO(f"Final download URL: {final_link[0]}")  # Log the final link before returning
     return final_link[0]
 
 
