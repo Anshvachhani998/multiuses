@@ -6,7 +6,6 @@ import re
 
 # Initialize the bot
 app = Client
-
 # Extract Google Drive file ID
 def extract_file_id(gdrive_url: str) -> str | None:
     match = re.search(r"/d/([a-zA-Z0-9_-]+)", gdrive_url)
@@ -15,22 +14,21 @@ def extract_file_id(gdrive_url: str) -> str | None:
     match = re.search(r"id=([a-zA-Z0-9_-]+)", gdrive_url)
     return match.group(1) if match else None
 
-# Get direct download link using confirm token
+# Get confirmed download URL with confirmation token
 def get_confirmed_download_url(file_id: str) -> str:
     session = requests.Session()
     base_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = session.get(base_url)
+    response = session.get(base_url, allow_redirects=True)
 
-    soup = BeautifulSoup(response.text, "html.parser")
-    for tag in soup.find_all("a"):
-        href = tag.get("href", "")
-        if "confirm=" in href:
-            confirm_token = re.search(r"confirm=([a-zA-Z0-9_-]+)", href)
-            if confirm_token:
-                confirm = confirm_token.group(1)
-                return f"https://drive.google.com/uc?export=download&confirm={confirm}&id={file_id}"
-
-    # Fallback: try direct link without confirm token
+    # Check for confirmation page and extract confirm token
+    if "confirm=" in response.url:
+        # Extract confirm token from URL
+        confirm_token = re.search(r"confirm=([a-zA-Z0-9_-]+)", response.url)
+        if confirm_token:
+            confirm = confirm_token.group(1)
+            return f"https://drive.google.com/uc?export=download&confirm={confirm}&id={file_id}"
+    
+    # If no confirmation page, return the base URL
     return base_url
 
 # Command handler for /extractlink
@@ -65,3 +63,4 @@ async def extract_link_cmd(client: Client, message: Message):
             await message.reply_text("⚠️ The link may be private or not downloadable.")
     except Exception as e:
         await message.reply_text(f"❌ Error occurred: `{e}`")
+
