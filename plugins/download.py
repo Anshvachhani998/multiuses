@@ -76,6 +76,9 @@ async def download_video(client, chat_id, youtube_link, check):
 
                 if cancel_event.is_set():
                     asyncio.run_coroutine_threadsafe(status_msg.edit_text("❌ **Download Cancelled!**"), client.loop)
+                    if os.path.exists(output_filename):
+                        os.remove(output_filename)
+                        logging.info("Cancelled download deleted.")
                     return
 
                 asyncio.run_coroutine_threadsafe(queue.put({"status": "finished"}), client.loop)
@@ -253,6 +256,9 @@ async def aria2c_media(client, chat_id, download_url, check):
                 await status_msg.edit("**Download Cancelled**")
                 active_tasks.pop(chat_id, None)
                 cancel_tasks.pop(chat_id, None)
+                if output_filename and os.path.exists(output_filename):
+                    os.remove(output_filename)
+                    logging.info("Cancelled download deleted.")
                 return
             
             output_filename = final_filenames
@@ -387,6 +393,10 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 await status_msg.edit("**Download Cancelled**")
                 active_tasks.pop(chat_id, None)
                 cancel_tasks.pop(chat_id, None)
+             
+                if output_filename and os.path.exists(output_filename):
+                    os.remove(output_filename)
+                    logging.info("Cancelled download deleted.")
                 return
             output_filename = final_filenames
             caption = os.path.splitext(os.path.basename(output_filename))[0]
