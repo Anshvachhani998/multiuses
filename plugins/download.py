@@ -401,10 +401,6 @@ async def google_drive(client, chat_id, gdrive_url, filename, check):
                 await status_msg.edit("**Download Cancelled**")
                 active_tasks.pop(chat_id, None)
                 cancel_tasks.pop(chat_id, None)
-             
-                if output_filename and os.path.exists(output_filename):
-                    os.remove(output_filename)
-                    logging.info("Cancelled download deleted.")
                 return
             output_filename = final_filenames
             caption = os.path.splitext(os.path.basename(output_filename))[0]
@@ -503,7 +499,18 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
         for line in process.stdout:
             if cancel_event.is_set():
                 process.terminate()
-                return None, True  # Cancelled by user
+                process.wait()
+                
+                # Delete any partially downloaded new files
+                after_cancel_files = set(os.listdir(download_dir))
+                new_files = after_cancel_files - before_files
+                for f in new_files:
+                    try:
+                        os.remove(os.path.join(download_dir, f))
+                    except Exception as e:
+                        print(f"Error deleting partial file: {e}")
+                
+                return None, True  # Download cancelled by user
 
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
             if match:
