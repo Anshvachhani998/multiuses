@@ -496,20 +496,23 @@ def gdown_download(url, download_dir, filename, label, queue, client, cancel_eve
             text=True
         )
 
+        before_files = set(os.listdir(download_dir))  # Track existing files
+
         for line in process.stdout:
             if cancel_event.is_set():
                 process.terminate()
                 process.wait()
-                
-                # Delete any partially downloaded new files
-                after_cancel_files = set(os.listdir(download_dir))
-                new_files = after_cancel_files - before_files
+
+                # Delete any new files created during the download
+                after_files = set(os.listdir(download_dir))
+                new_files = after_files - before_files
                 for f in new_files:
                     try:
                         os.remove(os.path.join(download_dir, f))
+                        print(f"Deleted partial file: {f}")
                     except Exception as e:
-                        print(f"Error deleting partial file: {e}")
-                
+                        print(f"Error deleting file {f}: {e}")
+
                 return None, True  # Download cancelled by user
 
             match = re.search(r'(\d+)%\|.*\| (\d+(\.\d+)?)([KMGT]?)\/(\d+(\.\d+)?)([KMGT]?)', line)
