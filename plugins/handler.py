@@ -270,30 +270,36 @@ async def universal_handler(client, message):
 
 async def get_video_info(url: str) -> dict:
     try:
-        # Using yt-dlp command to get JSON output
+        # Run yt-dlp command to fetch all formats
         command = ['yt-dlp', '-j', url]
-        
-        # Running the command to fetch video info as JSON
         result = await asyncio.to_thread(subprocess.check_output, command)
-        
-        # Decode the byte result to string
-        result_json = result.decode('utf-8')
-        
-        # Load the result string as a JSON object
-        info_dict = json.loads(result_json)
+        info_dict = json.loads(result.decode('utf-8'))
 
-        # Extract details from the JSON response
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
+        # Filter out formats with both video and audio
+        formats = info_dict.get("formats", [])
+        best_format = None
+        for fmt in reversed(formats):  # Reverse so higher quality comes first
+            if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
+                best_format = fmt
+                break
+
+        if not best_format:
+            best_format = formats[-1] if formats else {}
+
+        # Extract size
+        filesize = best_format.get("filesize") or best_format.get("filesize_approx")
         filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
 
-        # Get format type
-        format = info_dict.get("format") or info_dict.get("ext", "N/A")
+        # Extract MIME type
+        mime_type = best_format.get("ext", "N/A")
 
-        # Return the extracted information in dictionary format
+        # Extract format note or resolution
+        quality = best_format.get("format_note") or best_format.get("height") or "Unknown"
+
         return {
             "title": info_dict.get("title", "Unknown Title"),
             "filesize": filesize_str,
-            "format": format,
+            "format": mime_type
         }
 
     except Exception as e:
