@@ -273,17 +273,14 @@ import mimetypes
 
 async def get_video_info(url: str) -> dict:
     try:
-        # Run yt-dlp -j command to get JSON info
         command = ['yt-dlp', '-j', url]
         result = await asyncio.to_thread(subprocess.check_output, command)
         info_dict = json.loads(result.decode('utf-8'))
 
-        # Extract values
         title = info_dict.get("title", "Unknown Title")
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx") or 0
         ext = info_dict.get("ext", "unknown")
 
-        # Get mime type from extension
         mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
 
         return {
