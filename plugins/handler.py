@@ -289,7 +289,7 @@ async def get_video_info(url: str) -> dict:
 
         if not filesize:
             # Try fetching the size from formats if available
-            for format in info.get('formats', []):
+            for format in info_dict.get('formats', []):
                 if 'filesize' in format:
                     filesize = format['filesize']
                     break
