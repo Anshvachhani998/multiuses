@@ -268,28 +268,33 @@ async def universal_handler(client, message):
             logger.error(f"Failed to log to channel: {log_err}")
 
 
+
 async def get_video_info(url: str) -> dict:
     try:
-        # Run yt-dlp -j command to get raw JSON info
+        # Run yt-dlp -j command to get JSON info
         command = ['yt-dlp', '-j', url]
         result = await asyncio.to_thread(subprocess.check_output, command)
         info_dict = json.loads(result.decode('utf-8'))
 
-        # Try to get filesize from top-level
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        
-        # If not found, try from formats list (pick best available)
-        if not filesize and "formats" in info_dict:
-            formats = info_dict["formats"]
-            best_format = next(
-                (f for f in reversed(formats) if f.get("filesize") or f.get("filesize_approx")),
-                None
-            )
-            if best_format:
-                filesize = best_format.get("filesize") or best_format.get("filesize_approx")
+        # Pick best format with both audio and video (progressive)
+        best_format = None
+        for fmt in reversed(info_dict.get("formats", [])):
+            if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
+                if fmt.get("filesize") or fmt.get("filesize_approx"):
+                    best_format = fmt
+                    break
 
+        # Fallback if no progressive found
+        if not best_format:
+            best_format = next((f for f in reversed(info_dict.get("formats", []))
+                                if f.get("filesize") or f.get("filesize_approx")), None)
+
+        # Get size
+        filesize = best_format.get("filesize") or best_format.get("filesize_approx") if best_format else None
         filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
-        format_name = info_dict.get("format") or info_dict.get("ext", "N/A")
+
+        # Final format info
+        format_name = best_format.get("format_note") or best_format.get("ext") if best_format else "N/A"
 
         return {
             "title": info_dict.get("title", "Unknown Title"),
