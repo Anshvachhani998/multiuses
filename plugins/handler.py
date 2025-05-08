@@ -273,6 +273,7 @@ import asyncio
 import subprocess
 import json
 
+
 async def get_video_info(url: str) -> dict:
     try:
         # Run yt-dlp -j command to get JSON info
@@ -281,17 +282,14 @@ async def get_video_info(url: str) -> dict:
         info_dict = json.loads(result.decode('utf-8'))
 
         # Default values
-        filesize = None
-        format_name = "N/A"
-
-        # Case 1: formats[] available and has valid entries
         filesize = info_dict.get('filesize') or info_dict.get('filesize_approx')
+        format_name = "N/A"
 
         if not filesize:
             # Try fetching the size from formats if available
-            for format in info_dict.get('formats', []):
-                if 'filesize' in format:
-                    filesize = format['filesize']
+            for fmt in info_dict.get('formats', []):
+                if 'filesize' in fmt:
+                    filesize = fmt['filesize']
                     break
 
         # Default to 0 if no size is found
