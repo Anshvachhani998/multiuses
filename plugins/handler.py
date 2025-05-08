@@ -270,36 +270,31 @@ async def universal_handler(client, message):
 
 async def get_video_info(url: str) -> dict:
     try:
-        # Run yt-dlp command to fetch all formats
+        # Run yt-dlp -j command to get raw JSON info
         command = ['yt-dlp', '-j', url]
         result = await asyncio.to_thread(subprocess.check_output, command)
         info_dict = json.loads(result.decode('utf-8'))
 
-        # Filter out formats with both video and audio
-        formats = info_dict.get("formats", [])
-        best_format = None
-        for fmt in reversed(formats):  # Reverse so higher quality comes first
-            if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
-                best_format = fmt
-                break
+        # Try to get filesize from top-level
+        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
+        
+        # If not found, try from formats list (pick best available)
+        if not filesize and "formats" in info_dict:
+            formats = info_dict["formats"]
+            best_format = next(
+                (f for f in reversed(formats) if f.get("filesize") or f.get("filesize_approx")),
+                None
+            )
+            if best_format:
+                filesize = best_format.get("filesize") or best_format.get("filesize_approx")
 
-        if not best_format:
-            best_format = formats[-1] if formats else {}
-
-        # Extract size
-        filesize = best_format.get("filesize") or best_format.get("filesize_approx")
         filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
-
-        # Extract MIME type
-        mime_type = best_format.get("ext", "N/A")
-
-        # Extract format note or resolution
-        quality = best_format.get("format_note") or best_format.get("height") or "Unknown"
+        format_name = info_dict.get("format") or info_dict.get("ext", "N/A")
 
         return {
             "title": info_dict.get("title", "Unknown Title"),
             "filesize": filesize_str,
-            "format": mime_type
+            "format": format_name
         }
 
     except Exception as e:
