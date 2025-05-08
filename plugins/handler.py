@@ -205,8 +205,39 @@ async def universal_handler(client, message):
             await aria2c_media(client, chat_id, text, checking)
 
         elif await is_supported_by_ytdlp(text):
-            checking = await checking_msg.edit("✅ Processing video link...")
-            await download_video(client, chat_id, text, checking)
+            try:
+                checking = await checking_msg.edit("✅ Fetching file info...")
+
+                info = await get_video_info(text)  # 👈 aapka custom info fetcher
+                if not info:
+                    await checking.edit("❌ Failed to fetch video info.")
+                    return
+
+                title = info.get("title", "Unknown Title")
+                filesize = info.get("filesize", "Unknown size")
+                fmt = info.get("format", "N/A")
+                cleaned = clean_filename(title)  # 👈 optional cleaner
+
+                caption = (
+                    f"**🎬 Title:** `{title}`\n"
+                    f"**📦 Size:** `{filesize}`\n"
+                    f"**🔰 Format:** `{fmt}`\n\n"
+                    f"**✅ Click below to start download.**"
+                )
+
+                btn = [[
+                    InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp|{text}")
+                ]]
+
+                await checking.edit(
+                    caption,
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+
+            except Exception as e:
+                logger.error(f"YTDLP link processing error: {e}")
+                await checking_msg.edit("❌ Failed to process the link.")
+
 
         else:
             # If none of the supported link formats match
@@ -233,3 +264,37 @@ async def universal_handler(client, message):
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
             logger.error(f"Failed to log to channel: {log_err}")
+
+
+import yt_dlp
+
+async def get_video_info(url: str) -> dict:
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True,
+            'format': 'best',
+        }
+
+        loop = asyncio.get_event_loop()
+
+        def fetch():
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(url, download=False)
+
+        info_dict = await loop.run_in_executor(None, fetch)
+
+        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
+        filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
+
+        return {
+            "title": info_dict.get("title", "Unknown Title"),
+            "filesize": filesize_str,
+            "format": info_dict.get("format") or info_dict.get("ext", "N/A"),
+        }
+
+    except Exception as e:
+        print(f"[get_video_info] Error: {e}")
+        return None
+
