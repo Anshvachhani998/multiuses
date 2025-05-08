@@ -8,6 +8,8 @@ import subprocess
 import logging
 import aiohttp
 import yt_dlp
+import subprocess
+import json
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
@@ -266,31 +268,19 @@ async def universal_handler(client, message):
             logger.error(f"Failed to log to channel: {log_err}")
 
 
-import yt_dlp
-
-import yt_dlp
-import asyncio
-import json
-
 async def get_video_info(url: str) -> dict:
     try:
-        ydl_opts = {
-            'quiet': True,
-            'skip_download': True,
-            'no_warnings': True,
-            'format': 'best',
-            'dumpjson': True,  # JSON output
-        }
-
-        loop = asyncio.get_event_loop()
-
-        def fetch():
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Extracting the info in JSON format
-                return ydl.extract_info(url, download=False)
-
-        # Fetch video info using yt-dlp
-        info_dict = await loop.run_in_executor(None, fetch)
+        # Using yt-dlp command to get JSON output
+        command = ['yt-dlp', '-j', url]
+        
+        # Running the command to fetch video info as JSON
+        result = await asyncio.to_thread(subprocess.check_output, command)
+        
+        # Decode the byte result to string
+        result_json = result.decode('utf-8')
+        
+        # Load the result string as a JSON object
+        info_dict = json.loads(result_json)
 
         # Extract details from the JSON response
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
