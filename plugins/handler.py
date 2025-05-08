@@ -285,29 +285,21 @@ async def get_video_info(url: str) -> dict:
         format_name = "N/A"
 
         # Case 1: formats[] available and has valid entries
-        formats = info_dict.get("formats")
-        if formats:
-            # Find best video+audio format with size
-            for fmt in reversed(formats):
-                if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
-                    filesize = fmt.get("filesize") or fmt.get("filesize_approx")
-                    format_name = fmt.get("format_note") or fmt.get("format_id") or fmt.get("ext", "N/A")
-                    if filesize:
-                        break
+        filesize = info_dict.get('filesize') or info_dict.get('filesize_approx')
 
-        # Case 2: fallback to root-level info if no formats or no filesize
         if not filesize:
-            filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
+            # Try fetching the size from formats if available
+            for format in info.get('formats', []):
+                if 'filesize' in format:
+                    filesize = format['filesize']
+                    break
 
-        if format_name == "N/A":
-            format_name = info_dict.get("format") or info_dict.get("ext") or "N/A"
-
-        # Convert size to MB
-        filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
+        # Default to 0 if no size is found
+        filesize = filesize or 0
 
         return {
             "title": info_dict.get("title", "Unknown Title"),
-            "filesize": filesize_str,
+            "filesize": filesize,
             "format": format_name
         }
 
