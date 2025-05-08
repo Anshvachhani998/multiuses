@@ -269,6 +269,10 @@ async def universal_handler(client, message):
 
 
 
+import asyncio
+import subprocess
+import json
+
 async def get_video_info(url: str) -> dict:
     try:
         # Run yt-dlp -j command to get JSON info
@@ -276,25 +280,30 @@ async def get_video_info(url: str) -> dict:
         result = await asyncio.to_thread(subprocess.check_output, command)
         info_dict = json.loads(result.decode('utf-8'))
 
-        # Pick best format with both audio and video (progressive)
-        best_format = None
-        for fmt in reversed(info_dict.get("formats", [])):
-            if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
-                if fmt.get("filesize") or fmt.get("filesize_approx"):
-                    best_format = fmt
-                    break
+        # Default values
+        filesize = None
+        format_name = "N/A"
 
-        # Fallback if no progressive found
-        if not best_format:
-            best_format = next((f for f in reversed(info_dict.get("formats", []))
-                                if f.get("filesize") or f.get("filesize_approx")), None)
+        # Case 1: formats[] available and has valid entries
+        formats = info_dict.get("formats")
+        if formats:
+            # Find best video+audio format with size
+            for fmt in reversed(formats):
+                if fmt.get("vcodec") != "none" and fmt.get("acodec") != "none":
+                    filesize = fmt.get("filesize") or fmt.get("filesize_approx")
+                    format_name = fmt.get("format_note") or fmt.get("format_id") or fmt.get("ext", "N/A")
+                    if filesize:
+                        break
 
-        # Get size
-        filesize = best_format.get("filesize") or best_format.get("filesize_approx") if best_format else None
+        # Case 2: fallback to root-level info if no formats or no filesize
+        if not filesize:
+            filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
+
+        if format_name == "N/A":
+            format_name = info_dict.get("format") or info_dict.get("ext") or "N/A"
+
+        # Convert size to MB
         filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
-
-        # Final format info
-        format_name = best_format.get("format_note") or best_format.get("ext") if best_format else "N/A"
 
         return {
             "title": info_dict.get("title", "Unknown Title"),
@@ -305,3 +314,4 @@ async def get_video_info(url: str) -> dict:
     except Exception as e:
         print(f"[get_video_info] Error: {e}")
         return None
+
