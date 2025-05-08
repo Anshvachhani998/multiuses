@@ -268,6 +268,10 @@ async def universal_handler(client, message):
 
 import yt_dlp
 
+import yt_dlp
+import asyncio
+import json
+
 async def get_video_info(url: str) -> dict:
     try:
         ydl_opts = {
@@ -275,26 +279,33 @@ async def get_video_info(url: str) -> dict:
             'skip_download': True,
             'no_warnings': True,
             'format': 'best',
+            'dumpjson': True,  # JSON output
         }
 
         loop = asyncio.get_event_loop()
 
         def fetch():
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Extracting the info in JSON format
                 return ydl.extract_info(url, download=False)
 
+        # Fetch video info using yt-dlp
         info_dict = await loop.run_in_executor(None, fetch)
 
+        # Extract details from the JSON response
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
         filesize_str = f"{round(filesize / (1024 * 1024), 2)} MB" if filesize else "Unknown"
 
+        # Get format type
+        format = info_dict.get("format") or info_dict.get("ext", "N/A")
+
+        # Return the extracted information in dictionary format
         return {
             "title": info_dict.get("title", "Unknown Title"),
             "filesize": filesize_str,
-            "format": info_dict.get("format") or info_dict.get("ext", "N/A"),
+            "format": format,
         }
 
     except Exception as e:
         print(f"[get_video_info] Error: {e}")
         return None
-
