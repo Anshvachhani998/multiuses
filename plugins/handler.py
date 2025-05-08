@@ -269,10 +269,7 @@ async def universal_handler(client, message):
 
 
 
-import asyncio
-import subprocess
-import json
-
+import mimetypes
 
 async def get_video_info(url: str) -> dict:
     try:
@@ -281,27 +278,20 @@ async def get_video_info(url: str) -> dict:
         result = await asyncio.to_thread(subprocess.check_output, command)
         info_dict = json.loads(result.decode('utf-8'))
 
-        # Default values
-        filesize = info_dict.get('filesize') or info_dict.get('filesize_approx')
-        format_name = "N/A"
+        # Extract values
+        title = info_dict.get("title", "Unknown Title")
+        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx") or 0
+        ext = info_dict.get("ext", "unknown")
 
-        if not filesize:
-            # Try fetching the size from formats if available
-            for fmt in info_dict.get('formats', []):
-                if 'filesize' in fmt:
-                    filesize = fmt['filesize']
-                    break
-
-        # Default to 0 if no size is found
-        filesize = filesize or 0
+        # Get mime type from extension
+        mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
 
         return {
-            "title": info_dict.get("title", "Unknown Title"),
+            "title": title,
             "filesize": filesize,
-            "format": format_name
+            "mime": mime
         }
 
     except Exception as e:
         print(f"[get_video_info] Error: {e}")
         return None
-
