@@ -17,27 +17,20 @@ def get_token_from_code(code):
     flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'  # 🔥 FIXED!
     flow.fetch_token(code=code)
     creds = flow.credentials
-    with open("tokens.pickle", "wb") as token:
+    with open("plugins/token.pickle", "wb") as token:
         pickle.dump(creds, token)
     return True
 
-
-from pyrogram import Client, filters
-
-app = Client
-
-
-@app.on_message(filters.command("gdrive"))
+@Client.on_message(filters.command("gdrive"))
 async def send_auth_url(client, message):
     url = generate_auth_url()
     await message.reply(
         f"🔐 Visit this link to authorize:\n\n{url}\n\nThen send the code like this:\n/gcode <your-code>",
         quote=True,
-        parse_mode=None  # <- disables markdown
-    )
+        parse_mode=None
 
 
-@app.on_message(filters.command("gcode"))
+@Client.on_message(filters.command("gcode"))
 async def handle_code(client, message):
     try:
         code = message.text.split(" ", 1)[1]
