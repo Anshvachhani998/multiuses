@@ -65,13 +65,14 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
     caption += f"**✅ Click below to start download.**"
 
     btn = [[
-        InlineKeyboardButton("📥 Download Now", callback_data=f"terabox:{file_url}")
+        InlineKeyboardButton("📥 Download Now", callback_data=f"terabox")
     ]]
     
     await checking_msg.edit(
         caption,
         reply_markup=InlineKeyboardMarkup(btn)
     )
+
 
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
