@@ -142,6 +142,15 @@ def ytdlp_clean(title: str) -> str:
     if not cleaned.lower().endswith(".mp4"):
         cleaned += f"_({uid}).mp4"
     return cleaned
+
+def clean_filename(title: str) -> str:
+    cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    cleaned = cleaned.replace(" ", "_")
+    uid = uuid.uuid4().hex[:3]
+    if not cleaned.lower().endswith(".mp4"):
+        cleaned += f"_({uid}).mp4"
+    return cleaned
     
 def extract_file_id(link):
     patterns = [
