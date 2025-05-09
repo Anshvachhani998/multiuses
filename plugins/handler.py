@@ -215,17 +215,21 @@ async def universal_handler(client, message):
                     await checking.edit("❌ Failed to fetch video info.")
                     return
 
-                title = info.get("title", "Unknown Title")
+  
                 filesize = info.get("filesize", 0)
                 fmt = info.get("mime", "N/A")
-                cleaned = clean_filename(title)
+                raw_title = info.get("title", "").strip()
+                if not raw_title or raw_title.lower() == "unknown title":
+                    raw_title = f"{uuid.uuid4().hex[:8]}"  # random fallback title
+
+                title = clean_filename(raw_title)
 
                 if filesize == 0 or filesize == "Unknown size":
                     filesize = None
 
                 # Caption ko format karo
                 caption = f"**🎬 Title:** `{title}`\n"
-                if filesize:  # Agar filesize available hai toh hi show karo
+                if filesize:
                     caption += f"**📦 Size:** `{filesize}`\n"
                 caption += f"**🔰 Format:** `{fmt}`\n\n"
                 caption += f"**✅ Click below to start download.**"
