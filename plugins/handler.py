@@ -70,7 +70,10 @@ async def process_ytdlp_link(client, chat_id, link, checking_msg):
             await checking_msg.edit("❌ Failed to fetch video info.")
             return
 
-        file_size = info.get("filesize", 0)
+        try:
+            file_size = int(info.get("filesize", 0))
+        except (ValueError, TypeError):
+            file_size = 0
         mime = info.get("mime", "application/octet-stream")
         raw_title = info.get("title", "").strip()
 
