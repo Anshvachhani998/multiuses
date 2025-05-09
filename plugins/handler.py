@@ -51,7 +51,6 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
     caption = f"**🎬 Title:** `{clean_name}`\n"
     caption += f"**📦 Size:** `{file_size}`\n"
     caption += f"**🔰 Mime:** `{mime}`\n"
-    caption += f"**🗂 Extension:** `{ext}`\n"
     
     caption += f"**✅ Click below to start download.**"
 
