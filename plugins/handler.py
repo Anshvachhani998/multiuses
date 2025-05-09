@@ -78,13 +78,12 @@ async def process_ytdlp_link(client, chat_id, link, checking_msg):
             raw_title = f"{uuid.uuid4().hex[:8]}"
 
         clean = clean_filename(raw_title, mime)
-        ext = Path(clean).suffix
+
 
         caption = f"**🎬 Title:** `{clean}`\n"
         if file_size:
             caption += f"**📦 Size:** `{format_size(file_size)}`\n"
         caption += f"**🔰 Mime:** `{mime}`\n"
-        caption += f"**🗂 Extension:** `{ext}`\n"
         caption += f"**✅ Click below to start download.**"
 
         btn = [[InlineKeyboardButton("📥 Download Now", callback_data="ytdlp")]]
@@ -93,7 +92,6 @@ async def process_ytdlp_link(client, chat_id, link, checking_msg):
     except Exception as e:
         logger.error(f"YTDLP processing error: {e}")
         await checking_msg.edit("❌ Error processing the YouTube link.")
-
 
 
 @Client.on_message(filters.private & filters.text)
