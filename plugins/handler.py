@@ -104,10 +104,15 @@ def clean_filename(filename, mime=None):
     name = re.sub(r'[^\w\s-]', '', name)  # Remove unwanted characters
     name = re.sub(r'[-\s]+', '_', name)  # Replace spaces and hyphens with underscores
     name = name.strip('_')  # Remove leading/trailing underscores
-
-    # Return cleaned filename with correct extension
     return name + ext
 
+def ytdlp_clean(title: str) -> str:
+    cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    cleaned = cleaned.replace(" ", "_")
+    if not cleaned.lower().endswith(".mp4"):
+        cleaned += ".mp4"
+    return cleaned
 
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
@@ -222,7 +227,7 @@ async def universal_handler(client, message):
                 if not raw_title or raw_title.lower() == "unknown title":
                     raw_title = f"{uuid.uuid4().hex[:8]}"  # random fallback title
 
-                title = clean_filename(raw_title)
+                title = ytdlp_clean(raw_title)
 
                 if filesize == 0 or filesize == "Unknown size":
                     filesize = None
