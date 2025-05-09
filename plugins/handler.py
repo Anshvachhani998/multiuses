@@ -38,7 +38,7 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
         return
     
     # Extract file information from the TeraBox data
-    file_name = terabox_info.get("name", "Unknown File")
+    file_name = terabox_info.get("title", "Unknown File")
     file_size = terabox_info.get("size", "Unknown Size")
     file_url = terabox_info.get("download_url", "")
     
