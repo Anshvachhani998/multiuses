@@ -7,11 +7,14 @@ CLIENT_SECRET_FILE = 'plugins/credentials.json'
 
 def generate_auth_url():
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+    flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'  # 🔥 FIXED!
     auth_url, _ = flow.authorization_url(prompt='consent')
     return auth_url
 
+
 def get_token_from_code(code):
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+    flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'  # 🔥 FIXED!
     flow.fetch_token(code=code)
     creds = flow.credentials
     with open("tokens.pickle", "wb") as token:
