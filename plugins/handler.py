@@ -179,9 +179,8 @@ async def universal_handler(client, message):
             await aria2c_media(client, chat_id, text, checking)
 
         elif await is_supported_by_ytdlp(text):
-            try:
-                checking = await checking_msg.edit("✅ Fetching file info...")
-                await process_ytdlp_link(client, chat_id, text, checking)
+            checking = await checking_msg.edit("✅ Fetching file info...")
+            await process_ytdlp_link(client, chat_id, text, checking)
 
         else:
             await checking_msg.edit("**This link is not accessible or not direct download link**")
