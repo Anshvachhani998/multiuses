@@ -217,7 +217,7 @@ async def universal_handler(client, message):
 
                 title = info.get("title", "Unknown Title")
                 filesize = info.get("filesize", "Unknown size")
-                fmt = info.get("format", "N/A")
+                fmt = info.get("mime", "N/A")
                 cleaned = clean_filename(title)  # 👈 optional cleaner
 
                 caption = (
@@ -282,16 +282,14 @@ async def get_video_info(url: str) -> dict:
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
         ext = info_dict.get("ext", "unknown")
 
-        # Agar filesize na mile toh default 0 set karo
         filesize = filesize or 0
 
-        # Mime type ka default handle karo
         mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
 
         return {
             "title": title,
             "filesize": filesize,
-            "mime": ext
+            "mime": mime
         }
 
     except Exception as e:
