@@ -97,6 +97,24 @@ async def process_ytdlp_link(client, chat_id, link, checking_msg):
         await checking_msg.edit("❌ Error processing the YouTube link.")
 
 
+async def process_gdrive_link(client, chat_id, link, checking_msg):
+    file_id = extract_file_id(link)
+    if not file_id:
+        await checking_msg.edit("❌ Invalid Google Drive link.")
+        return
+
+    name, size, mime = get_file_info(file_id)
+    clean = clean_filename(name, mime)
+
+    caption = f"**🎬 Title:** `{clean}`\n"
+    caption += f"**📦 Size:** `{format_size(size) if isinstance(size, (int, float)) else size}`\n"
+    caption += f"**🔰 Mime:** `{mime}`\n"
+    caption += f"**✅ Click below to start download.**"
+
+    btn = [[InlineKeyboardButton("📥 Download Now", callback_data=f"gdrive:{file_id}|{clean}")]]
+    await checking_msg.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
