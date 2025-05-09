@@ -286,7 +286,7 @@ async def get_video_info(url: str) -> dict:
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
         ext = info_dict.get("ext", "unknown")
 
-        filesize = filesize or 0
+        filesize = format_size(filesize) or 0
 
         mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
 
