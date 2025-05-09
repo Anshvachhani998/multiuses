@@ -1,7 +1,7 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 # Replace with your own credentials file path
-CLIENT_SECRET_FILE = 'path_to_your_client_secret_file.json'
+CLIENT_SECRET_FILE = 'credentials.json'
 
 # Define the API scopes you need
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
