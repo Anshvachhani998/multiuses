@@ -16,7 +16,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceRepl
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 from database.db import db
-from utils import active_tasks
+from utils import active_tasks, format_size
 from info import LOG_CHANNEL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
