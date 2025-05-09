@@ -42,12 +42,7 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
     file_size = terabox_info.get("size", "Unknown Size")
     file_url = terabox_info.get("download_url", "")
     
-    # Ensure file_size is an integer or a default value
-    if isinstance(file_size, str):
-        try:
-            file_size = int(file_size)
-        except ValueError:
-            file_size = 0  # Default to 0 if it cannot be converted to an integer
+
 
     # Using regular expression to extract mime and extension from file name
     mime, file_extension = mimetypes.guess_type(file_name)
@@ -58,7 +53,7 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
     
     # Create the caption with proper formatting
     caption = f"**🎬 Title:** `{clean_name}`\n"
-    caption += f"**📦 Size:** `{format_size(file_size)}`\n"
+    caption += f"**📦 Size:** `{file_size}`\n"
     caption += f"**🔰 Mime:** `{mime}`\n"
     caption += f"**🗂 Extension:** `{ext}`\n"
     
