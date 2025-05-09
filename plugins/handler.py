@@ -16,7 +16,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceRepl
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 from database.db import db
-from utils import active_tasks, format_size
+from utils import active_tasks, format_size, get_ytdlp_info
 from info import LOG_CHANNEL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -216,7 +216,7 @@ async def universal_handler(client, message):
             try:
                 checking = await checking_msg.edit("✅ Fetching file info...")
 
-                info = await get_video_info(text)
+                info = await get_ytdlp_info(text)
                 if not info:
                     await checking.edit("❌ Failed to fetch video info.")
                     return
@@ -273,33 +273,3 @@ async def universal_handler(client, message):
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
             logger.error(f"Failed to log to channel: {log_err}")
-
-
-
-import mimetypes
-
-
-async def get_video_info(url: str) -> dict:
-    try:
-        command = ['yt-dlp', '-j', url]
-        result = await asyncio.to_thread(subprocess.check_output, command)
-        info_dict = json.loads(result.decode('utf-8'))
-
-        title = info_dict.get("title", "Unknown Title")
-        filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        ext = info_dict.get("ext", "unknown")
-
-        filesize = format_size(filesize) or 0
-
-        mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
-
-        return {
-            "title": title,
-            "filesize": filesize,
-            "mime": mime,
-            "ext": ext
-        }
-
-    except Exception as e:
-        print(f"[get_video_info] Error: {e}")
-        return None
