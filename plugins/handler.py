@@ -96,9 +96,9 @@ def clean_filename(filename, mime=None):
         if mime:
             # If mime type is provided, guess the extension
             guessed_ext = mimetypes.guess_extension(mime)
-            ext = guessed_ext if guessed_ext else '.mkv'
+            ext = guessed_ext if guessed_ext else '.mp4'
         else:
-            ext = '.mkv'
+            ext = '.mp4'
 
     # Clean the file name
     name = re.sub(r'[^\w\s-]', '', name)  # Remove unwanted characters
