@@ -80,7 +80,7 @@ async def process_ytdlp_link(client, chat_id, link, checking_msg):
         if not raw_title or raw_title.lower() == "unknown title":
             raw_title = f"{uuid.uuid4().hex[:8]}"
 
-        clean = clean_filename(raw_title, mime)
+        clean = ytdlp_clean(raw_title)
 
 
         caption = f"**🎬 Title:** `{clean}`\n"
