@@ -1,6 +1,6 @@
 import pickle
 from google_auth_oauthlib.flow import InstalledAppFlow
-
+from pyrogram import Client, filters
 # Scopes and file
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 CLIENT_SECRET_FILE = 'plugins/credentials.json'
