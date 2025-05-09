@@ -188,4 +188,4 @@ async def universal_handler(client, message):
         try:
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
-            logger.error(f"Failed to log to channel: {log_err}")  ab isme aesa kro ki gdrive me tera box me or directs link me bhoi ytdlp ki tarh file info phhl aaye
+            logger.error(f"Failed to log to channel: {log_err}")
