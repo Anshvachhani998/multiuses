@@ -280,7 +280,7 @@ async def get_confirm_token_download_url(file_id):
 
     return download_url
 
-async def get_ytdlp_info(url: str) -> dict:
+async def get_ytdlp_info(url):
     try:
         command = ['yt-dlp', '-j', url]
         result = await asyncio.to_thread(subprocess.check_output, command)
