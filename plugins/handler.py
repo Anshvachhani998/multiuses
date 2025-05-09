@@ -16,7 +16,12 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceRepl
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 from database.db import db
-from utils import active_tasks, format_size, get_ytdlp_info
+from utils import (
+    active_tasks, format_size, get_ytdlp_info,
+    extract_file_id, get_file_info, clean_filename,
+    get_terabox_info, is_direct_download_link,
+    is_supported_by_ytdlp, ytdlp_clean
+)
 from info import LOG_CHANNEL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -25,96 +30,7 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-async def is_direct_download_link(url: str) -> bool:
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url, timeout=5) as resp:
-                content_type = resp.headers.get("Content-Type", "")
-                return any(x in content_type for x in ["video/", "audio/", "application/"])
-    except:
-        return False
-        
-async def get_terabox_info(link):
-    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url) as response:
-                if response.status != 200:
-                    return {"error": f"HTTP {response.status}"}
-                data = await response.json()
 
-        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
-        if not info:
-            return {"error": "No extracted info found."}
-
-        return {
-            "title": info.get("Title"),
-            "size": info.get("Size"),
-            "download_url": info.get("Direct Download Link")
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
-
-def extract_file_id(link):
-    patterns = [
-        r'/file/d/([a-zA-Z0-9_-]+)',
-        r'id=([a-zA-Z0-9_-]+)'
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, link)
-        if match:
-            return match.group(1)
-    return None
-
-def get_file_info(file_id):
-    creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
-    service = build("drive", "v3", credentials=creds)
-    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
-    name = file.get("name")
-    size = int(file.get("size", 0))
-    mime = file.get("mimeType")
-    return name, size, mime
-    
-async def is_supported_by_ytdlp(url):
-     try:
-         cmd = ["yt-dlp", "--quiet", "--simulate", url]
-         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
- 
-         return result.returncode == 0
-     except Exception:
-         return False
-
-def clean_filename(filename, mime=None):
-    # Get the name and extension from the filename
-    name, ext = os.path.splitext(filename)
-    
-    # Normalize the extension to lowercase
-    ext = ext.lower() if ext else ''
-
-    if not ext:
-        if mime:
-            # If mime type is provided, guess the extension
-            guessed_ext = mimetypes.guess_extension(mime)
-            ext = guessed_ext if guessed_ext else '.mp4'
-        else:
-            ext = '.mp4'
-
-    # Clean the file name
-    name = re.sub(r'[^\w\s-]', '', name)  # Remove unwanted characters
-    name = re.sub(r'[-\s]+', '_', name)  # Replace spaces and hyphens with underscores
-    name = name.strip('_')  # Remove leading/trailing underscores
-    return name + ext
-
-def ytdlp_clean(title: str) -> str:
-    cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-    cleaned = cleaned.replace(" ", "_")
-    uid = uuid.uuid4().hex[:3]
-    if not cleaned.lower().endswith(".mp4"):
-        cleaned += f"_({uid}).mp4"
-    return cleaned
-    
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
