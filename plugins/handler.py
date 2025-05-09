@@ -232,7 +232,7 @@ async def universal_handler(client, message):
                 
 
                 btn = [[
-                    InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp|{text}")
+                    InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp")
                 ]]
 
                 await checking.edit(
