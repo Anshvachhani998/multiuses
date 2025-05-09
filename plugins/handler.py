@@ -66,7 +66,9 @@ async def universal_handler(client, message):
     try:
         if "drive.google.com" in text:
             if "drive/folders" in text:
+                # Google Drive Folder Error
                 await checking_msg.edit("❌ **Google Drive folder download is not supported yet.**\n\n📦 **Feature coming soon...**")
+                
                 err_msg = (
                     f"📁 <b>Google Drive Folder Attempt</b>\n"
                     f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
@@ -77,7 +79,9 @@ async def universal_handler(client, message):
 
             file_id = extract_file_id(text)
             if not file_id:
+                # Invalid Google Drive link error
                 await checking_msg.edit("** Invalid Google Drive link.**")
+                
                 err_msg = (
                     f"🚨 <b>Invalid Google Drive Link</b>\n"
                     f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
@@ -88,16 +92,19 @@ async def universal_handler(client, message):
 
             name, size, mime = get_file_info(file_id)
             checking = await checking_msg.edit(f"✅ Processing Google Drive link...")
+            logging.info(name)
             clean = clean_filename(name, mime)
-            caption = f"**🎬 Title:** `{name}`\n**📦 Size:** `{format_size(size)}`\n**🔰 Mime:** `{mime}`\n\n**✅ Click below to start download.**"
-            btn = [[InlineKeyboardButton("📥 Download Now", callback_data=f"google_drive_{file_id}")]]
-            await checking.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
-        
+            logging.info(clean)
+            await google_drive(client, chat_id, text, clean, checking)
+
         elif "terabox.com" in text:
             checking = await checking_msg.edit("✅ Processing TeraBox link...")
             terabox_info = await get_terabox_info(text)
+            logging.info(terabox_info)
             if "error" in terabox_info:
+                # Invalid TeraBox link error
                 await checking_msg.edit("**Invalid TeraBox link.**")
+                
                 err_msg = (
                     f"🚨 <b>Invalid TeraBox Link</b>\n"
                     f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
@@ -105,13 +112,9 @@ async def universal_handler(client, message):
                 )
                 await client.send_message(LOG_CHANNEL, err_msg)
                 return
-
-            name = terabox_info.get("name", "Unknown")
-            size = terabox_info.get("size", 0)
-            mime = terabox_info.get("mime", "Unknown")
-            caption = f"**🎬 Title:** `{name}`\n**📦 Size:** `{format_size(size)}`\n**🔰 Mime:** `{mime}`\n\n**✅ Click below to start download.**"
-            btn = [[InlineKeyboardButton("📥 Download Now", callback_data=f"terabox_{text}")]]
-            await checking.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+                
+            dwn = terabox_info.get("download_url")
+            await aria2c_media(client, chat_id, dwn, checking)
 
         elif "magnet:" in text:
             checking = await checking_msg.edit("✅ Processing magnet link...")
@@ -147,12 +150,19 @@ async def universal_handler(client, message):
 
                 caption = f"**🎬 Title:** `{title}`\n"
                 if filesize:
-                    caption += f"**📦 Size:** `{format_size(filesize)}`\n"
+                    caption += f"**📦 Size:** `{filesize}`\n"
                 caption += f"**🔰 Mime:** `{fmt}`\n\n"
                 caption += f"**✅ Click below to start download.**"
                 
-                btn = [[InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp")]]
-                await checking.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+
+                btn = [[
+                    InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp")
+                ]]
+
+                await checking.edit(
+                    caption,
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
 
             except Exception as e:
                 logger.error(f"YTDLP link processing error: {e}")
@@ -178,5 +188,4 @@ async def universal_handler(client, message):
         try:
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
-            logger.error(f"Failed to log to channel: {log_err}")
-
+            logger.error(f"Failed to log to channel: {log_err}")  ab isme aesa kro ki gdrive me tera box me or directs link me bhoi ytdlp ki tarh file info phhl aaye
