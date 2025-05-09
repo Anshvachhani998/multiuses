@@ -104,6 +104,7 @@ async def process_gdrive_link(client, chat_id, link, checking_msg):
         return
 
     name, size, mime = get_file_info(file_id)
+    logging.info(f" done{name}")
     clean = clean_filename(name, mime)
 
     caption = f"**🎬 Title:** `{clean}`\n"
