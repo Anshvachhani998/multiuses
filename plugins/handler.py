@@ -106,7 +106,7 @@ def clean_filename(filename, mime=None):
     name = name.strip('_')  # Remove leading/trailing underscores
     return name + ext
 
-def clean_filename(title: str) -> str:
+def ytdlp_clean(title: str) -> str:
     cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     cleaned = cleaned.replace(" ", "_")
@@ -114,6 +114,7 @@ def clean_filename(title: str) -> str:
     if not cleaned.lower().endswith(".mp4"):
         cleaned += f"_({uid}).mp4"
     return cleaned
+    
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
