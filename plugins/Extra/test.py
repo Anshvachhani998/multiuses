@@ -11,13 +11,13 @@ TOKEN_FILE = 'plugins/token.pickle'
 
 def generate_auth_url():
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-    flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+    flow.redirect_uri = 'http://localhost:8080/'
     auth_url, _ = flow.authorization_url(prompt='consent')
     return auth_url
 
 def get_token_from_code(code):
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-    flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+    flow.redirect_uri = 'http://localhost:8080/'
     flow.fetch_token(code=code)
     creds = flow.credentials
     with open(TOKEN_FILE, "wb") as token:
