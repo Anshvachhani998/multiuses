@@ -3,7 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 
 # Scopes and file
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
-CLIENT_SECRET_FILE = 'credentials.json'
+CLIENT_SECRET_FILE = 'plugins/credentials.json'
 
 def generate_auth_url():
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
