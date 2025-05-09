@@ -216,7 +216,7 @@ async def universal_handler(client, message):
                     return
 
                 title = info.get("title", "Unknown Title")
-                filesize = info.get("filesize", "Unknown size")
+                filesize = info.get("filesize", 0)
                 fmt = info.get("mime", "N/A")
                 cleaned = clean_filename(title)
 
