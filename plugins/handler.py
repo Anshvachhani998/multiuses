@@ -37,21 +37,17 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
         await checking_msg.edit(f"❌ **Invalid TeraBox link**.")
         return
     
-    # Extract file information from the TeraBox data
     file_name = terabox_info.get("title", "Unknown File")
     file_size = terabox_info.get("size", "Unknown Size")
     file_url = terabox_info.get("download_url", "")
     
 
-
-    # Using regular expression to extract mime and extension from file name
     mime, file_extension = mimetypes.guess_type(file_name)
-    mime = mime or "application/octet-stream"  # default mime type
+    mime = mime or "application/octet-stream"
     ext = file_extension or "unknown"
 
-    clean_name = clean_filename(file_name, mime)
-    
-    # Create the caption with proper formatting
+    clean_name = clean_filename(file_name)
+
     caption = f"**🎬 Title:** `{clean_name}`\n"
     caption += f"**📦 Size:** `{file_size}`\n"
     caption += f"**🔰 Mime:** `{mime}`\n"
