@@ -31,6 +31,41 @@ DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 
+async def process_terabox_link(client, chat_id, link, checking_msg):
+    terabox_info = await get_terabox_info(link)
+    if "error" in terabox_info:
+        await checking_msg.edit(f"❌ **Invalid TeraBox link**.")
+        return
+    
+    # Extract file information from the TeraBox data
+    file_name = terabox_info.get("name", "Unknown File")
+    file_size = terabox_info.get("size", "Unknown Size")
+    file_url = terabox_info.get("download_url", "")
+    
+    # Using regular expression to extract mime and extension from file name
+    mime, file_extension = mimetypes.guess_type(file_name)
+    mime = mime or "application/octet-stream"  # default mime type
+    ext = file_extension or "unknown"
+
+    clean_name = clean_filename(file_name, mime)
+    
+    caption = f"**🎬 Title:** `{clean_name}`\n"
+    caption += f"**📦 Size:** `{format_size(file_size)}`\n"
+    caption += f"**🔰 Mime:** `{mime}`\n"
+    caption += f"**🗂 Extension:** `{ext}`\n"
+    
+    caption += f"**✅ Click below to start download.**"
+
+    btn = [[
+        InlineKeyboardButton("📥 Download Now", callback_data=f"terabox:{file_url}")
+    ]]
+    
+    await checking_msg.edit(
+        caption,
+        reply_markup=InlineKeyboardMarkup(btn)
+    )
+
+
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
     text = message.text.strip()
@@ -99,22 +134,7 @@ async def universal_handler(client, message):
 
         elif "terabox.com" in text:
             checking = await checking_msg.edit("✅ Processing TeraBox link...")
-            terabox_info = await get_terabox_info(text)
-            logging.info(terabox_info)
-            if "error" in terabox_info:
-                # Invalid TeraBox link error
-                await checking_msg.edit("**Invalid TeraBox link.**")
-                
-                err_msg = (
-                    f"🚨 <b>Invalid TeraBox Link</b>\n"
-                    f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
-                    f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
-                )
-                await client.send_message(LOG_CHANNEL, err_msg)
-                return
-                
-            dwn = terabox_info.get("download_url")
-            await aria2c_media(client, chat_id, dwn, checking)
+            await process_terabox_link(client, chat_id, text, checking)
 
         elif "magnet:" in text:
             checking = await checking_msg.edit("✅ Processing magnet link...")
