@@ -143,13 +143,22 @@ def ytdlp_clean(title: str) -> str:
         cleaned += f"_({uid}).mp4"
     return cleaned
 
-def clean_filename(title: str) -> str:
+def clean_filename(title: str, ext: str = None) -> str:
     cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     cleaned = cleaned.replace(" ", "_")
+    
+    if not ext:
+        ext = ".mkv"
+    else:
+        if not ext.startswith("."):
+            ext = f".{ext}"
+
     uid = uuid.uuid4().hex[:3]
-    if not cleaned.lower().endswith(".mp4"):
-        cleaned += f"_({uid}).mp4"
+    
+    if not cleaned.lower().endswith(ext.lower()):
+        cleaned += f"_({uid}){ext}"
+
     return cleaned
     
 def extract_file_id(link):
