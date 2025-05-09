@@ -218,14 +218,18 @@ async def universal_handler(client, message):
                 title = info.get("title", "Unknown Title")
                 filesize = info.get("filesize", "Unknown size")
                 fmt = info.get("mime", "N/A")
-                cleaned = clean_filename(title)  # 👈 optional cleaner
+                cleaned = clean_filename(title)
 
-                caption = (
-                    f"**🎬 Title:** `{title}`\n"
-                    f"**📦 Size:** `{filesize}`\n"
-                    f"**🔰 Format:** `{fmt}`\n\n"
-                    f"**✅ Click below to start download.**"
-                )
+                if filesize == 0 or filesize == "Unknown size":
+                    filesize = None
+
+                # Caption ko format karo
+                caption = f"**🎬 Title:** `{title}`\n"
+                if filesize:  # Agar filesize available hai toh hi show karo
+                    caption += f"**📦 Size:** `{filesize}`\n"
+                caption += f"**🔰 Format:** `{fmt}`\n\n"
+                caption += f"**✅ Click below to start download.**"
+                
 
                 btn = [[
                     InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp|{text}")
@@ -290,6 +294,7 @@ async def get_video_info(url: str) -> dict:
             "title": title,
             "filesize": filesize,
             "mime": mime
+            "ext": ext
         }
 
     except Exception as e:
