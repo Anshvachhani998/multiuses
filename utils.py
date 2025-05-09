@@ -147,19 +147,20 @@ def clean_filename(title: str, ext: str = None) -> str:
     cleaned = re.sub(r'[\\/*?:"<>|]', "", title)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     cleaned = cleaned.replace(" ", "_")
-    
+    original_ext = os.path.splitext(cleaned)[1]
     if not ext:
-        ext = ".mkv"
+        ext = original_ext if original_ext else ".mkv"
     else:
         if not ext.startswith("."):
             ext = f".{ext}"
+    base_name = cleaned
+    if original_ext:
+        base_name = cleaned[: -len(original_ext)]
 
     uid = uuid.uuid4().hex[:3]
-    
-    if not cleaned.lower().endswith(ext.lower()):
-        cleaned += f"_({uid}){ext}"
+    final_name = f"{base_name}_({uid}){ext}"
 
-    return cleaned
+    return final_name
     
 def extract_file_id(link):
     patterns = [
