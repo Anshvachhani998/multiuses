@@ -27,7 +27,7 @@ async def send_auth_url(client, message):
     await message.reply(
         f"🔐 Visit this link to authorize:\n\n{url}\n\nThen send the code like this:\n/gcode <your-code>",
         quote=True,
-        parse_mode=None
+        parse_mode=None)
 
 
 @Client.on_message(filters.command("gcode"))
