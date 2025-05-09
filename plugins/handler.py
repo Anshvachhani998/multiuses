@@ -20,7 +20,7 @@ from utils import (
     active_tasks, format_size, get_ytdlp_info,
     extract_file_id, get_file_info, clean_filename,
     get_terabox_info, is_direct_download_link,
-    is_supported_by_ytdlp, ytdlp_clean
+    is_supported_by_ytdlp, ytdlp_clean, clean_terabox
 )
 from info import LOG_CHANNEL
 
@@ -46,7 +46,7 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
     mime = mime or "application/octet-stream"
     ext = file_extension or "unknown"
 
-    clean_name = clean_filename(file_name)
+    clean_name = clean_terabox(file_name)
 
     caption = f"**🎬 Title:** `{clean_name}`\n"
     caption += f"**📦 Size:** `{file_size}`\n"
