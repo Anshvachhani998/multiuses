@@ -216,28 +216,26 @@ async def universal_handler(client, message):
             try:
                 checking = await checking_msg.edit("✅ Fetching file info...")
 
-                info = await get_video_info(text)  # 👈 aapka custom info fetcher
+                info = await get_video_info(text)
                 if not info:
                     await checking.edit("❌ Failed to fetch video info.")
                     return
-
-  
+                    
                 filesize = info.get("filesize", 0)
                 fmt = info.get("mime", "N/A")
                 raw_title = info.get("title", "").strip()
                 if not raw_title or raw_title.lower() == "unknown title":
-                    raw_title = f"{uuid.uuid4().hex[:8]}"  # random fallback title
+                    raw_title = f"{uuid.uuid4().hex[:8]}"
 
                 title = ytdlp_clean(raw_title)
 
                 if filesize == 0 or filesize == "Unknown size":
                     filesize = None
 
-                # Caption ko format karo
                 caption = f"**🎬 Title:** `{title}`\n"
                 if filesize:
                     caption += f"**📦 Size:** `{filesize}`\n"
-                caption += f"**🔰 Format:** `{fmt}`\n\n"
+                caption += f"**🔰 Mime:** `{fmt}`\n\n"
                 caption += f"**✅ Click below to start download.**"
                 
 
@@ -253,10 +251,7 @@ async def universal_handler(client, message):
             except Exception as e:
                 logger.error(f"YTDLP link processing error: {e}")
                 await checking_msg.edit("❌ Failed to process the link.")
-
-
         else:
-            # If none of the supported link formats match
             await checking_msg.edit("**This link is not accessible or not direct download link**")
             err_msg = (
                 f"🚨 <b>Link Not Found</b>\n"
@@ -268,14 +263,12 @@ async def universal_handler(client, message):
     except Exception as e:
         logger.error(f"Error: {e}")
         await checking_msg.edit("**This link is not accessible or not direct download link**")
-
         err_msg = (
             f"🚨 <b>Link Handling Error</b>\n"
             f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
             f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
             f"⚠️ <b>Error:</b> <code>{str(e)}</code>"
         )
-
         try:
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
@@ -310,4 +303,3 @@ async def get_video_info(url: str) -> dict:
     except Exception as e:
         print(f"[get_video_info] Error: {e}")
         return None
-
