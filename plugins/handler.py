@@ -102,7 +102,7 @@ async def process_gdrive_link(client, chat_id, link, checking_msg):
     if not file_id:
         await checking_msg.edit("❌ Invalid Google Drive link.")
         return
-
+    logging.info(f" done {file_id} ")
     name, size, mime = get_file_info(file_id)
     logging.info(f" done{name}")
     clean = clean_filename(name, mime)
