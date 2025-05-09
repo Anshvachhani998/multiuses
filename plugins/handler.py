@@ -63,6 +63,38 @@ async def process_terabox_link(client, chat_id, link, checking_msg):
         reply_markup=InlineKeyboardMarkup(btn)
     )
 
+async def process_ytdlp_link(client, chat_id, link, checking_msg):
+    try:
+        info = await get_ytdlp_info(link)
+        if not info:
+            await checking_msg.edit("❌ Failed to fetch video info.")
+            return
+
+        file_size = info.get("filesize", 0)
+        mime = info.get("mime", "application/octet-stream")
+        raw_title = info.get("title", "").strip()
+
+        if not raw_title or raw_title.lower() == "unknown title":
+            raw_title = f"{uuid.uuid4().hex[:8]}"
+
+        clean = clean_filename(raw_title, mime)
+        ext = Path(clean).suffix
+
+        caption = f"**🎬 Title:** `{clean}`\n"
+        if file_size:
+            caption += f"**📦 Size:** `{format_size(file_size)}`\n"
+        caption += f"**🔰 Mime:** `{mime}`\n"
+        caption += f"**🗂 Extension:** `{ext}`\n"
+        caption += f"**✅ Click below to start download.**"
+
+        btn = [[InlineKeyboardButton("📥 Download Now", callback_data="ytdlp")]]
+        await checking_msg.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+
+    except Exception as e:
+        logger.error(f"YTDLP processing error: {e}")
+        await checking_msg.edit("❌ Error processing the YouTube link.")
+
+
 
 @Client.on_message(filters.private & filters.text)
 async def universal_handler(client, message):
@@ -149,42 +181,8 @@ async def universal_handler(client, message):
         elif await is_supported_by_ytdlp(text):
             try:
                 checking = await checking_msg.edit("✅ Fetching file info...")
+                await process_ytdlp_link(client, chat_id, text, checking)
 
-                info = await get_ytdlp_info(text)
-                if not info:
-                    await checking.edit("❌ Failed to fetch video info.")
-                    return
-                    
-                filesize = info.get("filesize", 0)
-                fmt = info.get("mime", "N/A")
-                raw_title = info.get("title", "").strip()
-                if not raw_title or raw_title.lower() == "unknown title":
-                    raw_title = f"{uuid.uuid4().hex[:8]}"
-
-                title = ytdlp_clean(raw_title)
-
-                if filesize == 0 or filesize == "Unknown size":
-                    filesize = None
-
-                caption = f"**🎬 Title:** `{title}`\n"
-                if filesize:
-                    caption += f"**📦 Size:** `{filesize}`\n"
-                caption += f"**🔰 Mime:** `{fmt}`\n\n"
-                caption += f"**✅ Click below to start download.**"
-                
-
-                btn = [[
-                    InlineKeyboardButton("📥 Download Now", callback_data=f"ytdlp")
-                ]]
-
-                await checking.edit(
-                    caption,
-                    reply_markup=InlineKeyboardMarkup(btn)
-                )
-
-            except Exception as e:
-                logger.error(f"YTDLP link processing error: {e}")
-                await checking_msg.edit("❌ Failed to process the link.")
         else:
             await checking_msg.edit("**This link is not accessible or not direct download link**")
             err_msg = (
