@@ -280,23 +280,12 @@ async def get_video_info(url: str) -> dict:
 
         title = info_dict.get("title", "Unknown Title")
         filesize = info_dict.get("filesize") or info_dict.get("filesize_approx")
-        ext = info_dict.get("ext")
+        ext = info_dict.get("ext", "unknown")
 
-        # Agar filesize na mile to formats me se best try karo
-        if not filesize or not ext:
-            best_format = None
-            for fmt in info_dict.get("formats", []):
-                if fmt.get("filesize") and fmt.get("ext"):
-                    if not best_format or fmt["filesize"] > best_format["filesize"]:
-                        best_format = fmt
-
-            if best_format:
-                filesize = best_format["filesize"]
-                ext = best_format["ext"]
-
-        # Defaults
+        # Agar filesize na mile toh default 0 set karo
         filesize = filesize or 0
-        ext = ext or "unknown"
+
+        # Mime type ka default handle karo
         mime = mimetypes.types_map.get(f".{ext}", "application/octet-stream")
 
         return {
@@ -308,3 +297,4 @@ async def get_video_info(url: str) -> dict:
     except Exception as e:
         print(f"[get_video_info] Error: {e}")
         return None
+
