@@ -291,7 +291,7 @@ async def get_video_info(url: str) -> dict:
         return {
             "title": title,
             "filesize": filesize,
-            "mime": mime
+            "mime": ext
         }
 
     except Exception as e:
