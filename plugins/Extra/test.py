@@ -27,8 +27,11 @@ app = Client
 @app.on_message(filters.command("gdrive"))
 async def send_auth_url(client, message):
     url = generate_auth_url()
-    await message.reply(f"🔐 Visit this link to authorize:\n\n{url}\n\nThen send the code like this:\n`/gcode <your-code>`", quote=True)
-
+    await message.reply(
+        f"🔐 Visit this link to authorize:\n\n{url}\n\nThen send the code like this:\n/gcode <your-code>",
+        quote=True,
+        parse_mode=None  # <- disables markdown
+    )
 
 
 @app.on_message(filters.command("gcode"))
