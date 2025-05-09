@@ -5,7 +5,7 @@ import re
 import mimetypes
 import pickle
 import subprocess
-import logging 
+import logging
 import aiohttp
 import yt_dlp
 import subprocess
@@ -102,9 +102,8 @@ async def process_gdrive_link(client, chat_id, link, checking_msg):
     if not file_id:
         await checking_msg.edit("❌ Invalid Google Drive link.")
         return
-    logging.info(f" done {file_id} ")
+
     name, size, mime = get_file_info(file_id)
-    logging.info(f" done{name}")
     clean = clean_filename(name, mime)
 
     caption = f"**🎬 Title:** `{clean}`\n"
@@ -175,8 +174,12 @@ async def universal_handler(client, message):
                 await client.send_message(LOG_CHANNEL, err_msg)
                 return
 
+            name, size, mime = get_file_info(file_id)
             checking = await checking_msg.edit(f"✅ Processing Google Drive link...")
-            await process_gdrive_link(client, chat_id, text, checking)
+            logging.info(name)
+            clean = clean_filename(name, mime)
+            logging.info(clean)
+            await google_drive(client, chat_id, text, clean, checking)
 
         elif "terabox.com" in text:
             checking = await checking_msg.edit("✅ Processing TeraBox link...")
