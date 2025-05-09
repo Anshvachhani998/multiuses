@@ -19,7 +19,7 @@ def get_token_from_code(code):
     return True
 
 
-
+from pyrogram import Client, filters
 
 app = Client
 
