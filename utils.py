@@ -195,12 +195,15 @@ def extract_file_id(link):
 def get_file_info(file_id):
     creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
     service = build("drive", "v3", credentials=creds)
-    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
-    name = file.get("name")
-    size = int(file.get("size", 0))
-    mime = file.get("mimeType")
-    return name, size, mime
-    
+    try:
+        file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
+        name = file.get("name")
+        size = int(file.get("size", 0))
+        mime = file.get("mimeType")
+        return name, size, mime
+    except Exception as e:
+        logging.info(f"Error fetching file details: {e}")
+        return None, None, None
 async def is_supported_by_ytdlp(url):
      try:
          cmd = ["yt-dlp", "--quiet", "--simulate", url]
