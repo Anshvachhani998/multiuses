@@ -8,20 +8,13 @@ import subprocess
 import logging
 import aiohttp
 import yt_dlp
-import subprocess
-import json
-import uuid
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from googleapiclient.discovery import build
 from plugins.download import download_video, aria2c_media, google_drive
 from database.db import db
-from utils import (
-    active_tasks, format_size, get_ytdlp_info,
-    extract_file_id, get_file_info, clean_filename,
-    get_terabox_info, is_direct_download_link,
-    is_supported_by_ytdlp, ytdlp_clean, clean_terabox
-)
+from utils import active_tasks
 from info import LOG_CHANNEL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -30,89 +23,88 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-
-async def process_terabox_link(client, chat_id, link, checking_msg):
-    terabox_info = await get_terabox_info(link)
-    if "error" in terabox_info:
-        await checking_msg.edit(f"❌ **Invalid TeraBox link**.")
-        return
-    
-    file_name = terabox_info.get("title", "Unknown File")
-    file_size = terabox_info.get("size", "Unknown Size")
-    file_url = terabox_info.get("download_url", "")
-    
-
-    mime, file_extension = mimetypes.guess_type(file_name)
-    mime = mime or "application/octet-stream"
-    ext = file_extension or "unknown"
-
-    clean_name = clean_terabox(file_name)
-
-    caption = f"**🎬 Title:** `{clean_name}`\n"
-    caption += f"**📦 Size:** `{file_size}`\n"
-    caption += f"**🔰 Mime:** `{mime}`\n"
-    
-    caption += f"**✅ Click below to start download.**"
-
-    btn = [[
-        InlineKeyboardButton("📥 Download Now", callback_data=f"terabox")
-    ]]
-    
-    await checking_msg.edit(
-        caption,
-        reply_markup=InlineKeyboardMarkup(btn)
-    )
-
-async def process_ytdlp_link(client, chat_id, link, checking_msg):
+async def is_direct_download_link(url: str) -> bool:
     try:
-        info = await get_ytdlp_info(link)
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, timeout=5) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                return any(x in content_type for x in ["video/", "audio/", "application/"])
+    except:
+        return False
+        
+async def get_terabox_info(link):
+    api_url = f"https://teraboxdl-sjjs-projects.vercel.app/api?link={link}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    return {"error": f"HTTP {response.status}"}
+                data = await response.json()
+
+        info = data.get("Extracted Info", [])[0] if data.get("Extracted Info") else None
         if not info:
-            await checking_msg.edit("❌ Failed to fetch video info.")
-            return
+            return {"error": "No extracted info found."}
 
-        try:
-            file_size = int(info.get("filesize", 0))
-        except (ValueError, TypeError):
-            file_size = 0
-        mime = info.get("mime", "application/octet-stream")
-        raw_title = info.get("title", "").strip()
-
-        if not raw_title or raw_title.lower() == "unknown title":
-            raw_title = f"{uuid.uuid4().hex[:8]}"
-
-        clean = ytdlp_clean(raw_title)
-
-
-        caption = f"**🎬 Title:** `{clean}`\n"
-        if file_size:
-            caption += f"**📦 Size:** `{format_size(file_size)}`\n"
-        caption += f"**🔰 Mime:** `{mime}`\n"
-        caption += f"**✅ Click below to start download.**"
-
-        btn = [[InlineKeyboardButton("📥 Download Now", callback_data="ytdlp")]]
-        await checking_msg.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+        return {
+            "title": info.get("Title"),
+            "size": info.get("Size"),
+            "download_url": info.get("Direct Download Link")
+        }
 
     except Exception as e:
-        logger.error(f"YTDLP processing error: {e}")
-        await checking_msg.edit("❌ Error processing the YouTube link.")
+        return {"error": str(e)}
 
+def extract_file_id(link):
+    patterns = [
+        r'/file/d/([a-zA-Z0-9_-]+)',
+        r'id=([a-zA-Z0-9_-]+)'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, link)
+        if match:
+            return match.group(1)
+    return None
 
-async def process_gdrive_link(client, chat_id, link, checking_msg):
-    file_id = extract_file_id(link)
-    if not file_id:
-        await checking_msg.edit("❌ Invalid Google Drive link.")
-        return
+def get_file_info(file_id):
+    creds = pickle.load(open("/app/plugins/token.pickle", "rb"))
+    service = build("drive", "v3", credentials=creds)
+    file = service.files().get(fileId=file_id, fields="name, size, mimeType").execute()
+    name = file.get("name")
+    size = int(file.get("size", 0))
+    mime = file.get("mimeType")
+    return name, size, mime
+    
+async def is_supported_by_ytdlp(url):
+     try:
+         cmd = ["yt-dlp", "--quiet", "--simulate", url]
+         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+ 
+         return result.returncode == 0
+     except Exception:
+         return False
 
-    name, size, mime = get_file_info(file_id)
-    clean = clean_filename(name, mime)
+def clean_filename(filename, mime=None):
+    # Get the name and extension from the filename
+    name, ext = os.path.splitext(filename)
+    
+    # Normalize the extension to lowercase
+    ext = ext.lower() if ext else ''
 
-    caption = f"**🎬 Title:** `{clean}`\n"
-    caption += f"**📦 Size:** `{format_size(size) if isinstance(size, (int, float)) else size}`\n"
-    caption += f"**🔰 Mime:** `{mime}`\n"
-    caption += f"**✅ Click below to start download.**"
+    if not ext:
+        if mime:
+            # If mime type is provided, guess the extension
+            guessed_ext = mimetypes.guess_extension(mime)
+            ext = guessed_ext if guessed_ext else '.mkv'
+        else:
+            ext = '.mkv'
 
-    btn = [[InlineKeyboardButton("📥 Download Now", callback_data=f"gdrive:{file_id}|{clean}")]]
-    await checking_msg.edit(caption, reply_markup=InlineKeyboardMarkup(btn))
+    # Clean the file name
+    name = re.sub(r'[^\w\s-]', '', name)  # Remove unwanted characters
+    name = re.sub(r'[-\s]+', '_', name)  # Replace spaces and hyphens with underscores
+    name = name.strip('_')  # Remove leading/trailing underscores
+
+    # Return cleaned filename with correct extension
+    return name + ext
 
 
 @Client.on_message(filters.private & filters.text)
@@ -183,7 +175,22 @@ async def universal_handler(client, message):
 
         elif "terabox.com" in text:
             checking = await checking_msg.edit("✅ Processing TeraBox link...")
-            await process_terabox_link(client, chat_id, text, checking)
+            terabox_info = await get_terabox_info(text)
+            logging.info(terabox_info)
+            if "error" in terabox_info:
+                # Invalid TeraBox link error
+                await checking_msg.edit("**Invalid TeraBox link.**")
+                
+                err_msg = (
+                    f"🚨 <b>Invalid TeraBox Link</b>\n"
+                    f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
+                    f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
+                )
+                await client.send_message(LOG_CHANNEL, err_msg)
+                return
+                
+            dwn = terabox_info.get("download_url")
+            await aria2c_media(client, chat_id, dwn, checking)
 
         elif "magnet:" in text:
             checking = await checking_msg.edit("✅ Processing magnet link...")
@@ -198,10 +205,11 @@ async def universal_handler(client, message):
             await aria2c_media(client, chat_id, text, checking)
 
         elif await is_supported_by_ytdlp(text):
-            checking = await checking_msg.edit("✅ Fetching file info...")
-            await process_ytdlp_link(client, chat_id, text, checking)
+            checking = await checking_msg.edit("✅ Processing video link...")
+            await download_video(client, chat_id, text, checking)
 
         else:
+            # If none of the supported link formats match
             await checking_msg.edit("**This link is not accessible or not direct download link**")
             err_msg = (
                 f"🚨 <b>Link Not Found</b>\n"
@@ -213,12 +221,14 @@ async def universal_handler(client, message):
     except Exception as e:
         logger.error(f"Error: {e}")
         await checking_msg.edit("**This link is not accessible or not direct download link**")
+
         err_msg = (
             f"🚨 <b>Link Handling Error</b>\n"
             f"👤 <b>User:</b> <a href='tg://user?id={chat_id}'>{chat_id}</a>\n"
             f"🔗 <b>Link:</b> <a href='{text}'>Click here</a>\n"
             f"⚠️ <b>Error:</b> <code>{str(e)}</code>"
         )
+
         try:
             await client.send_message(LOG_CHANNEL, err_msg)
         except Exception as log_err:
