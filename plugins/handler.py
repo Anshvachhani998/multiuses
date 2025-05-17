@@ -33,7 +33,7 @@ async def is_direct_download_link(url: str) -> bool:
         return False
         
 async def get_terabox_info(link):
-    api_url = f"https://teraboxdl-rho.vercel.app/api?url={link}"
+    api_url = f"https://terabox-dl-orcin.vercel.app/api?url={link}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url) as response:
