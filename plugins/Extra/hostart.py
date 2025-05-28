@@ -85,3 +85,15 @@ async def fetch_latest():
                 seen_titles.add(show['title'])
 
         return unique_shows
+
+
+@Client.on_message(filters.command("sendhtml"))
+async def send_html(client, message):
+    try:
+        with open("hotstar_dump.html", "rb") as f:
+            await message.reply_document(
+                f,
+                caption="📄 Here is the dumped Hotstar HTML file."
+            )
+    except FileNotFoundError:
+        await message.reply("❌ File `hotstar_dump.html` not found. Run /hotstar first.")
