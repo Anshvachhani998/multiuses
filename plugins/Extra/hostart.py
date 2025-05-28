@@ -30,7 +30,7 @@ async def fetch_latest():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(HOTSTAR_URL)
-        await page.wait_for_timeout(8000)
+        await page.wait_for_timeout(10000)  # 10 seconds wait for JS to load
 
         html = await page.content()
         await browser.close()
@@ -38,13 +38,29 @@ async def fetch_latest():
         soup = BeautifulSoup(html, "html.parser")
         shows = []
 
-        for tag in soup.find_all('a', href=True):
-            title = tag.get("aria-label")
-            href = tag["href"]
-            if title and href.startswith("/in/"):
-                shows.append({
-                    "title": title.strip(),
-                    "url": "https://www.hotstar.com" + href
-                })
+        # Find all 'a' tags which have href starting with /in/
+        for a_tag in soup.find_all('a', href=True):
+            href = a_tag['href']
+            if not href.startswith("/in/"):
+                continue
 
-        return shows
+            # Try to find image inside this anchor tag
+            img_tag = a_tag.find('img')
+            if img_tag and img_tag.has_attr('alt'):
+                title = img_tag['alt'].strip()
+                if title:
+                    shows.append({
+                        "title": title,
+                        "url": "https://www.hotstar.com" + href,
+                        "thumbnail": img_tag.get('src')  # optional, if you want thumbnail
+                    })
+
+        # Remove duplicates (sometimes multiple anchors with same title)
+        unique_shows = []
+        seen_titles = set()
+        for show in shows:
+            if show['title'] not in seen_titles:
+                unique_shows.append(show)
+                seen_titles.add(show['title'])
+
+        return unique_shows
