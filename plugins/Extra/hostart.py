@@ -97,3 +97,38 @@ async def send_html(client, message):
             )
     except FileNotFoundError:
         await message.reply("❌ File `hotstar_dump.html` not found. Run /hotstar first.")
+
+
+@Client.on_message(filters.command("get")) 
+async def get_hotstar_content(client, message):
+    try:
+        args = message.text.split(" ", 1)
+        if len(args) < 2:
+            await message.reply("❌ Please provide a URL!\nExample: `/get_content https://www.hotstar.com`")
+            return
+        
+        url = args[1].strip()
+
+        fetching_msg = await message.reply(f"⏳ Fetching content from:\n`{url}`")
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            await page.goto(url, timeout=60000)
+
+            await page.wait_for_selector("body", timeout=60000)
+
+
+            full_content = await page.content()
+            await browser.close()
+
+
+        file_path = "page_content.txt"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(full_content)
+        await client.send_document(message.chat.id, file_path, caption=f"📄 Page Content from:\n`{url}`")
+        os.remove(file_path)
+
+    except Exception as e:
+        await message.reply(f"❌ Error: {str(e)}")
+
