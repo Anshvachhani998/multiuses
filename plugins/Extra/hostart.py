@@ -140,7 +140,7 @@ async def get_hotstar_content(client, message):
 HOTSTAR_URL = "https://www.hotstar.com/in/browse/reco-editorial/latest-releases/tp-ed_CJE3EAEaAQI"
 
 @Client.on_message(filters.command("hotstar2"))
-async def hotstar_latesssst(_, message: Message):
+async def hotstar_latesssst(_, Message):
     status = await message.reply("🔄 Fetching Hotstar page...")
     
     try:
