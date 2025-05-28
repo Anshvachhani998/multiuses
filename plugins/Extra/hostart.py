@@ -132,3 +132,52 @@ async def get_hotstar_content(client, message):
     except Exception as e:
         await message.reply(f"❌ Error: {str(e)}")
 
+
+
+
+
+
+HOTSTAR_URL = "https://www.hotstar.com/in/browse/reco-editorial/latest-releases/tp-ed_CJE3EAEaAQI"
+
+@Client.on_message(filters.command("hotstar2"))
+async def hotstar_latesssst(_, message: Message):
+    status = await message.reply("🔄 Fetching Hotstar page...")
+    
+    try:
+        html_path = await fetch_hotstar_html()
+        await status.edit("📄 Sending HTML file for debug...")
+        await message.reply_document(html_path, caption="🧾 Hotstar HTML Dump")
+
+    except Exception as e:
+        await status.edit(f"❌ Error: {e}")
+
+
+async def fetch_hotstar_html():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 720}
+        )
+        page = await context.new_page()
+
+        print("🔄 Opening Hotstar page...")
+        await page.goto(HOTSTAR_URL)
+        await page.wait_for_timeout(4000)
+
+        # Scroll to load all content
+        for _ in range(5):
+            await page.mouse.wheel(0, 1000)
+            await page.wait_for_timeout(1500)
+
+        html = await page.content()
+
+        path = "hotstar_dump.html"
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(html)
+            print("✅ HTML saved to", path)
+
+        await browser.close()
+        return path
+
+
