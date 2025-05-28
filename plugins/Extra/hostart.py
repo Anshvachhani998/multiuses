@@ -157,7 +157,9 @@ async def fetch_hotstar_html():
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 720}
+            viewport={"width": 1366, "height": 768},
+            locale="en-IN",
+            java_script_enabled=True
         )
         page = await context.new_page()
 
