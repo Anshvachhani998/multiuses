@@ -90,7 +90,7 @@ async def fetch_latest():
 @Client.on_message(filters.command("sendhtml"))
 async def send_html(client, message):
     try:
-        with open("hotstar_dump.html", "rb") as f:
+        with open("hotstar.html", "rb") as f:
             await message.reply_document(
                 f,
                 caption="📄 Here is the dumped Hotstar HTML file."
