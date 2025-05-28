@@ -30,12 +30,22 @@ async def fetch_latest():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(HOTSTAR_URL)
-        await page.wait_for_selector('img')  # Wait until at least one image loads
+
+        # Wait for main container (replace selector if needed)
+        await page.wait_for_timeout(5000)
+
+        # Scroll to bottom to force lazy-load images
+        await page.evaluate(
+            """() => {
+                window.scrollBy(0, document.body.scrollHeight);
+            }"""
+        )
+        await page.wait_for_timeout(5000)  # Wait after scroll
 
         html = await page.content()
         await browser.close()
 
-        # Debug step to verify HTML content
+        # Save for debug
         with open("hotstar_dump.html", "w", encoding="utf-8") as f:
             f.write(html)
 
@@ -51,7 +61,6 @@ async def fetch_latest():
             if img_tag and img_tag.has_attr('alt'):
                 title = img_tag['alt'].strip()
 
-                # High-quality image logic
                 thumbnail = ""
                 if img_tag.has_attr('srcset'):
                     srcset_parts = img_tag['srcset'].split(",")
