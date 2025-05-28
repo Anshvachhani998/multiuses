@@ -30,7 +30,7 @@ async def fetch_latest():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(HOTSTAR_URL)
-        await page.wait_for_timeout(10000)  # 10 seconds wait for JS to load
+        await page.wait_for_timeout(10000)  # Wait for JS to load
 
         html = await page.content()
         await browser.close()
@@ -38,24 +38,33 @@ async def fetch_latest():
         soup = BeautifulSoup(html, "html.parser")
         shows = []
 
-        # Find all 'a' tags which have href starting with /in/
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
             if not href.startswith("/in/"):
                 continue
 
-            # Try to find image inside this anchor tag
             img_tag = a_tag.find('img')
             if img_tag and img_tag.has_attr('alt'):
                 title = img_tag['alt'].strip()
+
+                # Get best quality image from src or srcset
+                thumbnail = ""
+                if img_tag.has_attr('srcset'):
+                    # Take the last image (usually highest resolution)
+                    srcset_parts = img_tag['srcset'].split(",")
+                    if srcset_parts:
+                        thumbnail = srcset_parts[-1].split()[0].strip()
+                elif img_tag.has_attr('src'):
+                    thumbnail = img_tag['src']
+
                 if title:
                     shows.append({
                         "title": title,
                         "url": "https://www.hotstar.com" + href,
-                        "thumbnail": img_tag.get('src')  # optional, if you want thumbnail
+                        "thumbnail": thumbnail
                     })
 
-        # Remove duplicates (sometimes multiple anchors with same title)
+        # Remove duplicates
         unique_shows = []
         seen_titles = set()
         for show in shows:
