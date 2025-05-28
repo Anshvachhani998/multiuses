@@ -30,10 +30,14 @@ async def fetch_latest():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(HOTSTAR_URL)
-        await page.wait_for_timeout(10000)  # Wait for JS to load
+        await page.wait_for_selector('img')  # Wait until at least one image loads
 
         html = await page.content()
         await browser.close()
+
+        # Debug step to verify HTML content
+        with open("hotstar_dump.html", "w", encoding="utf-8") as f:
+            f.write(html)
 
         soup = BeautifulSoup(html, "html.parser")
         shows = []
@@ -47,10 +51,9 @@ async def fetch_latest():
             if img_tag and img_tag.has_attr('alt'):
                 title = img_tag['alt'].strip()
 
-                # Get best quality image from src or srcset
+                # High-quality image logic
                 thumbnail = ""
                 if img_tag.has_attr('srcset'):
-                    # Take the last image (usually highest resolution)
                     srcset_parts = img_tag['srcset'].split(",")
                     if srcset_parts:
                         thumbnail = srcset_parts[-1].split()[0].strip()
@@ -64,7 +67,7 @@ async def fetch_latest():
                         "thumbnail": thumbnail
                     })
 
-        # Remove duplicates
+        # Deduplicate
         unique_shows = []
         seen_titles = set()
         for show in shows:
