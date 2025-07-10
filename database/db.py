@@ -174,33 +174,43 @@ class Database:
         })
     
     async def redeem_premium_code(self, code: str, user_id: int):
-        """Redeem premium code"""
-        # Find unused code
-        premium_code = await self.premium_codes.find_one({
-            "code": code,
-            "used": False
-        })
-        
-        if not premium_code:
-            return False
-        
-        # Mark code as used
-        await self.premium_codes.update_one(
-            {"code": code},
-            {"$set": {"used": True, "used_by": user_id, "used_date": datetime.now()}}
-        )
-        
-        # Add premium to user
-        user = await self.get_user(user_id)
-        current_premium = user.get("premium_until", datetime.now())
-        if current_premium < datetime.now():
-            current_premium = datetime.now()
-        
-        new_premium_until = current_premium + timedelta(days=premium_code["days"])
-        
-        await self.update_user(user_id, {"premium_until": new_premium_until})
-        
-        return premium_code["days"]
+    """Redeem premium code"""
+    # Find unused code
+    premium_code = await self.premium_codes.find_one({
+        "code": code,
+        "used": False
+    })
+
+    if not premium_code:
+        return False
+
+    # Mark code as used
+    await self.premium_codes.update_one(
+        {"code": code},
+        {
+            "$set": {
+                "used": True,
+                "used_by": user_id,
+                "used_date": datetime.now()
+            }
+        }
+    )
+
+    # Add premium to user
+    user = await self.get_user(user_id)
+    current_premium = user.get("premium_until")
+
+    # Ensure current_premium is a datetime object and not None
+    if not current_premium or not isinstance(current_premium, datetime):
+        current_premium = datetime.now()
+    elif current_premium < datetime.now():
+        current_premium = datetime.now()
+
+    new_premium_until = current_premium + timedelta(days=premium_code["days"])
+
+    await self.update_user(user_id, {"premium_until": new_premium_until})
+
+    return premium_code["days"]
     
     async def get_user_stats(self):
         """Get user statistics"""
