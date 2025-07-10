@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 import json
 
 logger = logging.getLogger(__name__)
-db
 
 def admin_only(func):
     """Decorator to restrict commands to admins only"""
