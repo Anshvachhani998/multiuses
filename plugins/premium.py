@@ -1,12 +1,12 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database import Database
+from database.db import db
 from config import Config
 import logging
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
-db = Database()
+
 
 @Client.on_message(filters.command("premium") & filters.private)
 async def premium_command(client: Client, message: Message):
