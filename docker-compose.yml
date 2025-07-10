@@ -1,8 +1,8 @@
 version: '3'
 services:
-  urluploaderdl:
+  multiuses:
     build: .
-    container_name: UploaderDL
+    container_name: multiuses
     restart: always
     volumes:
       - .:/app
