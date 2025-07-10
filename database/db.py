@@ -31,7 +31,6 @@ class Database:
         return await self.users.find_one({"user_id": user_id})
 
     async def create_user(self, user_id: int, username: str = None, first_name: str = None, referred_by: int = None):
-        """Create a new user"""
         user_data = {
             "user_id": user_id,
             "username": username,
@@ -50,14 +49,12 @@ class Database:
         
         result = await self.users.insert_one(user_data)
         
-        # Handle referral bonus
         if referred_by:
             await self.handle_referral(referred_by, user_id)
         
         return result.inserted_id
     
     async def update_user(self, user_id: int, update_data: dict):
-        """Update user data"""
         update_data["last_activity"] = datetime.now()
         return await self.users.update_one(
             {"user_id": user_id},
@@ -65,14 +62,12 @@ class Database:
         )
     
     async def add_credits(self, user_id: int, amount: int):
-        """Add credits to user"""
         return await self.users.update_one(
             {"user_id": user_id},
             {"$inc": {"credits": amount}}
         )
     
     async def deduct_credits(self, user_id: int, amount: int):
-        """Deduct credits from user"""
         user = await self.get_user(user_id)
         if not user or user["credits"] < amount:
             return False
@@ -84,7 +79,6 @@ class Database:
         return True
     
     async def reset_daily_usage(self, user_id: int):
-        """Reset daily usage for user"""
         now = datetime.now()
         return await self.users.update_one(
             {"user_id": user_id},
@@ -92,16 +86,13 @@ class Database:
         )
     
     async def check_daily_limit(self, user_id: int):
-        """Check if user has exceeded daily limit"""
         user = await self.get_user(user_id)
         if not user:
             return False
         
-        # Check if premium
         if user.get("premium_until") and user["premium_until"] > datetime.now():
             return True
         
-        # Check if daily usage needs reset
         last_reset = user.get("last_usage_reset", datetime.now())
         if (datetime.now() - last_reset).days >= 1:
             await self.reset_daily_usage(user_id)
@@ -110,22 +101,18 @@ class Database:
         return user.get("daily_usage", 0) < Config.DAILY_LIMIT
     
     async def increment_daily_usage(self, user_id: int):
-        """Increment daily usage count"""
         return await self.users.update_one(
             {"user_id": user_id},
             {"$inc": {"daily_usage": 1, "total_operations": 1}}
         )
     
     async def handle_referral(self, referrer_id: int, referred_id: int):
-        """Handle referral bonus"""
-        # Check if referral already exists
         existing = await self.referrals.find_one({
             "referrer_id": referrer_id,
             "referred_id": referred_id
         })
         
         if not existing:
-            # Add referral record
             await self.referrals.insert_one({
                 "referrer_id": referrer_id,
                 "referred_id": referred_id,
@@ -133,19 +120,16 @@ class Database:
                 "bonus_given": True
             })
             
-            # Add bonus credits to referrer
             await self.add_credits(referrer_id, Config.REFERRAL_BONUS)
             
             return True
         return False
     
     async def get_referral_stats(self, user_id: int):
-        """Get referral statistics for user"""
         count = await self.referrals.count_documents({"referrer_id": user_id})
         return count
     
     async def add_operation(self, user_id: int, operation_type: str, status: str = "pending"):
-        """Add operation record"""
         return await self.operations.insert_one({
             "user_id": user_id,
             "operation_type": operation_type,
@@ -155,14 +139,12 @@ class Database:
         })
     
     async def update_operation(self, operation_id, update_data: dict):
-        """Update operation record"""
         return await self.operations.update_one(
             {"_id": operation_id},
             {"$set": update_data}
         )
     
     async def create_premium_code(self, code: str, days: int, created_by: int):
-        """Create premium code"""
         return await self.premium_codes.insert_one({
             "code": code,
             "days": days,
@@ -174,46 +156,40 @@ class Database:
         })
     
     async def redeem_premium_code(self, code: str, user_id: int):
-    """Redeem premium code"""
-    # Find unused code
-    premium_code = await self.premium_codes.find_one({
-        "code": code,
-        "used": False
-    })
+        premium_code = await self.premium_codes.find_one({
+            "code": code,
+            "used": False
+        })
 
-    if not premium_code:
-        return False
+        if not premium_code:
+            return False
 
-    # Mark code as used
-    await self.premium_codes.update_one(
-        {"code": code},
-        {
-            "$set": {
-                "used": True,
-                "used_by": user_id,
-                "used_date": datetime.now()
+        await self.premium_codes.update_one(
+            {"code": code},
+            {
+                "$set": {
+                    "used": True,
+                    "used_by": user_id,
+                    "used_date": datetime.now()
+                }
             }
-        }
-    )
+        )
 
-    # Add premium to user
-    user = await self.get_user(user_id)
-    current_premium = user.get("premium_until")
+        user = await self.get_user(user_id)
+        current_premium = user.get("premium_until")
 
-    # Ensure current_premium is a datetime object and not None
-    if not current_premium or not isinstance(current_premium, datetime):
-        current_premium = datetime.now()
-    elif current_premium < datetime.now():
-        current_premium = datetime.now()
+        if not current_premium or not isinstance(current_premium, datetime):
+            current_premium = datetime.now()
+        elif current_premium < datetime.now():
+            current_premium = datetime.now()
 
-    new_premium_until = current_premium + timedelta(days=premium_code["days"])
+        new_premium_until = current_premium + timedelta(days=premium_code["days"])
 
-    await self.update_user(user_id, {"premium_until": new_premium_until})
+        await self.update_user(user_id, {"premium_until": new_premium_until})
 
-    return premium_code["days"]
+        return premium_code["days"]
     
     async def get_user_stats(self):
-        """Get user statistics"""
         total_users = await self.users.count_documents({})
         active_users = await self.users.count_documents({
             "last_activity": {"$gte": datetime.now() - timedelta(days=7)}
@@ -229,20 +205,16 @@ class Database:
         }
     
     async def ban_user(self, user_id: int):
-        """Ban user"""
         return await self.update_user(user_id, {"banned": True})
     
     async def unban_user(self, user_id: int):
-        """Unban user"""
         return await self.update_user(user_id, {"banned": False})
     
     async def is_user_banned(self, user_id: int):
-        """Check if user is banned"""
         user = await self.get_user(user_id)
         return user and user.get("banned", False)
     
     async def is_user_premium(self, user_id: int):
-        """Check if user has premium"""
         user = await self.get_user(user_id)
         if not user:
             return False
@@ -254,7 +226,6 @@ class Database:
         return premium_until > datetime.now()
     
     async def add_premium_time(self, user_id: int, days: int):
-        """Add premium time to user"""
         user = await self.get_user(user_id)
         if not user:
             return False
