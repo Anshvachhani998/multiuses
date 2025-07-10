@@ -1,19 +1,17 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database import Database
+from database.db import db
 from config import Config
 import logging
 
 logger = logging.getLogger(__name__)
-db = Database()
+
 
 @Client.on_message(filters.command("credits") & filters.private)
 async def credits_command(client: Client, message: Message):
     """Handle /credits command"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
+
             
         user_id = message.from_user.id
         
@@ -95,9 +93,7 @@ async def earn_credits_command(client: Client, message: Message):
 async def check_credits_callback(client: Client, callback_query: CallbackQuery):
     """Handle check credits callback"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
+
             
         user_id = callback_query.from_user.id
         
