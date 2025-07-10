@@ -11,10 +11,6 @@ logger = logging.getLogger(__name__)
 async def start_command(client: Client, message: Message):
     """Handle /start command"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
-            
         user_id = message.from_user.id
         username = message.from_user.username
         first_name = message.from_user.first_name
