@@ -7,12 +7,12 @@ class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN", "6346317908:AAEEtPcj59TcbUGKLMFLIIeiZFDZFT6Nq40")
     
     # Database Configuration
-    MONGO_URI = os.getenv("MONGODB_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
-    MONGO_NAME = os.getenv("DATABASE_NAME", "MUlTI")
+    MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
+    MONGO_NAME = os.getenv("MONGO_NAME", "MUlTI")
     
     # Channel Configuration
-    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL_ID", "-1002858808929")) if os.getenv("LOG_CHANNEL_ID") else None
-    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL_ID", "-1002858808929")) if os.getenv("MEDIA_CHANNEL_ID") else None
+    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002858808929")) if os.getenv("LOG_CHANNEL") else None
+    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002858808929")) if os.getenv("MEDIA_CHANNEL") else None
     
     # Bot Owner and Admins
     OWNER_ID = int(os.getenv("OWNER_ID", "7744665378"))
