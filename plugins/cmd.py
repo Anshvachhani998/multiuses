@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
     
        
  
-@Client.on_message(filters.command("start"))
-async def start(client, message):
+@Client.on_message(filters.command("starth"))
+async def starth(client, message):
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton("❓ Help", callback_data="help"), InlineKeyboardButton("ℹ️ About", callback_data="about")],
         [InlineKeyboardButton("📢 Updates Channel", url="https://t.me/AnS_Bots")]
