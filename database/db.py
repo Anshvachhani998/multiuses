@@ -1,11 +1,11 @@
 import motor.motor_asyncio
 from datetime import datetime, timedelta
-from info import MONGO_URI, MONGO_NAME, DAILY_LIMITS, LOG_CHANNEL
+from info import Config
 
 class Database:
     def __init__(self):
-        self.client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-        self.db = self.client[MONGO_NAME]
+        self.client = motor.motor_asyncio.AsyncIOMotorClient(Config.MONGO_URI)
+        self.db = self.client[Config.MONGO_NAME]
         
         # Collections
         self.users = self.db["users"]
