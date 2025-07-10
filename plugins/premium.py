@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from database.db import db
-from config import Config
+from info import Config
 import logging
 from datetime import datetime, timedelta
 
