@@ -5,15 +5,15 @@ class Config:
     SESSION = "shhsa"
     API_ID = int(os.getenv("API_ID", "22141398"))
     API_HASH = os.getenv("API_HASH", "0c8f8bd171e05e42d6f6e5a6f4305389")
-    BOT_TOKEN = os.getenv("BOT_TOKEN", "6346317908:AAEEtPcj59TcbUGKLMFLIIeiZFDZFT6Nq40")
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "7764885085:AAHFwx7CCqbPrEk6-ZnKk67WBCvcxrA1LVU")
 
     # Database Configuration
     MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
     MONGO_NAME = os.getenv("MONGO_NAME", "MUlTI")
 
     # Channel Configuration
-    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002858808929"))
-    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002858808929"))
+    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002503587738"))
+    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002503587738"))
 
     # Bot Owner and Admins
     OWNER_ID = int(os.getenv("OWNER_ID", "7744665378"))
