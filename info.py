@@ -12,8 +12,8 @@ class Config:
     MONGO_NAME = os.getenv("MONGO_NAME", "MUlTI")
 
     # Channel Configuration
-    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002858808929")) if os.getenv("LOG_CHANNEL") else None
-    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002858808929")) if os.getenv("MEDIA_CHANNEL") else None
+    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002858808929"))
+    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002858808929"))
 
     # Bot Owner and Admins
     OWNER_ID = int(os.getenv("OWNER_ID", "7744665378"))
