@@ -1,11 +1,11 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from database import Database
+from database.db import db
 from config import Config
 import logging
 
 logger = logging.getLogger(__name__)
-db = Database()
+
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start_command(client: Client, message: Message):
