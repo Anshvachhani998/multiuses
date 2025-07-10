@@ -30,6 +30,19 @@ class Database:
     async def get_user(self, user_id: int):
         return await self.users.find_one({"user_id": user_id})
 
+    async def ban_user(self, user_id: int):
+        """Ban user"""
+        return await self.update_user(user_id, {"banned": True})
+    
+    async def unban_user(self, user_id: int):
+        """Unban user"""
+        return await self.update_user(user_id, {"banned": False})
+    
+    async def is_user_banned(self, user_id: int):
+        """Check if user is banned"""
+        user = await self.get_user(user_id)
+        return user and user.get("banned", False)
+    
     async def create_user(self, user_id: int, username=None, first_name=None, referred_by=None):
         user_data = {
             "user_id": user_id,
