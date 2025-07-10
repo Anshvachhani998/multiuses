@@ -9,7 +9,7 @@ import pytz
 from datetime import date, datetime
 from aiohttp import web
 from plugins import web_server
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT
+from info import Config
 from pyrogram import types
 from pyrogram import utils as pyroutils
 from database.db import db
