@@ -2,7 +2,7 @@ import os
 import uuid
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database import Database
+from database.db import db
 from config import Config
 from helpers.ffmpeg import FFmpegProcessor
 from progress import ProgressTracker
@@ -10,7 +10,7 @@ import logging
 import asyncio
 
 logger = logging.getLogger(__name__)
-db = Database()
+
 
 # Store pending operations
 pending_operations = {}
@@ -19,10 +19,7 @@ pending_operations = {}
 async def handle_video(client: Client, message: Message):
     """Handle video uploads"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
-            
+
         user_id = message.from_user.id
         
         # Check if user exists
