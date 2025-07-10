@@ -14,6 +14,9 @@ class Config:
     # Channel Configuration
     LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002503587738"))
     MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002503587738"))
+    LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "-1002503587738"))
+    MEDIA_CHANNEL_ID = int(os.getenv("MEDIA_CHANNEL_ID", "-1002503587738"))
+    
 
     # Bot Owner and Admins
     OWNER_ID = int(os.getenv("OWNER_ID", "7744665378"))
