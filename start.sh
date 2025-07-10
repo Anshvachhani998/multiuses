@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Folder Name
-DIR="URL-UPLOADER"
+DIR="multiuses"
 
 # GitHub Token
 TOKEN="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"
@@ -16,10 +16,10 @@ fi
 
 # Pull the latest updates
 echo "🔄 Updating repository..."
-git pull https://$TOKEN@github.com/Anshvachhani998/URL-UPLOADER
+git pull https://$TOKEN@github.com/Anshvachhani998/multiuses
 
 # Restart Docker Container
-echo "🚀 Restarting UploaderDL Docker container..."
-docker restart UploaderDL
+echo "🚀 Restarting multiuses Docker container..."
+docker restart multiuses
 
 echo "✅ Update & Restart Completed!"
