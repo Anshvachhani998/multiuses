@@ -1,4 +1,12 @@
 import os
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
+    MONGO_NAME = os.getenv("MONGO_NAME", "MUlTI")
+    
+    # Channel Configuration
+    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1002858808929")) if os.getenv("LOG_CHANNEL") else None
+    MEDIA_CHANNEL = int(os.getenv("MEDIA_CHANNEL", "-1002858808929")) if os.getenv("MEDIA_CHANNEL") else None
+
+    class Config:
     # Bot Configuration
     API_ID = int(os.getenv("API_ID", "22141398"))
     API_HASH = os.getenv("API_HASH", "0c8f8bd171e05e42d6f6e5a6f4305389")
