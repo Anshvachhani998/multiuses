@@ -16,7 +16,7 @@ class Config:
     
     # Credit System
     DEFAULT_CREDITS = int(os.getenv("DEFAULT_CREDITS", "100"))
-    PROCESS_COST = int(os.getenv("PROCESS_COST", "10"))
+    PROCESS_COST = 10
     REFERRAL_BONUS = int(os.getenv("REFERRAL_BONUS", "100"))
     DAILY_LIMIT = int(os.getenv("DAILY_LIMIT", "10"))
     
