@@ -15,11 +15,6 @@ psutil
 apscheduler
 gdown
 beautifulsoup4
-google-api-python-client
-google-auth-oauthlib
-google-auth
-cloudscraper
-lxml
 libtorrent==2.0.11
 requests-html
 playwright
