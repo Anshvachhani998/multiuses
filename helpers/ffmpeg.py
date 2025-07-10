@@ -3,7 +3,7 @@ import os
 import subprocess
 import logging
 from typing import Optional
-from config import Config
+from info import Config
 
 logger = logging.getLogger(__name__)
 
