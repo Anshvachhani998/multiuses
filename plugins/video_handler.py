@@ -90,10 +90,7 @@ async def handle_video(client: Client, message: Message):
 async def handle_option_callback(client: Client, callback_query: CallbackQuery):
     """Handle video processing option callbacks"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
-            
+
         user_id = callback_query.from_user.id
         data = callback_query.data
         
@@ -172,9 +169,7 @@ async def handle_option_callback(client: Client, callback_query: CallbackQuery):
 async def handle_process_callback(client: Client, callback_query: CallbackQuery):
     """Handle video processing callbacks"""
     try:
-        # Ensure database is connected
-        if not db._connected:
-            await db.connect()
+
             
         user_id = callback_query.from_user.id
         data = callback_query.data
