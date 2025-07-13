@@ -19,4 +19,4 @@ libtorrent==2.0.11
 requests-html
 playwright
 beautifulsoup4
-selenium==4.29.0
+humanize  
