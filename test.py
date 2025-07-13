@@ -2,7 +2,7 @@ import undetected_chromedriver as uc
 
 options = uc.ChromeOptions()
 options.headless = False
-options.binary_location = "/usr/bin/google-chrome"
+options.binary_location = "/opt/google/chrome/google-chrome"
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
