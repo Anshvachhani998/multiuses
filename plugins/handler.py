@@ -20,11 +20,11 @@ async def video_handler(client, message):
     )
 
     buttons = [
-        [InlineKeyboardButton("➕ Add to Merge", callback_data=f"addmerge_{video.file_id}")],
-        [InlineKeyboardButton("🖼️ Generate Screenshot", callback_data=f"screenshot_{video.file_id}")],
-        [InlineKeyboardButton("🎵 Convert to Audio", callback_data=f"audio_{video.file_id}")],
-        [InlineKeyboardButton("✂️ Trim Video", callback_data=f"trim_{video.file_id}")],
-        [InlineKeyboardButton("❌ Delete", callback_data=f"delete_{video.file_id}")]
+        [InlineKeyboardButton("➕ Add to Merge", callback_data=f"addmerge")],
+        [InlineKeyboardButton("🖼️ Generate Screenshot", callback_data=f"screenshot")],
+        [InlineKeyboardButton("🎵 Convert to Audio", callback_data=f"audio")],
+        [InlineKeyboardButton("✂️ Trim Video", callback_data=f"trim_")],
+        [InlineKeyboardButton("❌ Delete", callback_data=f"delete_")]
     ]
 
     await message.reply(
