@@ -17,19 +17,17 @@ def im_human():
 
 def get_spotidown_link(song_url):
     options = uc.ChromeOptions()
-    options.add_argument("--headless")  # or comment out for debug
-    options.binary_location = "/opt/google/chrome/google-chrome"
+    options.add_argument("--headless=new")  # headless mode Chrome 109+ style
+    options.binary_location = "/opt/google/chrome/chrome"  # actual chrome binary
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument('--enable-logging')
-    options.add_argument('--v=1')
-    # options.add_argument("--remote-debugging-port=9222")  # REMOVE this for now
+    # options.add_argument("--remote-debugging-port=9222")  # ye zaruri nahi agar basic chalana ho
 
     driver = uc.Chrome(
         options=options,
         use_subprocess=True,
-        # browser_executable_path="/opt/google/chrome/google-chrome"  # Try removing this param first
+        browser_executable_path="/opt/google/chrome/chrome"
     )
 
     try:
