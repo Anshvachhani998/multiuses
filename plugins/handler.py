@@ -2,7 +2,7 @@ import os
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from pyrogram.enums import ChatAction
 MERGE_SESSIONS = {}
 TEMP_DIR = "./temp_downloads"
 
@@ -65,7 +65,7 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
                 os.remove(f)
         return
 
-    await client.send_chat_action(chat_id, "upload_video")
+    await client.send_chat_action(chat_id, ChatAction.UPLOAD_VIDEO)
     await client.send_video(chat_id, output_path, caption="✅ Here is your merged video!")
 
     # Cleanup all temp files
