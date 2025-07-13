@@ -19,16 +19,21 @@ def get_spotidown_link(song_url):
     options = uc.ChromeOptions()
     options.headless = True
 
-    # ✅ FIX: correct binary location
+    # Same binary path for both
     options.binary_location = "/usr/bin/google-chrome"
 
-    # (Optional but recommended for headless on server)
+    # Recommended server args
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = uc.Chrome(options=options, use_subprocess=True)
+    driver = uc.Chrome(
+        options=options,
+        use_subprocess=True,
+        browser_executable_path="/usr/bin/google-chrome"
+    )
 
     result = None
+
 
     try:
         driver.get('https://spotidown.app/')
