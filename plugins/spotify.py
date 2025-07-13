@@ -17,23 +17,18 @@ def im_human():
 
 def get_spotidown_link(song_url):
     options = uc.ChromeOptions()
-    options.headless = True
+    options.headless = True  # Headless mode on (agar issues aaye to False karke try karo)
 
-    # Same binary path for both
+    # Chrome executable ka path (jo `which google-chrome` se mila tha)
     options.binary_location = "/usr/bin/google-chrome"
 
-    # Recommended server args
+    # Recommended flags for server environment
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = uc.Chrome(
-        options=options,
-        use_subprocess=True,
-        browser_executable_path="/usr/bin/google-chrome"
-    )
+    driver = uc.Chrome(options=options, use_subprocess=True)
 
     result = None
-
 
     try:
         driver.get('https://spotidown.app/')
