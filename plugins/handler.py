@@ -3,6 +3,7 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatAction
+
 MERGE_SESSIONS = {}
 TEMP_DIR = "./temp_downloads"
 
@@ -43,35 +44,52 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
     os.makedirs(TEMP_DIR, exist_ok=True)
 
     file_paths = []
-    for i, f in enumerate(queue):
-        out_path = os.path.join(TEMP_DIR, f"{user_id}_{i}.mp4")
+    total_files = len(queue)
+
+    # Initial progress message
+    progress_msg = await client.send_message(chat_id, f"⬇️ Downloading videos: 0/{total_files}")
+
+    for i, f in enumerate(queue, start=1):
+        out_path = os.path.join(TEMP_DIR, f"{user_id}_{i-1}.mp4")
         await client.download_media(f["file_id"], file_name=out_path)
         file_paths.append(out_path)
 
-    # Check files exist before merge
+        # Update download progress
+        await progress_msg.edit(f"⬇️ Downloading videos: {i}/{total_files}")
+
+    # Check if all files exist
     for p in file_paths:
         if not os.path.isfile(p):
-            await message.reply(f"❌ File not found: {p}")
+            await progress_msg.edit(f"❌ File not found: {p}")
             return
 
     output_path = os.path.abspath(os.path.join(TEMP_DIR, f"{user_id}_merged.mp4"))
 
+    # Merging progress update
+    await progress_msg.edit("🔄 Merging videos... Please wait...")
+
     try:
         await ffmpeg_merge(file_paths, output_path)
     except Exception as e:
-        await message.reply(f"❌ Merge failed:\n{str(e)}")
+        await progress_msg.edit(f"❌ Merge failed:\n{str(e)}")
         for f in file_paths:
             if os.path.exists(f):
                 os.remove(f)
         return
 
+    # Uploading progress update
+    await progress_msg.edit("⬆️ Uploading merged video...")
+
     await client.send_chat_action(chat_id, ChatAction.UPLOAD_VIDEO)
     await client.send_video(chat_id, output_path, caption="✅ Here is your merged video!")
 
-    # Cleanup all temp files
+    # Cleanup temp files
     for f in file_paths + [output_path]:
         if os.path.exists(f):
             os.remove(f)
+
+    # Delete progress message after completion
+    await progress_msg.delete()
 
 
 @Client.on_message(filters.video)
