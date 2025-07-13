@@ -1,5 +1,6 @@
 import os
 import asyncio
+import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatAction
@@ -7,6 +8,17 @@ from pyrogram.enums import ChatAction
 MERGE_SESSIONS = {}
 TEMP_DIR = "./temp_downloads"
 
+def human_readable_size(size_bytes):
+    # Converts bytes to human readable format
+    for unit in ['B','KB','MB','GB','TB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.2f} PB"
+
+def create_progress_bar(progress: float, length=20):
+    done = int(progress * length)
+    return '█' * done + '░' * (length - done)
 
 async def ffmpeg_merge(file_paths: list, output_path: str):
     list_txt_path = output_path + "_list.txt"
@@ -39,6 +51,29 @@ async def ffmpeg_merge(file_paths: list, output_path: str):
 
     return output_path
 
+async def progress_callback(current, total, start_time, message, prefix):
+    now = time.time()
+    elapsed = now - start_time
+    speed = current / elapsed if elapsed > 0 else 0
+    progress = current / total if total else 0
+    percent = progress * 100
+
+    speed_str = human_readable_size(speed) + "/s"
+    current_str = human_readable_size(current)
+    total_str = human_readable_size(total)
+
+    bar = create_progress_bar(progress)
+
+    text = (
+        f"{prefix}\n"
+        f"{bar} {percent:.2f}%\n"
+        f"{current_str} / {total_str} @ {speed_str}"
+    )
+
+    try:
+        await message.edit(text)
+    except:
+        pass
 
 async def download_merge_upload(client: Client, user_id: int, queue: list, chat_id: int, message):
     os.makedirs(TEMP_DIR, exist_ok=True)
@@ -46,18 +81,28 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
     file_paths = []
     total_files = len(queue)
 
-    # Initial progress message
+    # Send initial progress message
     progress_msg = await client.send_message(chat_id, f"⬇️ Downloading videos: 0/{total_files}")
 
     for i, f in enumerate(queue, start=1):
         out_path = os.path.join(TEMP_DIR, f"{user_id}_{i-1}.mp4")
-        await client.download_media(f["file_id"], file_name=out_path)
+
+        start_time = time.time()
+        # Pyrogram's download_media me progress callback laga rahe hain
+        await client.download_media(
+            f["file_id"], 
+            file_name=out_path,
+            progress=lambda cur, tot: asyncio.create_task(progress_callback(
+                cur, tot, start_time, progress_msg,
+                prefix=f"⬇️ Downloading video {i}/{total_files}"
+            ))
+        )
         file_paths.append(out_path)
 
-        # Update download progress
+        # Update download count after each video fully downloaded
         await progress_msg.edit(f"⬇️ Downloading videos: {i}/{total_files}")
 
-    # Check if all files exist
+    # Check all files exist
     for p in file_paths:
         if not os.path.isfile(p):
             await progress_msg.edit(f"❌ File not found: {p}")
@@ -77,18 +122,28 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
                 os.remove(f)
         return
 
-    # Uploading progress update
+    # Upload progress message before starting upload
     await progress_msg.edit("⬆️ Uploading merged video...")
 
+    start_time = time.time()
+
+    async def upload_progress(current, total):
+        await progress_callback(current, total, start_time, progress_msg, prefix="⬆️ Uploading merged video...")
+
     await client.send_chat_action(chat_id, ChatAction.UPLOAD_VIDEO)
-    await client.send_video(chat_id, output_path, caption="✅ Here is your merged video!")
+    await client.send_video(
+        chat_id,
+        output_path,
+        caption="✅ Here is your merged video!",
+        progress=upload_progress
+    )
 
     # Cleanup temp files
     for f in file_paths + [output_path]:
         if os.path.exists(f):
             os.remove(f)
 
-    # Delete progress message after completion
+    # Delete progress message after all done
     await progress_msg.delete()
 
 
