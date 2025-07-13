@@ -8,16 +8,17 @@ TEMP_DIR = "./temp_downloads"
 
 
 async def ffmpeg_merge(file_paths: list, output_path: str):
-    list_txt = output_path + "_list.txt"
-    with open(list_txt, "w") as f:
+    list_txt_path = output_path + "_list.txt"
+    with open(list_txt_path, "w") as f:
         for p in file_paths:
-            f.write(f"file '{p}'\n")
+            abs_path = os.path.abspath(p)  # absolute path use karo yahan
+            f.write(f"file '{abs_path}'\n")
 
     cmd = [
         "ffmpeg",
         "-f", "concat",
         "-safe", "0",
-        "-i", list_txt,
+        "-i", list_txt_path,
         "-c", "copy",
         output_path,
         "-y"
@@ -30,10 +31,12 @@ async def ffmpeg_merge(file_paths: list, output_path: str):
     )
 
     stdout, stderr = await proc.communicate()
-    os.remove(list_txt)
+    os.remove(list_txt_path)
 
     if proc.returncode != 0:
         raise Exception(f"FFmpeg failed:\n{stderr.decode()}")
+
+    return output_path
 
 
 async def download_merge_upload(client: Client, user_id: int, queue: list, chat_id: int, message):
@@ -45,7 +48,13 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
         await client.download_media(f["file_id"], file_name=out_path)
         file_paths.append(out_path)
 
-    output_path = os.path.join(TEMP_DIR, f"{user_id}_merged.mp4")
+    # Check files exist before merge
+    for p in file_paths:
+        if not os.path.isfile(p):
+            await message.reply(f"❌ File not found: {p}")
+            return
+
+    output_path = os.path.abspath(os.path.join(TEMP_DIR, f"{user_id}_merged.mp4"))
 
     try:
         await ffmpeg_merge(file_paths, output_path)
@@ -59,7 +68,7 @@ async def download_merge_upload(client: Client, user_id: int, queue: list, chat_
     await client.send_chat_action(chat_id, "upload_video")
     await client.send_video(chat_id, output_path, caption="✅ Here is your merged video!")
 
-    # Cleanup
+    # Cleanup all temp files
     for f in file_paths + [output_path]:
         if os.path.exists(f):
             os.remove(f)
