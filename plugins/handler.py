@@ -3,12 +3,12 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQ
 
 MERGE_SESSIONS = {}
 
-# ✅ When user sends video
+# ✅ Jab user video bheje
 @Client.on_message(filters.video)
 async def handle_video(client, message):
     user_id = message.from_user.id
 
-    # Agar user merge mode me hai → queue me add karo
+    # Agar merge mode me hai → queue me add karo
     if MERGE_SESSIONS.get(user_id, {}).get("active"):
         queue = MERGE_SESSIONS[user_id]["queue"]
         queue.append({
@@ -35,7 +35,7 @@ async def handle_video(client, message):
 
         return
 
-    # ELSE → normal pehla video → options do
+    # Pehla video → option do → message ID bhejo
     video = message.video
     text = (
         f"📹 **Video Details:**\n"
@@ -45,7 +45,7 @@ async def handle_video(client, message):
         f"👇 **Choose Option:**"
     )
     buttons = [
-        [InlineKeyboardButton("➕ Add to Merge", callback_data=f"start_merge_{video.file_id}")],
+        [InlineKeyboardButton("➕ Add to Merge", callback_data=f"start_merge_{message.id}")],
         [InlineKeyboardButton("🖼️ Screenshot", callback_data="screenshot")],
         [InlineKeyboardButton("🎵 Convert to Audio", callback_data="audio")],
         [InlineKeyboardButton("✂️ Trim", callback_data="trim")],
@@ -54,23 +54,25 @@ async def handle_video(client, message):
     await message.reply(text, reply_markup=InlineKeyboardMarkup(buttons))
 
 
-# ✅ When user clicks Add to Merge → pehla video bhi queue me daalo
-@Client.on_callback_query(filters.regex(r"start_merge_(.+)"))
+# ✅ Jab user Add to Merge dabaye
+@Client.on_callback_query(filters.regex(r"start_merge_(\d+)"))
 async def start_merge_flow(client, cb):
     user_id = cb.from_user.id
-    file_id = cb.data.split("_", 1)[1]
+    msg_id = int(cb.data.split("_")[2])
 
-    # Pehla video ki info laane ke liye — original message se lo
-    video = cb.message.reply_to_message.video if cb.message.reply_to_message else None
+    # Original video message laao
+    orig_msg = await client.get_messages(cb.message.chat.id, msg_id)
 
-    if not video:
-        await cb.answer("❌ Can't find original video.", show_alert=True)
+    if not orig_msg or not orig_msg.video:
+        await cb.answer("❌ Original video nahi mila.", show_alert=True)
         return
+
+    video = orig_msg.video
 
     MERGE_SESSIONS[user_id] = {
         "active": True,
         "queue": [{
-            "file_id": file_id,
+            "file_id": video.file_id,
             "file_name": video.file_name or "Unknown",
             "size": video.file_size,
             "duration": video.duration
@@ -78,12 +80,12 @@ async def start_merge_flow(client, cb):
     }
 
     await cb.message.reply(
-        "**✅ Merge Started!**\nAb baaki videos bhejo.\nSab ho jaye toh [🚀 Start Merge] dabao."
+        "**✅ Merge Started!**\nAb baaki videos bhejo.\nJab sab ho jaye toh [🚀 Start Merge] dabao."
     )
     await cb.answer()
 
 
-# ✅ When user clicks Start Merge
+# ✅ Jab user Start Merge dabaye
 @Client.on_callback_query(filters.regex("do_merge"))
 async def do_merge(client, cb):
     user_id = cb.from_user.id
@@ -95,15 +97,10 @@ async def do_merge(client, cb):
 
     await cb.message.reply("🔄 **Merging... Please wait...**")
 
-    # Here you'll write:
-    # 1. Download all videos using file_id → save temp dir
-    # 2. Make list.txt for FFmpeg concat
-    # 3. Run FFmpeg concat → output.mp4
-    # 4. Upload final merged file back to user
-
+    # Yaha download & FFmpeg merge karo
     await cb.message.reply("✅ **Done!** (Here you send the merged video.)")
 
-    # Clear user session
+    # Session cleanup
     MERGE_SESSIONS.pop(user_id, None)
 
     await cb.answer()
