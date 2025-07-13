@@ -74,22 +74,31 @@ async def start_merge_flow(client, cb):
 
     video = orig_msg.video
 
+    # Pehla file dict
+    first_file = {
+        "file_id": video.file_id,
+        "file_name": video.file_name or "Unknown",
+        "size": video.file_size,
+        "duration": video.duration
+    }
+
     MERGE_SESSIONS[user_id] = {
         "active": True,
-        "queue": [{
-            "file_id": video.file_id,
-            "file_name": video.file_name or "Unknown",
-            "size": video.file_size,
-            "duration": video.duration
-        }],
+        "queue": [first_file],
         "origin_msg_id": cb.message.id
     }
 
+    total_size = round(first_file["size"] / 1024 / 1024, 2)
+    total_duration = round(first_file["duration"] / 60, 2)
+
     text = (
-        "**✅ Merge Started!**\n"
-        "Now just send more videos.\n"
-        "When done, click [🚀 Start Merge] or [❌ Cancel]."
+        "**✅ Merge Started!**\n\n"
+        f"**1.** `{first_file['file_name']}`\n\n"
+        f"📦 **Total Size:** {total_size} MB\n"
+        f"⏳ **Total Duration:** {total_duration} min\n\n"
+        "➕ **Send another file or click below:**"
     )
+
     buttons = [
         [InlineKeyboardButton("🚀 Start Merge", callback_data="do_merge")],
         [InlineKeyboardButton("❌ Cancel Merge", callback_data="cancel_merge")]
