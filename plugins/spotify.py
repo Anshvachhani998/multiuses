@@ -17,18 +17,19 @@ def im_human():
 
 def get_spotidown_link(song_url):
     options = uc.ChromeOptions()
-    options.headless = True  # Headless mode on (agar issues aaye to False karke try karo)
-
-    # Chrome executable ka path (jo `which google-chrome` se mila tha)
-    options.binary_location = "/usr/bin/google-chrome"
-
-    # Recommended flags for server environment
+    # Explicit headless argument instead of options.headless=True
+    options.add_argument("--headless=new")
+    options.binary_location = "/opt/google/chrome/google-chrome"
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--remote-debugging-port=9222")
 
-    driver = uc.Chrome(options=options, use_subprocess=True)
-
-    result = None
+    driver = uc.Chrome(
+        options=options,
+        use_subprocess=True,
+        browser_executable_path="/opt/google/chrome/google-chrome"
+    )
 
     try:
         driver.get('https://spotidown.app/')
@@ -65,7 +66,6 @@ def get_spotidown_link(song_url):
         driver.quit()
 
     return result
-
 # ✅ Ye sirf Spotify track/playlist URL pe chalega
 SPOTIFY_LINK_REGEX = r"(https?://open\.spotify\.com/(track|playlist)/[a-zA-Z0-9]+)"
 
