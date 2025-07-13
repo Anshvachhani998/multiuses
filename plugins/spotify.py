@@ -1,4 +1,3 @@
-from pyrogram import Client, filters
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,7 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import time
 import random
-import re
+
+
 
 
 bot = Client
@@ -15,8 +15,18 @@ def im_human():
     time.sleep(random.uniform(1.0, 5.0))
 
 def get_spotidown_link(song_url):
-    driver = uc.Chrome(headless=True, use_subprocess=True)
-    time.sleep(5)
+    options = uc.ChromeOptions()
+    options.headless = True
+
+    # ✅ FIX: correct binary location
+    options.binary_location = "/usr/bin/google-chrome"
+
+    # (Optional but recommended for headless on server)
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    driver = uc.Chrome(options=options, use_subprocess=True)
+
     result = None
 
     try:
