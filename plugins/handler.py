@@ -1,33 +1,93 @@
+import os
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 MERGE_SESSIONS = {}
+TEMP_DIR = "./temp_downloads"
+
+
+async def ffmpeg_merge(file_paths: list, output_path: str):
+    list_txt = output_path + "_list.txt"
+    with open(list_txt, "w") as f:
+        for p in file_paths:
+            f.write(f"file '{p}'\n")
+
+    cmd = [
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", list_txt,
+        "-c", "copy",
+        output_path,
+        "-y"
+    ]
+
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    stdout, stderr = await proc.communicate()
+    os.remove(list_txt)
+
+    if proc.returncode != 0:
+        raise Exception(f"FFmpeg failed:\n{stderr.decode()}")
+
+
+async def download_merge_upload(client: Client, user_id: int, queue: list, chat_id: int, message):
+    os.makedirs(TEMP_DIR, exist_ok=True)
+
+    file_paths = []
+    for i, f in enumerate(queue):
+        out_path = os.path.join(TEMP_DIR, f"{user_id}_{i}.mp4")
+        await client.download_media(f["file_id"], file_name=out_path)
+        file_paths.append(out_path)
+
+    output_path = os.path.join(TEMP_DIR, f"{user_id}_merged.mp4")
+
+    try:
+        await ffmpeg_merge(file_paths, output_path)
+    except Exception as e:
+        await message.reply(f"❌ Merge failed:\n{str(e)}")
+        for f in file_paths:
+            if os.path.exists(f):
+                os.remove(f)
+        return
+
+    await client.send_chat_action(chat_id, "upload_video")
+    await client.send_video(chat_id, output_path, caption="✅ Here is your merged video!")
+
+    # Cleanup
+    for f in file_paths + [output_path]:
+        if os.path.exists(f):
+            os.remove(f)
+
 
 @Client.on_message(filters.video)
 async def handle_video(client, message):
     if not message.from_user:
-        return await message.reply("❌ Unknown sender.")
+        return
     user_id = message.from_user.id
-
     session = MERGE_SESSIONS.get(user_id)
 
     if session and session["active"]:
-        # 🟢 Hybrid: koi bhi nayi video auto queue me chali jaaye
-        queue = session["queue"]
-        queue.append({
+        session["queue"].append({
             "file_id": message.video.file_id,
             "file_name": message.video.file_name or "Unknown",
             "size": message.video.file_size,
             "duration": message.video.duration
         })
 
-        total_size = sum(x["size"] for x in queue)
-        total_duration = sum(x["duration"] for x in queue)
+        total_size = sum(f["size"] for f in session["queue"])
+        total_duration = sum(f["duration"] for f in session["queue"])
 
         text = "✅ Video Added to Merge Queue!\n\n**Files:**\n"
-        for i, f in enumerate(queue, 1):
+        for i, f in enumerate(session["queue"], 1):
             text += f"{i}. `{f['file_name']}`\n"
-        text += f"\n📦 **Total Size:** {round(total_size/1024/1024, 2)} MB\n⏳ **Total Duration:** {round(total_duration/60, 2)} min"
+        text += f"\n📦 Total Size: {round(total_size/1024/1024, 2)} MB\n⏳ Duration: {round(total_duration/60, 2)} min\n\n"
+        text += "➕ Send another video or click 🚀 Start Merge below."
 
         buttons = [
             [InlineKeyboardButton("🚀 Start Merge", callback_data="do_merge")],
@@ -42,14 +102,14 @@ async def handle_video(client, message):
         )
         return
 
-    # Else: pehla video → show options
+    # First video normal flow
     video = message.video
     text = (
         f"📹 **Video Details:**\n"
         f"• File Name: `{video.file_name}`\n"
         f"• Size: `{round(video.file_size/1024/1024, 2)} MB`\n"
         f"• Duration: `{video.duration // 60}:{video.duration % 60} min`\n\n"
-        f"👇 **Choose an option:**"
+        f"👇 Choose an option:"
     )
     buttons = [
         [InlineKeyboardButton("➕ Add to Merge", callback_data=f"start_merge_{message.id}")],
@@ -59,13 +119,10 @@ async def handle_video(client, message):
 
 
 @Client.on_callback_query(filters.regex(r"start_merge_(\d+)"))
-async def start_merge_flow(client, cb):
-    if not cb.from_user:
-        return await cb.answer("❌ Unknown user.", show_alert=True)
+async def start_merge(client, cb):
     user_id = cb.from_user.id
-
     if MERGE_SESSIONS.get(user_id):
-        return await cb.answer("⚠️ You already have an active merge. Cancel first.", show_alert=True)
+        return await cb.answer("⚠️ You have an active merge. Cancel it first.", show_alert=True)
 
     msg_id = int(cb.data.split("_")[2])
     orig_msg = await client.get_messages(cb.message.chat.id, msg_id)
@@ -74,7 +131,6 @@ async def start_merge_flow(client, cb):
 
     video = orig_msg.video
 
-    # Pehla file dict
     first_file = {
         "file_id": video.file_id,
         "file_name": video.file_name or "Unknown",
@@ -94,9 +150,9 @@ async def start_merge_flow(client, cb):
     text = (
         "**✅ Merge Started!**\n\n"
         f"**1.** `{first_file['file_name']}`\n\n"
-        f"📦 **Total Size:** {total_size} MB\n"
-        f"⏳ **Total Duration:** {total_duration} min\n\n"
-        "➕ **Send another file or click below:**"
+        f"📦 Total Size: {total_size} MB\n"
+        f"⏳ Duration: {total_duration} min\n\n"
+        "➕ Send another video or click below:"
     )
 
     buttons = [
@@ -110,18 +166,15 @@ async def start_merge_flow(client, cb):
 
 @Client.on_callback_query(filters.regex("do_merge"))
 async def do_merge(client, cb):
-    if not cb.from_user:
-        return await cb.answer("❌ Unknown user.", show_alert=True)
     user_id = cb.from_user.id
-
     session = MERGE_SESSIONS.get(user_id)
+
     if not session or not session["queue"]:
-        return await cb.answer("❌ Queue empty!", show_alert=True)
+        return await cb.answer("❌ Merge queue is empty!", show_alert=True)
 
-    await cb.message.edit("🔄 **Merging... Please wait...**")
+    await cb.message.edit("🔄 Merging videos... Please wait...")
 
-    # Download + merge logic here
-    await cb.message.reply("✅ **Done!** Merged video here...")
+    await download_merge_upload(client, user_id, session["queue"], cb.message.chat.id, cb.message)
 
     MERGE_SESSIONS.pop(user_id, None)
     await cb.answer()
@@ -129,12 +182,9 @@ async def do_merge(client, cb):
 
 @Client.on_callback_query(filters.regex("cancel_merge"))
 async def cancel_merge(client, cb):
-    if not cb.from_user:
-        return await cb.answer("❌ Unknown user.", show_alert=True)
     user_id = cb.from_user.id
-
     if MERGE_SESSIONS.pop(user_id, None):
-        await cb.message.edit("✅ **Merge cancelled.**")
+        await cb.message.edit("✅ Merge cancelled.")
     else:
-        await cb.answer("❌ No active session.", show_alert=True)
+        await cb.answer("❌ No active merge session.", show_alert=True)
     await cb.answer()
