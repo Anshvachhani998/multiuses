@@ -4,18 +4,21 @@ WORKDIR /app
 
 COPY . .
 
-# Already has chromium, par chromedriver alag se chahiye:
-RUN apt update && apt install -y ffmpeg aria2 unzip wget curl && rm -rf /var/lib/apt/lists/*
+# Install dependencies + utilities + chromedriver
+RUN apt update && apt install -y ffmpeg aria2 unzip wget curl gnupg ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Install chromedriver
+# Install chromedriver matching latest version
 RUN CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
     wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     rm /tmp/chromedriver.zip && \
     chmod +x /usr/local/bin/chromedriver
 
-# Install python deps
-RUN pip install -r requirements.txt
-RUN pip install yt-dlp
+# Install python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir yt-dlp
+
+# Expose port if you run any webserver (optional)
+# EXPOSE 8080
 
 CMD ["python", "bot.py"]
