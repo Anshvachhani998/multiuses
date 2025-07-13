@@ -20,3 +20,5 @@ requests-html
 playwright
 beautifulsoup4
 humanize  
+undetected-chromedriver
+selenium
