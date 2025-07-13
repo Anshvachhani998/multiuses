@@ -15,6 +15,11 @@ bot = Client
 def im_human():
     time.sleep(random.uniform(1.0, 5.0))
 
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
+
+def im_human():
+    time.sleep(1.5)  # Simulate human-like pause
+
 def get_spotidown_link(song_url):
     options = uc.ChromeOptions()
     options.add_argument("--headless=new")  # Headless Chrome 109+ style
@@ -22,7 +27,7 @@ def get_spotidown_link(song_url):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    # options.add_argument("--remote-debugging-port=9222")  # optional
+    # options.add_argument("--remote-debugging-port=9222")  # optional, uncomment if needed
 
     print("[INFO] Launching Chrome driver...")
     driver = uc.Chrome(
